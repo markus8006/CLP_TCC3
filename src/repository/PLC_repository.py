@@ -58,6 +58,7 @@ class PLCRepo(BaseRepo):
             self.session.rollback()
             logger.exception("Erro ao adicionar %s", getattr(self.model, '__name__', str(self.model)))
             raise
-        
+    
+    
 
 Plcrepo = PLCRepo()

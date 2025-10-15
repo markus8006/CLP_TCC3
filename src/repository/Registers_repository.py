@@ -35,6 +35,27 @@ class RegisterRepo(BaseRepo):
             self.session.rollback()
             logger.exception("Erro ao adicionar %s", getattr(self.model, '__name__', str(self.model)))
             raise
+    def get_registers_for_plc(self, plc_id: int):
+        """
+    Esta função busca os registradores para um CLP específico.
+    É o "provider" que o ActivePLCPoller usará.
+        """
+        # LOG DE DIAGNÓSTICO:
+        logger.debug(f"Buscando registradores para o plc_id: {plc_id}")
+        
+        # Filtros que estamos usando na busca
+        filters = {'plc_id': plc_id, 'is_active': True}
+        
+        registers_found = self.find_by(**filters)
+        
+        # LOG DE DIAGNÓSTICO:
+        if registers_found:
+            logger.info(f"Encontrados {len(registers_found)} registradores para o plc_id: {plc_id}")
+        else:
+            # Este é o log que você estava vendo, mas agora com mais contexto.
+            logger.warning(f"Nenhum registrador ativo encontrado para o plc_id: {plc_id} usando os filtros: {filters}")
+            
+        return registers_found
 
 
 

@@ -1,80 +1,81 @@
-from src.app import create_app
-from src.utils.logs import logger
+# run.py
 import threading
-from src.simulations.modbus_simulation import start_modbus_simulator, add_register_test_modbus
-from src.repository.PLC_repository import Plcrepo
-from src.repository.Registers_repository import RegRepo
+from src.app import create_app
 from src.models import PLC
-from src.adapters.modbus_adapter import ModbusAdapter
-from src.services.client_service import SimpleManager, wait_for_port, example_registers_provider
-import time
-import asyncio
+from src.repository.PLC_repository import Plcrepo
+# Importa a CLASSE, não uma instância global
+from src.manager.client_polling_manager import SimpleManager, wait_for_port
+from src.simulations.modbus_simulation import (add_register_test_modbus,
+                                                start_modbus_simulator)
+from src.utils.logs import logger
+from src.services.client_polling_service import run_async_polling
 
+# --- Configurações ---
+HOST = "127.0.0.1"
+MODBUS_PORT = 5020
 
+# --- Cria a Aplicação Flask ---
 app = create_app()
 
-HOST = "127.0.0.1"
-MOSBUS_PORT = 5020
 
-with app.app_context():
-    logger.process("Iniciando simulador Modbus em %s:%s", HOST, MOSBUS_PORT)
-    modbus_thread = threading.Thread(
-    target=start_modbus_simulator, args=(HOST, MOSBUS_PORT), daemon=True
-    )
-    modbus_thread.start()
-    logger.info("Servidor iniciado")
-    logger.process("Adicionando PLC ao banco de dados")
-    plc = PLC(name='PLCMod', ip_address='127.0.0.1', protocol='modbus', port=5020, unit_id=1)
-    Plcrepo.add(plc)
-    logger.process("Adicionando registrador")
-    time.sleep(1)
-    add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=0)
-    logger.info("Registrador iniciado")
-    time.sleep(1)
-
-    logger.process("Criando adapter")
-    print(Plcrepo.first_by(ip_address=HOST).__dict__)
-    plc = ModbusAdapter(Plcrepo.first_by(ip_address=HOST))
-    
-
-    async def con():
-        logger.process("Conectando plc")
-        await plc.connect()
-        await asyncio.sleep(1)
-        logger.process("lendo register")
-        teste = await plc.read_register(RegRepo.first_by(plc_id=getattr(Plcrepo.first_by(ip_address=HOST), "id")))
-        print(teste)
-
-    async def main():
-        mgr = SimpleManager()
-
-        plc_cfg = {
-        "ip": "127.0.0.1",
-        "port": 5020,
-        "unit": 1,
-        "vlan": None,
-        "poll_interval": 1.0,
-        "plc_id": 1,
-        }
-
-    # wait for simulator (optional)
-        if not wait_for_port(plc_cfg["ip"], plc_cfg["port"], timeout=6.0):
-            logger.warning("Modbus server not listening yet at %s:%s - continuing (you may start simulator)", plc_cfg["ip"], plc_cfg["port"])
-
-    # add PLC (starts polling task)
-        await mgr.add_plc(plc_cfg, example_registers_provider)
-
-    # let it run for some seconds
-        await asyncio.sleep(8)
-
+# --- Inicialização e Execução ---
 if __name__ == "__main__":
-    asyncio.run(main())
+    with app.app_context():
+        # ETAPA 1: Iniciar os CLPs Simulados para teste
+        logger.process(f"Iniciando simuladores Modbus...")
+        
+        # Simulador para 127.0.0.1
+        modbus_thread_1 = threading.Thread(
+            target=start_modbus_simulator, args=(HOST, MODBUS_PORT), daemon=True
+        )
+        modbus_thread_1.start()
 
+        # Simulador para 127.0.0.2
+        modbus_thread_2 = threading.Thread(
+            target=start_modbus_simulator, args=("127.0.0.2", MODBUS_PORT), daemon=True
+        )
+        modbus_thread_2.start()
 
-with app.app_context():
-    asyncio.run(con())
-logger.info("Thread do simulador Modbus iniciada.")
+        # Aguarda o primeiro simulador ficar pronto para continuar
+        if not wait_for_port(HOST, MODBUS_PORT, timeout=5.0):
+            logger.error(f"Simulador Modbus em {HOST}:{MODBUS_PORT} não iniciou. Abortando.")
+            exit(1)
+        logger.info("Simuladores Modbus iniciados com sucesso.")
 
+        # ETAPA 2: Popular o banco de dados com dados de teste, se necessário
+        logger.process("Configurando dados de teste no banco de dados...")
+        
+        # Garante que o PLC 'PLCMod' existe
+        if not Plcrepo.first_by(name='PLCMod'):
+            logger.info("PLC 'PLCMod' não encontrado, criando um novo...")
+            plc_to_add = PLC(name='PLCMod', ip_address='127.0.0.1', protocol='modbus', port=5020, unit_id=1, is_active=True)
+            Plcrepo.add(plc_to_add, commit=True)
+            add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=0)
 
-logger.process("Iniciando server")
-app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+        # Garante que o PLC 'PLCMod2' existe
+        if not Plcrepo.first_by(name='PLCMod2'):
+            logger.info("PLC 'PLCMod2' não encontrado, criando um novo...")
+            plc_to_add_2 = PLC(name='PLCMod2', ip_address='127.0.0.2', protocol='modbus', port=5020, unit_id=1, is_active=True)
+            Plcrepo.add(plc_to_add_2, commit=True)
+            add_register_test_modbus(plc_name="PLCMod2", host="127.0.0.2", port=5020, address=0)
+        
+        logger.info("Dados de teste configurados.")
+
+    # ETAPA 3: Iniciar o serviço de polling em background
+    
+    # 3.1. Cria a instância única do gerente de polling
+    polling_manager = SimpleManager()
+    
+    # 3.2. Inicia a thread do serviço, injetando o app e o gerente
+    polling_service_thread = threading.Thread(
+        target=run_async_polling,
+        args=(app, polling_manager),  # Passa o gerente como argumento
+        daemon=True
+    )
+    polling_service_thread.start()
+    logger.info("Serviço de polling rodando em background.")
+
+    # ETAPA 4: Iniciar o Servidor Web Flask (Aplicação Principal)
+    logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
+    # use_reloader=False é importante ao rodar serviços em threads
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
