@@ -12,7 +12,7 @@
       
       
       
-        <link rel="next" href="../DEPLOYMENT/">
+        <link rel="next" href="../Guia%20de%20Desenvolvimento/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -198,7 +198,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../DEVELOPMENT.md" class="md-tabs__link">
+      <a href="../Guia%20de%20Desenvolvimento/" class="md-tabs__link">
         
   
   
@@ -386,7 +386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DEVELOPMENT.md" class="md-nav__link">
+      <a href="../Guia%20de%20Desenvolvimento/" class="md-nav__link">
         
   
   
@@ -566,221 +566,33 @@
 ```bash
     git clone &lt;URL_DO_SEU_REPOSITORIO&gt;
     cd CLP_TCC3
-    ```
-
-2.  **Crie e ative um ambiente virtual:**
-```bash
-    python -m venv .venv
+</code></pre>
+<ol>
+<li><strong>Crie e ative um ambiente virtual:</strong></li>
+</ol>
+<pre><code class="language-bash">    python -m venv .venv
     # No Windows:
     .venv\Scripts\activate
     # No Linux/Mac:
     source .venv/bin/activate
-    ```
-
-3.  **Instale as dependências:**
-```bash
-    pip install -r requirements.txt
-    ```
-
-4.  **Execute a aplicação:**
-```bash
-    python run.py
-    ```
-
-A aplicação estará disponível em `http://127.0.0.1:5000`. O script `run.py` iniciará automaticamente os simuladores de CLP e o serviço de polling em background.
-
-Para informações mais detalhadas sobre arquitetura, deploy e solução de problemas, consulte os seguintes guias:
-
-- 📖 **[[Guia de Desenvolvimento|DEVELOPMENT.md]]**: Para desenvolvedores que desejam entender a arquitetura, os padrões de código e como contribuir.
-- 🚀**[[Guia de Deploy|DEPLOYMENT.md]]**: Instruções completas para configurar o ambiente de produção.
-- 🔧 **[[Troubleshooting|TROUBLESHOOTING.md]]**: Soluções para problemas comuns e dicas de debug.
-### 🏃‍♂️ Instalação Rápida
-```bash
-# 1. Usar o script de migração automática
-python migrate_project.py
-
-# 2. Instalar dependências
-pip install -r requirements.txt
-
-# 3. Configurar ambiente
-cp .env.example .env
-
-# 4. Inicializar banco
-python scripts/init_db.py
-
-# 5. Executar
-python run.py
 </code></pre>
-<h3 id="acesso">🌐 Acesso</h3>
-<ul>
-<li><strong>URL</strong>: http://localhost:5000</li>
-<li><strong>Login</strong>: admin / admin123</li>
-</ul>
-<hr />
-<h2 id="documentacao-por-perfil">📋 Documentação por Perfil</h2>
-<h3 id="para-administradores">👨‍💼 Para Administradores</h3>
-<ul>
-<li><strong><a href="README.md#manual-de-instalação">Manual de Instalação</a></strong> - Setup inicial</li>
-<li><strong><a href="README.md#manual-do-usuário">Manual do Usuário</a></strong> - Como usar o sistema</li>
-<li><strong><a href="../DEPLOYMENT/">Deploy em Produção</a></strong> - Configuração de servidor</li>
-<li><strong><a href="../TROUBLESHOOTING/">Troubleshooting</a></strong> - Solução de problemas</li>
-</ul>
-<h3 id="para-desenvolvedores">👨‍💻 Para Desenvolvedores</h3>
-<ul>
-<li><strong><a href="DEVELOPMENT.md#arquitetura-do-sistema">Arquitetura do Sistema</a></strong> - Padrões e estrutura</li>
-<li><strong><a href="DEVELOPMENT.md#setup-de-desenvolvimento">Setup de Desenvolvimento</a></strong> - Ambiente de dev</li>
-<li><strong><a href="DEVELOPMENT.md#padrões-de-código">Padrões de Código</a></strong> - Estilo e boas práticas</li>
-<li><strong><a href="DEVELOPMENT.md#testes">Testes</a></strong> - Como escrever e executar testes</li>
-<li><strong><a href="../TROUBLESHOOTING/#debug-tools-e-comandos-úteis">Debug Tools</a></strong> - Ferramentas de debug</li>
-</ul>
-<h3 id="para-devops">🔧 Para DevOps</h3>
-<ul>
-<li><strong><a href="../DEPLOYMENT/">Deploy em Produção</a></strong> - Setup completo de servidor</li>
-<li><strong><a href="../DEPLOYMENT/#monitoramento-e-performance">Monitoramento</a></strong> - Logs e métricas</li>
-<li><strong><a href="../DEPLOYMENT/#backup-automatizado">Backup e Manutenção</a></strong> - Processos automatizados</li>
-<li><strong><a href="../DEPLOYMENT/#configuração-de-ssltls">Segurança</a></strong> - Configurações de segurança</li>
-</ul>
-<h3 id="para-integradores">🔌 Para Integradores</h3>
-<ul>
-<li><strong><a href="README.md#documentação-da-api">Documentação da API</a></strong> - Endpoints REST</li>
-<li><strong><a href="DEVELOPMENT.md#criando-novos-adapters">Adapters de Protocolo</a></strong> - Como criar novos adapters</li>
-<li><strong><a href="README.md#exemplos-de-integração">Exemplos de Integração</a></strong> - Python, JavaScript, curl</li>
-</ul>
-<hr />
-<h2 id="arquivos-de-configuracao-e-scripts">📁 Arquivos de Configuração e Scripts</h2>
-<h3 id="arquivos-de-configuracao">📄 Arquivos de Configuração</h3>
-<ul>
-<li><strong><code>.env.example</code></strong> - Template de configuração</li>
-<li><strong><code>requirements.txt</code></strong> - Dependências Python</li>
-<li><strong><code>docker-compose.yml</code></strong> - Configuração Docker</li>
-<li><strong><code>migrate_project.py</code></strong> - Script de migração automática</li>
-</ul>
-<h3 id="scripts-utilitarios">🔧 Scripts Utilitários</h3>
-<ul>
-<li><strong><code>scripts/init_db.py</code></strong> - Inicialização do banco de dados</li>
-<li><strong><code>scripts/backup.sh</code></strong> - Script de backup (produção)</li>
-<li><strong><code>scripts/deploy.sh</code></strong> - Script de deploy (produção)</li>
-<li><strong><code>scripts/health_check.sh</code></strong> - Verificação de saúde do sistema</li>
-</ul>
-<hr />
-<h2 id="estrutura-tecnica-resumida">🏗️ Estrutura Técnica Resumida</h2>
-<h3 id="tecnologias-principais">Tecnologias Principais</h3>
-<ul>
-<li><strong>Backend</strong>: Flask, SQLAlchemy, Flask-SocketIO</li>
-<li><strong>Frontend</strong>: Bootstrap 5, Chart.js, WebSockets</li>
-<li><strong>Protocolos</strong>: Modbus TCP/RTU, Siemens S7</li>
-<li><strong>Banco</strong>: SQLite (dev), PostgreSQL (prod)</li>
-<li><strong>Cache</strong>: Redis</li>
-<li><strong>Deploy</strong>: Nginx, Supervisor, Docker</li>
-</ul>
-<h3 id="modulos-principais">Módulos Principais</h3>
-<pre><code>app/
-├── auth/           # Autenticação e autorização
-├── models/         # Modelos de dados (SQLAlchemy)
-├── services/       # Lógica de negócios
-│   ├── polling_service.py    # Coleta de dados
-│   ├── alarm_service.py      # Sistema de alarmes
-│   ├── security_service.py   # Segurança
-│   └── backup_service.py     # Backup automático
-├── api/            # API REST
-├── web/            # Interface web
-├── adapters/       # Drivers de comunicação
-└── utils/          # Utilitários
-</code></pre>
-<hr />
-<h2 id="links-rapidos">🔗 Links Rápidos</h2>
-<h3 id="documentacao">📖 Documentação</h3>
-<ul>
-<li><a href="README.md#sistema-scada-industrial">Visão Geral do Sistema</a></li>
-<li><a href="README.md#instalação-detalhada">Instalação Passo a Passo</a></li>
-<li><a href="README.md#gerenciamento-de-plcs">Configuração de PLCs</a></li>
-<li><a href="README.md#sistema-de-alarmes">Sistema de Alarmes</a></li>
-<li><a href="README.md#documentação-da-api">API REST Completa</a></li>
-</ul>
-<h3 id="desenvolvimento">🛠️ Desenvolvimento</h3>
-<ul>
-<li><a href="DEVELOPMENT.md#arquitetura-do-sistema">Arquitetura e Padrões</a></li>
-<li><a href="DEVELOPMENT.md#setup-de-desenvolvimento">Setup de Desenvolvimento</a></li>
-<li><a href="DEVELOPMENT.md#testes">Criando Testes</a></li>
-<li><a href="DEVELOPMENT.md#criando-novos-adapters">Novos Adapters</a></li>
-</ul>
-<h3 id="producao">🚀 Produção</h3>
-<ul>
-<li><a href="../DEPLOYMENT/#deploy-em-produção">Deploy Completo</a></li>
-<li><a href="../DEPLOYMENT/#configuração-do-nginx">Configuração Nginx</a></li>
-<li><a href="../DEPLOYMENT/#monitoramento-de-performance">Monitoramento</a></li>
-<li><a href="../DEPLOYMENT/#backup-automatizado">Backup Automático</a></li>
-</ul>
-<h3 id="troubleshooting">🔧 Troubleshooting</h3>
-<ul>
-<li><a href="../TROUBLESHOOTING/#problemas-comuns-e-soluções">Problemas Comuns</a></li>
-<li><a href="../TROUBLESHOOTING/#problemas-de-comunicação-com-plcs">Debug de Comunicação</a></li>
-<li><a href="../TROUBLESHOOTING/#problemas-de-performance">Performance Issues</a></li>
-<li><a href="../TROUBLESHOOTING/#debug-de-protocolos">Scripts de Debug</a></li>
-</ul>
-<hr />
-<h2 id="suporte-e-contribuicao">🆘 Suporte e Contribuição</h2>
-<h3 id="canais-de-suporte">📞 Canais de Suporte</h3>
-<ul>
-<li><strong>GitHub Issues</strong>: Para bugs e feature requests</li>
-<li><strong>Email</strong>: suporte@scada.local</li>
-<li><strong>Wiki</strong>: Documentação adicional</li>
-</ul>
-<h3 id="como-contribuir">🤝 Como Contribuir</h3>
 <ol>
-<li>Fork o projeto</li>
-<li>Crie uma branch (<code>git checkout -b feature/NovaFuncionalidade</code>)</li>
-<li>Commit suas mudanças (<code>git commit -m 'Adiciona nova funcionalidade'</code>)</li>
-<li>Push para a branch (<code>git push origin feature/NovaFuncionalidade</code>)</li>
-<li>Abra um Pull Request</li>
+<li><strong>Instale as dependências:</strong></li>
 </ol>
-<h3 id="reportar-problemas">📝 Reportar Problemas</h3>
-<p>Use o <a href="../TROUBLESHOOTING/#template-para-reportar-problemas">template de issue</a> para reportar problemas.</p>
-<hr />
-<h2 id="status-do-projeto">📊 Status do Projeto</h2>
-<h3 id="funcionalidades-implementadas">✅ Funcionalidades Implementadas</h3>
+<pre><code class="language-bash">    pip install -r requirements.txt
+</code></pre>
+<ol>
+<li><strong>Execute a aplicação:</strong></li>
+</ol>
+<pre><code class="language-bash">    python run.py
+</code></pre>
+<p>A aplicação estará disponível em <code>http://127.0.0.1:5000</code>. O script <code>run.py</code> iniciará automaticamente os simuladores de CLP e o serviço de polling em background.</p>
+<p>Para informações mais detalhadas sobre arquitetura, deploy e solução de problemas, consulte os seguintes guias:</p>
 <ul>
-<li>[x] Sistema de autenticação com roles</li>
-<li>[x] Interface web moderna e responsiva</li>
-<li>[x] Polling de dados em tempo real</li>
-<li>[x] Sistema de alarmes completo</li>
-<li>[x] Suporte a Modbus TCP/RTU</li>
-<li>[x] Suporte a Siemens S7</li>
-<li>[x] API REST completa</li>
-<li>[x] Sistema de relatórios</li>
-<li>[x] Backup automático</li>
-<li>[x] Auditoria de segurança</li>
+<li>📖 <strong>[[Guia de Desenvolvimento|DEVELOPMENT.md]]</strong>: Para desenvolvedores que desejam entender a arquitetura, os padrões de código e como contribuir.</li>
+<li>🚀<strong>[[Guia de Deploy|DEPLOYMENT.md]]</strong>: Instruções completas para configurar o ambiente de produção.</li>
+<li>🔧 <strong>[[Troubleshooting|TROUBLESHOOTING.md]]</strong>: Soluções para problemas comuns e dicas de debug.</li>
 </ul>
-<h3 id="em-desenvolvimento">🔄 Em Desenvolvimento</h3>
-<ul>
-<li>[ ] Suporte a EtherNet/IP</li>
-<li>[ ] Suporte a OPC UA</li>
-<li>[ ] Dashboard customizável</li>
-<li>[ ] Integração com MES/ERP</li>
-<li>[ ] App mobile</li>
-</ul>
-<h3 id="roadmap">📈 Roadmap</h3>
-<ul>
-<li><strong>v2.1</strong>: Suporte a OPC UA e EtherNet/IP</li>
-<li><strong>v2.2</strong>: Dashboard customizável e widgets</li>
-<li><strong>v2.3</strong>: Integração com sistemas MES/ERP</li>
-<li><strong>v3.0</strong>: Aplicativo mobile nativo</li>
-</ul>
-<hr />
-<h2 id="licenca">📄 Licença</h2>
-<p>Este projeto está licenciado sob a MIT License - veja o arquivo <a href="LICENSE">LICENSE</a> para detalhes.</p>
-<hr />
-<h2 id="agradecimentos">🙏 Agradecimentos</h2>
-<ul>
-<li><strong>Flask Community</strong> - Framework web excepcional</li>
-<li><strong>PyModbus Team</strong> - Biblioteca Modbus robusta  </li>
-<li><strong>Python-snap7</strong> - Interface S7 confiável</li>
-<li><strong>Bootstrap Team</strong> - Framework CSS moderno</li>
-<li><strong>Chart.js</strong> - Gráficos interativos</li>
-</ul>
-<hr />
-<p><strong>Sistema SCADA Industrial v2.0</strong><br />
-<em>Desenvolvido com ❤️ para a indústria brasileira</em></p>
 
 
 
