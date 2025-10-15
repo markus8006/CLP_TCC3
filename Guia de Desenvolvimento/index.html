@@ -505,7 +505,7 @@ app = creat_app()
 with app.app_context():
     new_plc = PLC(name='PLCMod', 
     ip_address='127.0.0.1', protocol='modbus', port=5020,
-    unit_id=1, is_active=True) #Cria o objeto do PLC
+    unit_id=1, is_active=True) # Cria o objeto do PLC
     Plcrepo.add(new_plc) #adiciona plc ao banco de dados
 
 
@@ -514,8 +514,7 @@ app.run(host=&quot;0.0.0.0&quot;, port=5000, debug=True, use_reloader=False)
 
 </code></pre>
 <h2 id="lista-de-parametros-dos-plcs">Lista de parâmetros dos PLCs:</h2>
-<p>```python
-    id = db.Column(db.Integer, primary_key=True)
+<pre><code class="language-python">    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     ip_address = db.Column(db.String(45), nullable=False)  # ipv6-safe
@@ -534,11 +533,11 @@ app.run(host=&quot;0.0.0.0&quot;, port=5000, debug=True, use_reloader=False)
     last_maintenance = db.Column(db.DateTime)
     maintenance_by = db.Column(db.String(100))
     maintenance_notes = db.Column(db.Text)
-    next_maintenance = db.Column(db.DateTime)</p>
-<pre><code>#Relacionamento
-</code></pre>
-<p>organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
-    organization = db.relationship("Organization", backref="plcs")
+    next_maintenance = db.Column(db.DateTime)
+
+    #Relacionamento
+    organization_id = db.Column(db.Integer, db.ForeignKey('organization.id'))
+    organization = db.relationship(&quot;Organization&quot;, backref=&quot;plcs&quot;)
     # use JSON se seu DB suportar (Postgres). Caso contrário Text.
     try:
         tags = db.Column(db.JSON)
@@ -553,15 +552,20 @@ app.run(host=&quot;0.0.0.0&quot;, port=5000, debug=True, use_reloader=False)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
     
-    #Outros relacionamentos
+    # Outros relacionamentos
     registers = db.relationship('Register', backref='plc', cascade='all, delete-orphan')
     data_logs = db.relationship('DataLog', backref='plc')
     alarms = db.relationship('Alarm', backref='plc')
- ```</p>
-<h1 id="adicionar-registradores">Adicionar Registradores</h1>
-<h1 id="criar-registradores-polling-leitura">criar #registradores #polling #leitura</h1>
-<p>Para adicionar registradores, segue-se a mesma estrutura dos PLCs, importe a classe modelo e adicione com o repository, mas, Register é relacionado ao PLC pelo id do PLC, então precisamos buscar o id do PLC no db e adicionar o id para o register </p>
-<pre><code class="language-python">from src.app import creat_app 
+ ```
+
+
+# Adicionar Registradores 
+#criar #registradores #polling #leitura
+
+Para adicionar registradores, segue-se a mesma estrutura dos PLCs, importe a classe modelo e adicione com o repository, mas, Register é relacionado ao PLC pelo id do PLC, então precisamos buscar o id do PLC no db e adicionar o id para o register 
+
+```python
+from src.app import creat_app 
 from src.models import PLC, Register #importa a class
 from src.repository.PLC_repository import Plcrepo 
 from src.repository.Registers_repository import RegRepo #importa o objeto para manipulação
@@ -574,7 +578,7 @@ with app.app_context():
     unit_id=1, is_active=True) 
     Plcrepo.add(new_plc)
 
-    plc = Plcrepo.firts_by(ip_adrres='127.0.0.1') #Pocura o clp no db com um filtro de ip
+    plc = Plcrepo.firts_by(ip_adrres='127.0.0.1') # Pocura o clp no db com um filtro de ip
 
     reg = Register(plc_id=plc.id,
     name=&quot;Registrador_teste,
@@ -584,9 +588,9 @@ with app.app_context():
     scale_factor=1.0,
     offset=0.0,
     unit=&quot;°C&quot;,
-    is_active=True) #Cria o objeto do Register
+    is_active=True) # Cria o objeto do Register
 
-    RegRepo.add(reg) #adiciona plc ao banco de dados
+    RegRepo.add(reg) # adiciona plc ao banco de dados
 
 
 app.run(host=&quot;0.0.0.0&quot;, port=5000, debug=True, use_reloader=False) 
