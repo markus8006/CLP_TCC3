@@ -20,7 +20,7 @@
     
     
       
-        <title>Troubleshooting - Documentação do Sistema SCADA</title>
+        <title>Solução de Problemas - Documentação do Sistema SCADA</title>
       
     
     
@@ -61,7 +61,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="light-blue">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -104,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting
+              Solução de Problemas
             
           </span>
         </div>
@@ -140,6 +140,8 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
       </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
       
     </form>
     <div class="md-search__output">
@@ -196,7 +198,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../Guia%20de%20Desenvolvimento/" class="md-tabs__link">
+      <a href="../DEVELOPMENT/" class="md-tabs__link">
         
   
   
@@ -242,7 +244,7 @@
   
     
   
-  Troubleshooting
+  Solução de Problemas
 
       </a>
     </li>
@@ -269,7 +271,9 @@
   
 
 
-<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="Documentação do Sistema SCADA" class="md-nav__button md-logo" aria-label="Documentação do Sistema SCADA" data-md-component="logo">
       
@@ -311,7 +315,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Guia%20de%20Desenvolvimento/" class="md-nav__link">
+      <a href="../DEVELOPMENT/" class="md-nav__link">
         
   
   
@@ -369,7 +373,7 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting
+    Solução de Problemas
     
   </span>
   
@@ -382,7 +386,7 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting
+    Solução de Problemas
     
   </span>
   
@@ -758,371 +762,6 @@
               </div>
             
             
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
-                <div class="md-sidebar__scrollwrap">
-                  <div class="md-sidebar__inner">
-                    
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#problemas-comuns-e-solucoes" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚨 Problemas Comuns e Soluções
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🚨 Problemas Comuns e Soluções">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-instalacao" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Instalação
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Instalação">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pythonpip-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Python/Pip Issues
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dependencias-snap7" class="md-nav__link">
-    <span class="md-ellipsis">
-      Dependências Snap7
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-banco-de-dados" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Banco de Dados
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Banco de Dados">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#sqlite-locked" class="md-nav__link">
-    <span class="md-ellipsis">
-      SQLite Locked
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#postgresql-connection-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      PostgreSQL Connection Issues
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-comunicacao-com-plcs" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Comunicação com PLCs
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Comunicação com PLCs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#modbus-tcp-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Modbus TCP Issues
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#siemens-s7-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Siemens S7 Issues
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-polling" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Polling
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Polling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#polling-not-starting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Polling Not Starting
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#high-cpu-usage-in-polling" class="md-nav__link">
-    <span class="md-ellipsis">
-      High CPU Usage in Polling
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-performance" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Performance
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Performance">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#slow-database-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      Slow Database Queries
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#memory-leaks" class="md-nav__link">
-    <span class="md-ellipsis">
-      Memory Leaks
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-seguranca" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Segurança
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Segurança">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#csrf-token-missing" class="md-nav__link">
-    <span class="md-ellipsis">
-      CSRF Token Missing
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#session-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Session Issues
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#problemas-de-deploy" class="md-nav__link">
-    <span class="md-ellipsis">
-      Problemas de Deploy
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Problemas de Deploy">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#nginx-502-bad-gateway" class="md-nav__link">
-    <span class="md-ellipsis">
-      Nginx 502 Bad Gateway
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#permission-denied-issues" class="md-nav__link">
-    <span class="md-ellipsis">
-      Permission Denied Issues
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#debug-tools-e-comandos-uteis" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔍 Debug Tools e Comandos Úteis
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🔍 Debug Tools e Comandos Úteis">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#verificacao-de-sistema" class="md-nav__link">
-    <span class="md-ellipsis">
-      Verificação de Sistema
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#debug-de-aplicacao" class="md-nav__link">
-    <span class="md-ellipsis">
-      Debug de Aplicação
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#comandos-de-banco-de-dados" class="md-nav__link">
-    <span class="md-ellipsis">
-      Comandos de Banco de Dados
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#debug-de-protocolos" class="md-nav__link">
-    <span class="md-ellipsis">
-      Debug de Protocolos
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quando-pedir-ajuda" class="md-nav__link">
-    <span class="md-ellipsis">
-      📞 Quando Pedir Ajuda
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="📞 Quando Pedir Ajuda">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#informacoes-a-coletar" class="md-nav__link">
-    <span class="md-ellipsis">
-      Informações a Coletar
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#canais-de-suporte" class="md-nav__link">
-    <span class="md-ellipsis">
-      Canais de Suporte
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#template-para-reportar-problemas" class="md-nav__link">
-    <span class="md-ellipsis">
-      Template para Reportar Problemas
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-                  </div>
-                </div>
-              </div>
-            
           
           
             <div class="md-content" data-md-component="content">
@@ -1136,442 +775,444 @@
 <h2 id="problemas-comuns-e-solucoes">🚨 Problemas Comuns e Soluções</h2>
 <h3 id="problemas-de-instalacao">Problemas de Instalação</h3>
 <h4 id="pythonpip-issues">Python/Pip Issues</h4>
-<p><strong>Problema:</strong> <code>pip install</code> falha com erros de compilação</p>
-<pre><code class="language-bash"># Solução: Instalar dependências de desenvolvimento
-# Ubuntu/Debian
-sudo apt-get install python3-dev build-essential libffi-dev libssl-dev
-
-# CentOS/RHEL
-sudo yum groupinstall &quot;Development Tools&quot;
-sudo yum install python3-devel libffi-devel openssl-devel
-</code></pre>
-<p><strong>Problema:</strong> Erro de permissão no pip</p>
-<pre><code class="language-bash"># Solução: Usar usuário virtual environment
-python -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-</code></pre>
+<p><strong>Problema:</strong> <code>pip install</code> falha com erros de compilação
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Solução: Instalar dependências de desenvolvimento</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Ubuntu/Debian</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>python3-dev<span class="w"> </span>build-essential<span class="w"> </span>libffi-dev<span class="w"> </span>libssl-dev
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># CentOS/RHEL</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>sudo<span class="w"> </span>yum<span class="w"> </span>groupinstall<span class="w"> </span><span class="s2">&quot;Development Tools&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>sudo<span class="w"> </span>yum<span class="w"> </span>install<span class="w"> </span>python3-devel<span class="w"> </span>libffi-devel<span class="w"> </span>openssl-devel
+</code></pre></div></p>
+<p><strong>Problema:</strong> Erro de permissão no pip
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Solução: Usar usuário virtual environment</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</code></pre></div></p>
 <h4 id="dependencias-snap7">Dependências Snap7</h4>
-<p><strong>Problema:</strong> <code>ImportError: snap7.dll not found</code> (Windows)</p>
-<pre><code class="language-bash"># Solução: 
-1. Baixar snap7 library de https://snap7.sourceforge.net/
-2. Extrair snap7.dll para uma pasta no PATH
-3. Ou colocar na pasta do projeto
-</code></pre>
-<p><strong>Problema:</strong> <code>libsnap7.so not found</code> (Linux)</p>
-<pre><code class="language-bash"># Ubuntu/Debian
-sudo apt-get install libsnap7-1 libsnap7-dev
-
-# Ou instalar manualmente:
-wget https://github.com/gijzelaerr/python-snap7/files/2432652/snap7-full-1.4.2.tar.gz
-tar -xzf snap7-full-1.4.2.tar.gz
-cd snap7-full-1.4.2/build/unix
-make -f x86_64_linux.mk
-sudo cp ../bin/x86_64-linux/libsnap7.so /usr/lib/
-</code></pre>
+<p><strong>Problema:</strong> <code>ImportError: snap7.dll not found</code> (Windows)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Solução: </span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="m">1</span>.<span class="w"> </span>Baixar<span class="w"> </span>snap7<span class="w"> </span>library<span class="w"> </span>de<span class="w"> </span>https://snap7.sourceforge.net/
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="m">2</span>.<span class="w"> </span>Extrair<span class="w"> </span>snap7.dll<span class="w"> </span>para<span class="w"> </span>uma<span class="w"> </span>pasta<span class="w"> </span>no<span class="w"> </span>PATH
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="m">3</span>.<span class="w"> </span>Ou<span class="w"> </span>colocar<span class="w"> </span>na<span class="w"> </span>pasta<span class="w"> </span><span class="k">do</span><span class="w"> </span>projeto
+</code></pre></div></p>
+<p><strong>Problema:</strong> <code>libsnap7.so not found</code> (Linux)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Ubuntu/Debian</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libsnap7-1<span class="w"> </span>libsnap7-dev
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Ou instalar manualmente:</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>wget<span class="w"> </span>https://github.com/gijzelaerr/python-snap7/files/2432652/snap7-full-1.4.2.tar.gz
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>tar<span class="w"> </span>-xzf<span class="w"> </span>snap7-full-1.4.2.tar.gz
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nb">cd</span><span class="w"> </span>snap7-full-1.4.2/build/unix
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>make<span class="w"> </span>-f<span class="w"> </span>x86_64_linux.mk
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>sudo<span class="w"> </span>cp<span class="w"> </span>../bin/x86_64-linux/libsnap7.so<span class="w"> </span>/usr/lib/
+</code></pre></div></p>
 <h3 id="problemas-de-banco-de-dados">Problemas de Banco de Dados</h3>
 <h4 id="sqlite-locked">SQLite Locked</h4>
-<p><strong>Problema:</strong> <code>database is locked</code></p>
-<pre><code class="language-python"># Solução: Verificar conexões pendentes
-from app import create_app
-from app.extensions import db
-
-app = create_app()
-with app.app_context():
-    db.session.close()
-    db.engine.dispose()
-</code></pre>
+<p><strong>Problema:</strong> <code>database is locked</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Solução: Verificar conexões pendentes</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_app</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">db</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">app</span> <span class="o">=</span> <span class="n">create_app</span><span class="p">()</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="k">with</span> <span class="n">app</span><span class="o">.</span><span class="n">app_context</span><span class="p">():</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">db</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+</code></pre></div></p>
 <h4 id="postgresql-connection-issues">PostgreSQL Connection Issues</h4>
-<p><strong>Problema:</strong> <code>FATAL: password authentication failed</code></p>
-<pre><code class="language-bash"># Verificar configurações
-sudo -u postgres psql
-\l  # Listar bancos
-\du # Listar usuários
-
-# Recriar usuário se necessário
-DROP USER IF EXISTS scada_user;
-CREATE USER scada_user WITH PASSWORD 'nova_senha';
-GRANT ALL PRIVILEGES ON DATABASE scada TO scada_user;
-</code></pre>
-<p><strong>Problema:</strong> <code>could not connect to server</code></p>
-<pre><code class="language-bash"># Verificar se PostgreSQL está rodando
-sudo systemctl status postgresql
-sudo systemctl start postgresql
-
-# Verificar configuração de rede
-sudo grep -n &quot;listen_addresses&quot; /etc/postgresql/*/main/postgresql.conf
-sudo grep -n &quot;port&quot; /etc/postgresql/*/main/postgresql.conf
-</code></pre>
+<p><strong>Problema:</strong> <code>FATAL: password authentication failed</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Verificar configurações</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>psql
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="se">\l</span><span class="w">  </span><span class="c1"># Listar bancos</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="se">\d</span>u<span class="w"> </span><span class="c1"># Listar usuários</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Recriar usuário se necessário</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>DROP<span class="w"> </span>USER<span class="w"> </span>IF<span class="w"> </span>EXISTS<span class="w"> </span>scada_user<span class="p">;</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>CREATE<span class="w"> </span>USER<span class="w"> </span>scada_user<span class="w"> </span>WITH<span class="w"> </span>PASSWORD<span class="w"> </span><span class="s1">&#39;nova_senha&#39;</span><span class="p">;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>GRANT<span class="w"> </span>ALL<span class="w"> </span>PRIVILEGES<span class="w"> </span>ON<span class="w"> </span>DATABASE<span class="w"> </span>scada<span class="w"> </span>TO<span class="w"> </span>scada_user<span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Problema:</strong> <code>could not connect to server</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Verificar se PostgreSQL está rodando</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>postgresql
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>postgresql
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Verificar configuração de rede</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>sudo<span class="w"> </span>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;listen_addresses&quot;</span><span class="w"> </span>/etc/postgresql/*/main/postgresql.conf
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>sudo<span class="w"> </span>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;port&quot;</span><span class="w"> </span>/etc/postgresql/*/main/postgresql.conf
+</code></pre></div></p>
 <h3 id="problemas-de-comunicacao-com-plcs">Problemas de Comunicação com PLCs</h3>
 <h4 id="modbus-tcp-issues">Modbus TCP Issues</h4>
-<p><strong>Problema:</strong> <code>ConnectionException: Modbus Error: [Connection] Failed to connect</code></p>
-<pre><code class="language-python"># Debug step-by-step
-import socket
-
-def test_tcp_connection(host, port):
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        result = sock.connect_ex((host, port))
-        sock.close()
-
-        if result == 0:
-            print(f&quot;✅ Conexão TCP OK para {host}:{port}&quot;)
-            return True
-        else:
-            print(f&quot;❌ Não foi possível conectar em {host}:{port}&quot;)
-            return False
-    except Exception as e:
-        print(f&quot;❌ Erro na conexão: {e}&quot;)
-        return False
-
-# Testar conectividade
-test_tcp_connection('192.168.1.100', 502)
-</code></pre>
-<p><strong>Problema:</strong> <code>ModbusIOException: Modbus Error: [Invalid Message]</code></p>
-<pre><code class="language-python"># Verificar configurações do Modbus
-from pymodbus.client.sync import ModbusTcpClient
-
-client = ModbusTcpClient('192.168.1.100', port=502)
-client.connect()
-
-# Testar leitura simples
-try:
-    result = client.read_holding_registers(0, 1, unit=1)
-    if result.isError():
-        print(f&quot;Erro Modbus: {result}&quot;)
-    else:
-        print(f&quot;Valor lido: {result.registers[0]}&quot;)
-except Exception as e:
-    print(f&quot;Erro na leitura: {e}&quot;)
-finally:
-    client.close()
-</code></pre>
+<p><strong>Problema:</strong> <code>ConnectionException: Modbus Error: [Connection] Failed to connect</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Debug step-by-step</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_tcp_connection</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="n">sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">connect_ex</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="n">sock</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>        <span class="k">if</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Conexão TCP OK para </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>            <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>        <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Não foi possível conectar em </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>            <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Erro na conexão: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="c1"># Testar conectividade</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="n">test_tcp_connection</span><span class="p">(</span><span class="s1">&#39;192.168.1.100&#39;</span><span class="p">,</span> <span class="mi">502</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Problema:</strong> <code>ModbusIOException: Modbus Error: [Invalid Message]</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Verificar configurações do Modbus</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pymodbus.client.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModbusTcpClient</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">ModbusTcpClient</span><span class="p">(</span><span class="s1">&#39;192.168.1.100&#39;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">502</span><span class="p">)</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Testar leitura simples</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">read_holding_registers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">isError</span><span class="p">():</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erro Modbus: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valor lido: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">registers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Erro na leitura: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</code></pre></div></p>
 <h4 id="siemens-s7-issues">Siemens S7 Issues</h4>
-<p><strong>Problema:</strong> <code>S7 Communication Error</code></p>
-<pre><code class="language-python"># Debug S7 connection
-import snap7
-from snap7.util import *
-
-def test_s7_connection(ip, rack=0, slot=1):
-    plc = snap7.client.Client()
-
-    try:
-        plc.connect(ip, rack, slot)
-        print(f&quot;✅ Conectado ao S7 PLC em {ip}&quot;)
-
-        # Testar leitura de DB
-        data = plc.db_read(1, 0, 2)  # DB1, offset 0, 2 bytes
-        value = get_int(data, 0)
-        print(f&quot;Valor lido do DB1: {value}&quot;)
-
-        return True
-    except Exception as e:
-        print(f&quot;❌ Erro S7: {e}&quot;)
-        return False
-    finally:
-        plc.disconnect()
-
-# Testar
-test_s7_connection('192.168.1.100')
-</code></pre>
+<p><strong>Problema:</strong> <code>S7 Communication Error</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Debug S7 connection</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">snap7</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">snap7.util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_s7_connection</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="n">plc</span> <span class="o">=</span> <span class="n">snap7</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>        <span class="n">plc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">slot</span><span class="p">)</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Conectado ao S7 PLC em </span><span class="si">{</span><span class="n">ip</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>        <span class="c1"># Testar leitura de DB</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>        <span class="n">data</span> <span class="o">=</span> <span class="n">plc</span><span class="o">.</span><span class="n">db_read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># DB1, offset 0, 2 bytes</span>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>        <span class="n">value</span> <span class="o">=</span> <span class="n">get_int</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valor lido do DB1: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>
+<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>        <span class="k">return</span> <span class="kc">True</span>
+<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Erro S7: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>        <span class="k">return</span> <span class="kc">False</span>
+<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>    <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>        <span class="n">plc</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
+<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="c1"># Testar</span>
+<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="n">test_s7_connection</span><span class="p">(</span><span class="s1">&#39;192.168.1.100&#39;</span><span class="p">)</span>
+</code></pre></div></p>
 <h3 id="problemas-de-polling">Problemas de Polling</h3>
 <h4 id="polling-not-starting">Polling Not Starting</h4>
-<p><strong>Problema:</strong> Polling não inicia ou para inesperadamente</p>
-<pre><code class="language-python"># Debug no PollingManager
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Verificar logs específicos
-tail -f logs/polling.log | grep ERROR
-
-# Verificar se PLC está configurado corretamente
-from app import create_app
-from app.models.plc import PLC
-from app.models.register import Register
-
-app = create_app()
-with app.app_context():
-    plc = PLC.query.filter_by(ip_address='192.168.1.100').first()
-    if plc:
-        print(f&quot;PLC encontrado: {plc.name}&quot;)
-        print(f&quot;Protocolo: {plc.protocol}&quot;)
-        print(f&quot;Registradores ativos: {len([r for r in plc.registers if r.is_active])}&quot;)
-    else:
-        print(&quot;PLC não encontrado no banco de dados&quot;)
-</code></pre>
+<p><strong>Problema:</strong> Polling não inicia ou para inesperadamente
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># Debug no PollingManager</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># Verificar logs específicos</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">tail</span> <span class="o">-</span><span class="n">f</span> <span class="n">logs</span><span class="o">/</span><span class="n">polling</span><span class="o">.</span><span class="n">log</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">ERROR</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># Verificar se PLC está configurado corretamente</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_app</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.models.plc</span><span class="w"> </span><span class="kn">import</span> <span class="n">PLC</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">app.models.register</span><span class="w"> </span><span class="kn">import</span> <span class="n">Register</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="n">app</span> <span class="o">=</span> <span class="n">create_app</span><span class="p">()</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">with</span> <span class="n">app</span><span class="o">.</span><span class="n">app_context</span><span class="p">():</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="n">plc</span> <span class="o">=</span> <span class="n">PLC</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">ip_address</span><span class="o">=</span><span class="s1">&#39;192.168.1.100&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    <span class="k">if</span> <span class="n">plc</span><span class="p">:</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PLC encontrado: </span><span class="si">{</span><span class="n">plc</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Protocolo: </span><span class="si">{</span><span class="n">plc</span><span class="o">.</span><span class="n">protocol</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registradores ativos: </span><span class="si">{</span><span class="nb">len</span><span class="p">([</span><span class="n">r</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">plc</span><span class="o">.</span><span class="n">registers</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">r</span><span class="o">.</span><span class="n">is_active</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PLC não encontrado no banco de dados&quot;</span><span class="p">)</span>
+</code></pre></div></p>
 <h4 id="high-cpu-usage-in-polling">High CPU Usage in Polling</h4>
-<p><strong>Problema:</strong> CPU alto durante polling</p>
-<pre><code class="language-python"># Ajustar intervalos e timeouts
-# Em app/config.py
-class Config:
-    POLLING_DEFAULT_INTERVAL = 2000  # Aumentar de 1000ms para 2000ms
-    POLLING_TIMEOUT = 10  # Aumentar timeout
-
-# Verificar número de registradores por polling
-# Dividir em múltiplos jobs se necessário
-</code></pre>
+<p><strong>Problema:</strong> CPU alto durante polling
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Ajustar intervalos e timeouts</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Em app/config.py</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">POLLING_DEFAULT_INTERVAL</span> <span class="o">=</span> <span class="mi">2000</span>  <span class="c1"># Aumentar de 1000ms para 2000ms</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">POLLING_TIMEOUT</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Aumentar timeout</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Verificar número de registradores por polling</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># Dividir em múltiplos jobs se necessário</span>
+</code></pre></div></p>
 <h3 id="problemas-de-performance">Problemas de Performance</h3>
 <h4 id="slow-database-queries">Slow Database Queries</h4>
-<p><strong>Problema:</strong> Queries lentas</p>
-<pre><code class="language-sql">-- Verificar queries lentas no PostgreSQL
-SELECT query, mean_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_time DESC 
-LIMIT 10;
-
--- Verificar índices
-SELECT schemaname, tablename, indexname, indexdef
-FROM pg_indexes 
-WHERE tablename IN ('data_log', 'alarm', 'register');
-</code></pre>
-<p><strong>Solução:</strong> Adicionar índices</p>
-<pre><code class="language-python"># Em migrations ou manualmente
-CREATE INDEX idx_data_log_timestamp_plc ON data_log(timestamp, plc_id);
-CREATE INDEX idx_data_log_register_time ON data_log(register_id, timestamp);
-CREATE INDEX idx_alarm_state_priority ON alarm(state, priority);
-</code></pre>
+<p><strong>Problema:</strong> Queries lentas
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1">-- Verificar queries lentas no PostgreSQL</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="n">mean_time</span><span class="p">,</span><span class="w"> </span><span class="n">calls</span><span class="w"> </span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_statements</span><span class="w"> </span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="k">DESC</span><span class="w"> </span>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="c1">-- Verificar índices</span>
+<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="k">SELECT</span><span class="w"> </span><span class="n">schemaname</span><span class="p">,</span><span class="w"> </span><span class="n">tablename</span><span class="p">,</span><span class="w"> </span><span class="n">indexname</span><span class="p">,</span><span class="w"> </span><span class="n">indexdef</span>
+<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="k">FROM</span><span class="w"> </span><span class="n">pg_indexes</span><span class="w"> </span>
+<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">tablename</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;data_log&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;alarm&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;register&#39;</span><span class="p">);</span>
+</code></pre></div></p>
+<p><strong>Solução:</strong> Adicionar índices
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Em migrations ou manualmente</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">CREATE</span> <span class="n">INDEX</span> <span class="n">idx_data_log_timestamp_plc</span> <span class="n">ON</span> <span class="n">data_log</span><span class="p">(</span><span class="n">timestamp</span><span class="p">,</span> <span class="n">plc_id</span><span class="p">);</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">CREATE</span> <span class="n">INDEX</span> <span class="n">idx_data_log_register_time</span> <span class="n">ON</span> <span class="n">data_log</span><span class="p">(</span><span class="n">register_id</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">);</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">CREATE</span> <span class="n">INDEX</span> <span class="n">idx_alarm_state_priority</span> <span class="n">ON</span> <span class="n">alarm</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">priority</span><span class="p">);</span>
+</code></pre></div></p>
 <h4 id="memory-leaks">Memory Leaks</h4>
-<p><strong>Problema:</strong> Uso crescente de memória</p>
-<pre><code class="language-python"># Debug memory usage
-import psutil
-import os
-
-def log_memory_usage():
-    process = psutil.Process(os.getpid())
-    memory_mb = process.memory_info().rss / 1024 / 1024
-    print(f&quot;Uso de memória: {memory_mb:.2f} MB&quot;)
-
-# Adicionar ao polling loop
-log_memory_usage()
-</code></pre>
-<p><strong>Solução:</strong> Gerenciar conexões de banco</p>
-<pre><code class="language-python"># Em app/services/polling_service.py
-class DataProcessor:
-    def _process_data(self):
-        while self.running:
-            try:
-                # Processar dados
-                pass
-            finally:
-                # Importante: fechar sessões
-                db.session.remove()
-</code></pre>
+<p><strong>Problema:</strong> Uso crescente de memória
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Debug memory usage</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">psutil</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">log_memory_usage</span><span class="p">():</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">process</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">())</span>
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="n">memory_mb</span> <span class="o">=</span> <span class="n">process</span><span class="o">.</span><span class="n">memory_info</span><span class="p">()</span><span class="o">.</span><span class="n">rss</span> <span class="o">/</span> <span class="mi">1024</span> <span class="o">/</span> <span class="mi">1024</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Uso de memória: </span><span class="si">{</span><span class="n">memory_mb</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># Adicionar ao polling loop</span>
+<a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="n">log_memory_usage</span><span class="p">()</span>
+</code></pre></div></p>
+<p><strong>Solução:</strong> Gerenciar conexões de banco
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># Em app/services/polling_service.py</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">DataProcessor</span><span class="p">:</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_process_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>                <span class="c1"># Processar dados</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>                <span class="k">pass</span>
+<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>            <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>                <span class="c1"># Importante: fechar sessões</span>
+<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a>                <span class="n">db</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+</code></pre></div></p>
 <h3 id="problemas-de-seguranca">Problemas de Segurança</h3>
 <h4 id="csrf-token-missing">CSRF Token Missing</h4>
-<p><strong>Problema:</strong> <code>The CSRF token is missing</code></p>
-<pre><code class="language-html">&lt;!-- Adicionar em todos os formulários --&gt;
-&lt;form method=&quot;POST&quot;&gt;
-    {{ csrf_token() }}
-    &lt;!-- ou --&gt;
-    &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;{{ csrf_token() }}&quot;/&gt;
-&lt;/form&gt;
-</code></pre>
+<p><strong>Problema:</strong> <code>The CSRF token is missing</code>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="cm">&lt;!-- Adicionar em todos os formulários --&gt;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="p">&lt;</span><span class="nt">form</span> <span class="na">method</span><span class="o">=</span><span class="s">&quot;POST&quot;</span><span class="p">&gt;</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    {{ csrf_token() }}
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="cm">&lt;!-- ou --&gt;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">&quot;hidden&quot;</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;csrf_token&quot;</span> <span class="na">value</span><span class="o">=</span><span class="s">&quot;{{ csrf_token() }}&quot;</span><span class="p">/&gt;</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre></div></p>
 <h4 id="session-issues">Session Issues</h4>
-<p><strong>Problema:</strong> Usuário deslogado constantemente</p>
-<pre><code class="language-python"># Verificar configurações de sessão
-# Em app/config.py
-class Config:
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
-    SESSION_COOKIE_SECURE = False  # True apenas em HTTPS
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
-</code></pre>
+<p><strong>Problema:</strong> Usuário deslogado constantemente
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Verificar configurações de sessão</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="c1"># Em app/config.py</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>    <span class="n">PERMANENT_SESSION_LIFETIME</span> <span class="o">=</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    <span class="n">SESSION_COOKIE_SECURE</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># True apenas em HTTPS</span>
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    <span class="n">SESSION_COOKIE_HTTPONLY</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="n">SESSION_COOKIE_SAMESITE</span> <span class="o">=</span> <span class="s1">&#39;Lax&#39;</span>
+</code></pre></div></p>
 <h3 id="problemas-de-deploy">Problemas de Deploy</h3>
 <h4 id="nginx-502-bad-gateway">Nginx 502 Bad Gateway</h4>
-<p><strong>Problema:</strong> Erro 502 no Nginx</p>
-<pre><code class="language-bash"># Verificar se aplicação está rodando
-curl http://localhost:5000/api/health
-
-# Verificar logs do Nginx
-sudo tail -f /var/log/nginx/error.log
-
-# Verificar logs da aplicação
-sudo tail -f /var/log/supervisor/scada.log
-
-# Reiniciar serviços
-sudo supervisorctl restart scada
-sudo systemctl restart nginx
-</code></pre>
+<p><strong>Problema:</strong> Erro 502 no Nginx
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Verificar se aplicação está rodando</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>http://localhost:5000/api/health
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># Verificar logs do Nginx</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>sudo<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/nginx/error.log
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Verificar logs da aplicação</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>sudo<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/supervisor/scada.log
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="c1"># Reiniciar serviços</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>sudo<span class="w"> </span>supervisorctl<span class="w"> </span>restart<span class="w"> </span>scada
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>nginx
+</code></pre></div></p>
 <h4 id="permission-denied-issues">Permission Denied Issues</h4>
-<p><strong>Problema:</strong> Permissões incorretas em produção</p>
-<pre><code class="language-bash"># Corrigir propriedade dos arquivos
-sudo chown -R scada:scada /opt/scada
-sudo chmod -R 755 /opt/scada
-sudo chmod 600 /opt/scada/.env
-
-# Verificar logs de permissão
-sudo tail -f /var/log/auth.log | grep scada
-</code></pre>
+<p><strong>Problema:</strong> Permissões incorretas em produção
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Corrigir propriedade dos arquivos</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>sudo<span class="w"> </span>chown<span class="w"> </span>-R<span class="w"> </span>scada:scada<span class="w"> </span>/opt/scada
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>sudo<span class="w"> </span>chmod<span class="w"> </span>-R<span class="w"> </span><span class="m">755</span><span class="w"> </span>/opt/scada
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>sudo<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>/opt/scada/.env
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>
+<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a><span class="c1"># Verificar logs de permissão</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>sudo<span class="w"> </span>tail<span class="w"> </span>-f<span class="w"> </span>/var/log/auth.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>scada
+</code></pre></div></p>
 <h2 id="debug-tools-e-comandos-uteis">🔍 Debug Tools e Comandos Úteis</h2>
 <h3 id="verificacao-de-sistema">Verificação de Sistema</h3>
-<pre><code class="language-bash"># Status geral dos serviços
-systemctl status nginx postgresql redis supervisor
-
-# Uso de recursos
-top -u scada
-htop
-df -h
-free -h
-
-# Conexões de rede
-netstat -tulpn | grep :5000
-netstat -tulpn | grep :5432
-ss -tulpn | grep scada
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Status geral dos serviços</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>systemctl<span class="w"> </span>status<span class="w"> </span>nginx<span class="w"> </span>postgresql<span class="w"> </span>redis<span class="w"> </span>supervisor
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="c1"># Uso de recursos</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>top<span class="w"> </span>-u<span class="w"> </span>scada
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>htop
+<a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a>df<span class="w"> </span>-h
+<a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a>free<span class="w"> </span>-h
+<a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a>
+<a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="c1"># Conexões de rede</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a>netstat<span class="w"> </span>-tulpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>:5000
+<a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a>netstat<span class="w"> </span>-tulpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>:5432
+<a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a>ss<span class="w"> </span>-tulpn<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>scada
+</code></pre></div>
 <h3 id="debug-de-aplicacao">Debug de Aplicação</h3>
-<pre><code class="language-python"># Debug mode no Flask
-# Em .env
-FLASK_ENV=development
-FLASK_DEBUG=1
-
-# Debug de SQL queries
-# Em app/config.py
-SQLALCHEMY_ECHO = True
-
-# Debug logging personalizado
-import logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s %(name)s %(levelname)s: %(message)s'
-)
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Debug mode no Flask</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># Em .env</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">FLASK_ENV</span><span class="o">=</span><span class="n">development</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">FLASK_DEBUG</span><span class="o">=</span><span class="mi">1</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="c1"># Debug de SQL queries</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Em app/config.py</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="n">SQLALCHEMY_ECHO</span> <span class="o">=</span> <span class="kc">True</span>
+<a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>
+<a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="c1"># Debug logging personalizado</span>
+<a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+<a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(name)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<a id="__codelineno-21-15" name="__codelineno-21-15" href="#__codelineno-21-15"></a><span class="p">)</span>
+</code></pre></div>
 <h3 id="comandos-de-banco-de-dados">Comandos de Banco de Dados</h3>
-<pre><code class="language-bash"># PostgreSQL
-sudo -u postgres psql scada_prod
-
-# Verificar tamanho das tabelas
-SELECT 
-    schemaname,
-    tablename,
-    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
-FROM pg_tables 
-WHERE schemaname = 'public'
-ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
-
-# Verificar conexões ativas
-SELECT * FROM pg_stat_activity WHERE datname = 'scada_prod';
-
-# SQLite (desenvolvimento)
-sqlite3 instance/scada.db
-.tables
-.schema user
-SELECT COUNT(*) FROM data_log;
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># PostgreSQL</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>sudo<span class="w"> </span>-u<span class="w"> </span>postgres<span class="w"> </span>psql<span class="w"> </span>scada_prod
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Verificar tamanho das tabelas</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>SELECT<span class="w"> </span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a><span class="w">    </span>schemaname,
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="w">    </span>tablename,
+<a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="w">    </span>pg_size_pretty<span class="o">(</span>pg_total_relation_size<span class="o">(</span>schemaname<span class="o">||</span><span class="s1">&#39;.&#39;</span><span class="o">||</span>tablename<span class="o">))</span><span class="w"> </span>AS<span class="w"> </span>size
+<a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a>FROM<span class="w"> </span>pg_tables<span class="w"> </span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>WHERE<span class="w"> </span><span class="nv">schemaname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;public&#39;</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>ORDER<span class="w"> </span>BY<span class="w"> </span>pg_total_relation_size<span class="o">(</span>schemaname<span class="o">||</span><span class="s1">&#39;.&#39;</span><span class="o">||</span>tablename<span class="o">)</span><span class="w"> </span>DESC<span class="p">;</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>
+<a id="__codelineno-22-13" name="__codelineno-22-13" href="#__codelineno-22-13"></a><span class="c1"># Verificar conexões ativas</span>
+<a id="__codelineno-22-14" name="__codelineno-22-14" href="#__codelineno-22-14"></a>SELECT<span class="w"> </span>*<span class="w"> </span>FROM<span class="w"> </span>pg_stat_activity<span class="w"> </span>WHERE<span class="w"> </span><span class="nv">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;scada_prod&#39;</span><span class="p">;</span>
+<a id="__codelineno-22-15" name="__codelineno-22-15" href="#__codelineno-22-15"></a>
+<a id="__codelineno-22-16" name="__codelineno-22-16" href="#__codelineno-22-16"></a><span class="c1"># SQLite (desenvolvimento)</span>
+<a id="__codelineno-22-17" name="__codelineno-22-17" href="#__codelineno-22-17"></a>sqlite3<span class="w"> </span>instance/scada.db
+<a id="__codelineno-22-18" name="__codelineno-22-18" href="#__codelineno-22-18"></a>.tables
+<a id="__codelineno-22-19" name="__codelineno-22-19" href="#__codelineno-22-19"></a>.schema<span class="w"> </span>user
+<a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>SELECT<span class="w"> </span>COUNT<span class="o">(</span>*<span class="o">)</span><span class="w"> </span>FROM<span class="w"> </span>data_log<span class="p">;</span>
+</code></pre></div>
 <h3 id="debug-de-protocolos">Debug de Protocolos</h3>
-<pre><code class="language-python"># Test script para Modbus
-#!/usr/bin/env python3
-import sys
-from pymodbus.client.sync import ModbusTcpClient
-
-def test_modbus(host, port=502):
-    client = ModbusTcpClient(host, port=port)
-
-    if client.connect():
-        print(f&quot;✅ Conectado ao Modbus em {host}:{port}&quot;)
-
-        # Testar diferentes tipos de registradores
-        tests = [
-            (&quot;Holding Registers&quot;, lambda: client.read_holding_registers(0, 10, unit=1)),
-            (&quot;Input Registers&quot;, lambda: client.read_input_registers(0, 10, unit=1)),
-            (&quot;Coils&quot;, lambda: client.read_coils(0, 10, unit=1)),
-            (&quot;Discrete Inputs&quot;, lambda: client.read_discrete_inputs(0, 10, unit=1)),
-        ]
-
-        for test_name, test_func in tests:
-            try:
-                result = test_func()
-                if not result.isError():
-                    print(f&quot;✅ {test_name}: OK&quot;)
-                else:
-                    print(f&quot;❌ {test_name}: {result}&quot;)
-            except Exception as e:
-                print(f&quot;❌ {test_name}: {e}&quot;)
-
-        client.close()
-    else:
-        print(f&quot;❌ Não foi possível conectar ao Modbus em {host}:{port}&quot;)
-
-if __name__ == &quot;__main__&quot;:
-    if len(sys.argv) != 2:
-        print(&quot;Uso: python test_modbus.py &lt;IP_DO_PLC&gt;&quot;)
-        sys.exit(1)
-
-    test_modbus(sys.argv[1])
-</code></pre>
-<pre><code class="language-python"># Test script para S7
-#!/usr/bin/env python3
-import sys
-import snap7
-
-def test_s7(host, rack=0, slot=1):
-    plc = snap7.client.Client()
-
-    try:
-        plc.connect(host, rack, slot)
-        print(f&quot;✅ Conectado ao S7 PLC em {host}&quot;)
-
-        # Informações do PLC
-        cpu_info = plc.get_cpu_info()
-        print(f&quot;CPU: {cpu_info}&quot;)
-
-        # Testar leitura de diferentes áreas
-        tests = [
-            (&quot;DB1 (2 bytes)&quot;, lambda: plc.db_read(1, 0, 2)),
-            (&quot;Inputs (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaPE, 0, 0, 1)),
-            (&quot;Outputs (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaPA, 0, 0, 1)),
-            (&quot;Merkers (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaMK, 0, 0, 1)),
-        ]
-
-        for test_name, test_func in tests:
-            try:
-                result = test_func()
-                print(f&quot;✅ {test_name}: {len(result)} bytes lidos&quot;)
-            except Exception as e:
-                print(f&quot;❌ {test_name}: {e}&quot;)
-
-    except Exception as e:
-        print(f&quot;❌ Erro S7: {e}&quot;)
-    finally:
-        plc.disconnect()
-
-if __name__ == &quot;__main__&quot;:
-    if len(sys.argv) != 2:
-        print(&quot;Uso: python test_s7.py &lt;IP_DO_PLC&gt;&quot;)
-        sys.exit(1)
-
-    test_s7(sys.argv[1])
-</code></pre>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Test script para Modbus</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1">#!/usr/bin/env python3</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pymodbus.client.sync</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModbusTcpClient</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_modbus</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">502</span><span class="p">):</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="n">client</span> <span class="o">=</span> <span class="n">ModbusTcpClient</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">)</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>
+<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>    <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">():</span>
+<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Conectado ao Modbus em </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
+<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>        <span class="c1"># Testar diferentes tipos de registradores</span>
+<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>        <span class="n">tests</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>            <span class="p">(</span><span class="s2">&quot;Holding Registers&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">client</span><span class="o">.</span><span class="n">read_holding_registers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>            <span class="p">(</span><span class="s2">&quot;Input Registers&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">client</span><span class="o">.</span><span class="n">read_input_registers</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a>            <span class="p">(</span><span class="s2">&quot;Coils&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">client</span><span class="o">.</span><span class="n">read_coils</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>            <span class="p">(</span><span class="s2">&quot;Discrete Inputs&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">client</span><span class="o">.</span><span class="n">read_discrete_inputs</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>        <span class="p">]</span>
+<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>
+<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>        <span class="k">for</span> <span class="n">test_name</span><span class="p">,</span> <span class="n">test_func</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
+<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a>                <span class="n">result</span> <span class="o">=</span> <span class="n">test_func</span><span class="p">()</span>
+<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a>                <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">isError</span><span class="p">():</span>
+<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a>                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ </span><span class="si">{</span><span class="n">test_name</span><span class="si">}</span><span class="s2">: OK&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a>                <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a>                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ </span><span class="si">{</span><span class="n">test_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a>            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ </span><span class="si">{</span><span class="n">test_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a>
+<a id="__codelineno-23-30" name="__codelineno-23-30" href="#__codelineno-23-30"></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<a id="__codelineno-23-31" name="__codelineno-23-31" href="#__codelineno-23-31"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-23-32" name="__codelineno-23-32" href="#__codelineno-23-32"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Não foi possível conectar ao Modbus em </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-33" name="__codelineno-23-33" href="#__codelineno-23-33"></a>
+<a id="__codelineno-23-34" name="__codelineno-23-34" href="#__codelineno-23-34"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<a id="__codelineno-23-35" name="__codelineno-23-35" href="#__codelineno-23-35"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+<a id="__codelineno-23-36" name="__codelineno-23-36" href="#__codelineno-23-36"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Uso: python test_modbus.py &lt;IP_DO_PLC&gt;&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-37" name="__codelineno-23-37" href="#__codelineno-23-37"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-23-38" name="__codelineno-23-38" href="#__codelineno-23-38"></a>
+<a id="__codelineno-23-39" name="__codelineno-23-39" href="#__codelineno-23-39"></a>    <span class="n">test_modbus</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Test script para S7</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1">#!/usr/bin/env python3</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">snap7</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_s7</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">rack</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="n">plc</span> <span class="o">=</span> <span class="n">snap7</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>        <span class="n">plc</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">rack</span><span class="p">,</span> <span class="n">slot</span><span class="p">)</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Conectado ao S7 PLC em </span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a>        <span class="c1"># Informações do PLC</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a>        <span class="n">cpu_info</span> <span class="o">=</span> <span class="n">plc</span><span class="o">.</span><span class="n">get_cpu_info</span><span class="p">()</span>
+<a id="__codelineno-24-15" name="__codelineno-24-15" href="#__codelineno-24-15"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CPU: </span><span class="si">{</span><span class="n">cpu_info</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-16" name="__codelineno-24-16" href="#__codelineno-24-16"></a>
+<a id="__codelineno-24-17" name="__codelineno-24-17" href="#__codelineno-24-17"></a>        <span class="c1"># Testar leitura de diferentes áreas</span>
+<a id="__codelineno-24-18" name="__codelineno-24-18" href="#__codelineno-24-18"></a>        <span class="n">tests</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-24-19" name="__codelineno-24-19" href="#__codelineno-24-19"></a>            <span class="p">(</span><span class="s2">&quot;DB1 (2 bytes)&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">plc</span><span class="o">.</span><span class="n">db_read</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
+<a id="__codelineno-24-20" name="__codelineno-24-20" href="#__codelineno-24-20"></a>            <span class="p">(</span><span class="s2">&quot;Inputs (1 byte)&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">plc</span><span class="o">.</span><span class="n">read_area</span><span class="p">(</span><span class="n">snap7</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">S7AreaPE</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-24-21" name="__codelineno-24-21" href="#__codelineno-24-21"></a>            <span class="p">(</span><span class="s2">&quot;Outputs (1 byte)&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">plc</span><span class="o">.</span><span class="n">read_area</span><span class="p">(</span><span class="n">snap7</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">S7AreaPA</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-24-22" name="__codelineno-24-22" href="#__codelineno-24-22"></a>            <span class="p">(</span><span class="s2">&quot;Merkers (1 byte)&quot;</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">plc</span><span class="o">.</span><span class="n">read_area</span><span class="p">(</span><span class="n">snap7</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">S7AreaMK</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+<a id="__codelineno-24-23" name="__codelineno-24-23" href="#__codelineno-24-23"></a>        <span class="p">]</span>
+<a id="__codelineno-24-24" name="__codelineno-24-24" href="#__codelineno-24-24"></a>
+<a id="__codelineno-24-25" name="__codelineno-24-25" href="#__codelineno-24-25"></a>        <span class="k">for</span> <span class="n">test_name</span><span class="p">,</span> <span class="n">test_func</span> <span class="ow">in</span> <span class="n">tests</span><span class="p">:</span>
+<a id="__codelineno-24-26" name="__codelineno-24-26" href="#__codelineno-24-26"></a>            <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-24-27" name="__codelineno-24-27" href="#__codelineno-24-27"></a>                <span class="n">result</span> <span class="o">=</span> <span class="n">test_func</span><span class="p">()</span>
+<a id="__codelineno-24-28" name="__codelineno-24-28" href="#__codelineno-24-28"></a>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ </span><span class="si">{</span><span class="n">test_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2"> bytes lidos&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-29" name="__codelineno-24-29" href="#__codelineno-24-29"></a>            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-24-30" name="__codelineno-24-30" href="#__codelineno-24-30"></a>                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ </span><span class="si">{</span><span class="n">test_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-31" name="__codelineno-24-31" href="#__codelineno-24-31"></a>
+<a id="__codelineno-24-32" name="__codelineno-24-32" href="#__codelineno-24-32"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+<a id="__codelineno-24-33" name="__codelineno-24-33" href="#__codelineno-24-33"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Erro S7: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-34" name="__codelineno-24-34" href="#__codelineno-24-34"></a>    <span class="k">finally</span><span class="p">:</span>
+<a id="__codelineno-24-35" name="__codelineno-24-35" href="#__codelineno-24-35"></a>        <span class="n">plc</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+<a id="__codelineno-24-36" name="__codelineno-24-36" href="#__codelineno-24-36"></a>
+<a id="__codelineno-24-37" name="__codelineno-24-37" href="#__codelineno-24-37"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<a id="__codelineno-24-38" name="__codelineno-24-38" href="#__codelineno-24-38"></a>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+<a id="__codelineno-24-39" name="__codelineno-24-39" href="#__codelineno-24-39"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Uso: python test_s7.py &lt;IP_DO_PLC&gt;&quot;</span><span class="p">)</span>
+<a id="__codelineno-24-40" name="__codelineno-24-40" href="#__codelineno-24-40"></a>        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-24-41" name="__codelineno-24-41" href="#__codelineno-24-41"></a>
+<a id="__codelineno-24-42" name="__codelineno-24-42" href="#__codelineno-24-42"></a>    <span class="n">test_s7</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</code></pre></div>
 <h2 id="quando-pedir-ajuda">📞 Quando Pedir Ajuda</h2>
 <h3 id="informacoes-a-coletar">Informações a Coletar</h3>
 <p>Antes de reportar um problema, colete estas informações:</p>
 <ol>
-<li><strong>Versão do Sistema</strong></li>
+<li>
+<p><strong>Versão do Sistema</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>python<span class="w"> </span>--version
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;(Flask|SQLAlchemy|pymodbus|snap7)&quot;</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>cat<span class="w"> </span>/etc/os-release
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Logs Relevantes</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Últimas 100 linhas de cada log</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>tail<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span><span class="w"> </span>logs/app.log
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>tail<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span><span class="w"> </span>/var/log/supervisor/scada.log
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>tail<span class="w"> </span>-n<span class="w"> </span><span class="m">100</span><span class="w"> </span>/var/log/nginx/error.log
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Configuração</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Configuração sanitizada (sem senhas)</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>grep<span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;PASSWORD\|SECRET\|KEY&quot;</span><span class="w"> </span>.env
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Status dos Serviços</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>systemctl<span class="w"> </span>status<span class="w"> </span>nginx<span class="w"> </span>postgresql<span class="w"> </span>redis<span class="w"> </span>supervisor
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>supervisorctl<span class="w"> </span>status
+</code></pre></div></p>
+</li>
 </ol>
-<pre><code class="language-bash">python --version
-pip list | grep -E &quot;(Flask|SQLAlchemy|pymodbus|snap7)&quot;
-cat /etc/os-release
-</code></pre>
-<ol>
-<li><strong>Logs Relevantes</strong></li>
-</ol>
-<pre><code class="language-bash"># Últimas 100 linhas de cada log
-tail -n 100 logs/app.log
-tail -n 100 /var/log/supervisor/scada.log
-tail -n 100 /var/log/nginx/error.log
-</code></pre>
-<ol>
-<li><strong>Configuração</strong></li>
-</ol>
-<pre><code class="language-bash"># Configuração sanitizada (sem senhas)
-grep -v &quot;PASSWORD\|SECRET\|KEY&quot; .env
-</code></pre>
-<ol>
-<li><strong>Status dos Serviços</strong></li>
-</ol>
-<pre><code class="language-bash">systemctl status nginx postgresql redis supervisor
-supervisorctl status
-</code></pre>
 <h3 id="canais-de-suporte">Canais de Suporte</h3>
 <ul>
 <li><strong>Issues no GitHub</strong>: Para bugs e feature requests</li>
@@ -1579,33 +1220,32 @@ supervisorctl status
 <li><strong>Documentação</strong>: https://github.com/seu-usuario/CLP_TCC2/wiki</li>
 </ul>
 <h3 id="template-para-reportar-problemas">Template para Reportar Problemas</h3>
-<pre><code class="language-markdown">## Descrição do Problema
-[Descreva o problema detalhadamente]
-
-## Passos para Reproduzir
-1. [Primeiro passo]
-2. [Segundo passo]
-3. [Terceiro passo]
-
-## Comportamento Esperado
-[O que deveria acontecer]
-
-## Comportamento Atual
-[O que está acontecendo]
-
-## Ambiente
-- OS: [Ubuntu 20.04, CentOS 8, etc.]
-- Python: [3.8.10]
-- Flask: [2.3.3]
-- Browser: [Chrome 115, Firefox 116, etc.]
-
-## Logs
-</code></pre>
-<p>[Cole os logs relevantes aqui]</p>
-<pre><code>
-## Screenshots
-[Se aplicável, adicione screenshots]
-</code></pre>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="gu">## Descrição do Problema</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>[Descreva o problema detalhadamente]
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="gu">## Passos para Reproduzir</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="k">1.</span> [Primeiro passo]
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="k">2.</span> [Segundo passo]
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a><span class="k">3.</span> [Terceiro passo]
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a><span class="gu">## Comportamento Esperado</span>
+<a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>[O que deveria acontecer]
+<a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>
+<a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a><span class="gu">## Comportamento Atual</span>
+<a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>[O que está acontecendo]
+<a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>
+<a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a><span class="gu">## Ambiente</span>
+<a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a><span class="k">-</span><span class="w"> </span>OS: [Ubuntu 20.04, CentOS 8, etc.]
+<a id="__codelineno-29-17" name="__codelineno-29-17" href="#__codelineno-29-17"></a><span class="k">-</span><span class="w"> </span>Python: [3.8.10]
+<a id="__codelineno-29-18" name="__codelineno-29-18" href="#__codelineno-29-18"></a><span class="k">-</span><span class="w"> </span>Flask: [2.3.3]
+<a id="__codelineno-29-19" name="__codelineno-29-19" href="#__codelineno-29-19"></a><span class="k">-</span><span class="w"> </span>Browser: [Chrome 115, Firefox 116, etc.]
+<a id="__codelineno-29-20" name="__codelineno-29-20" href="#__codelineno-29-20"></a>
+<a id="__codelineno-29-21" name="__codelineno-29-21" href="#__codelineno-29-21"></a><span class="gu">## Logs</span>
+</code></pre></div>
+[Cole os logs relevantes aqui]
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>## Screenshots
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>[Se aplicável, adicione screenshots]
+</code></pre></div></p>
 <p>Este guia de troubleshooting deve cobrir a maioria dos problemas comuns que você pode encontrar. Mantenha-o atualizado conforme novos problemas e soluções surgirem!</p>
 
 
@@ -1649,6 +1289,22 @@ supervisorctl status
   
 </div>
       
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/markus8006/CLP_TCC3" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
     </div>
   </div>
 </footer>
@@ -1661,7 +1317,7 @@ supervisorctl status
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top", "navigation.instant", "navigation.indexes", "toc.integrate", "search.suggest", "search.highlight"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
