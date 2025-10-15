@@ -11,6 +11,10 @@
         <link rel="canonical" href="https://markus8006.github.io/CLP_TCC3/DEPLOYMENT/">
       
       
+        <link rel="prev" href="../INDEX/">
+      
+      
+        <link rel="next" href="../TROUBLESHOOTING/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -18,7 +22,7 @@
     
     
       
-        <title>🚀 Manual de Deploy e Produção - Documentação do Sistema SCADA</title>
+        <title>Deploy - Documentação do Sistema SCADA</title>
       
     
     
@@ -102,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              🚀 Manual de Deploy e Produção
+              Deploy
             
           </span>
         </div>
@@ -175,7 +179,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/INDEX.md" class="md-tabs__link">
+      <a href="../INDEX/" class="md-tabs__link">
         
   
   
@@ -194,7 +198,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/DEVELOPMENT.md" class="md-tabs__link">
+      <a href="../DEVELOPMENT.md" class="md-tabs__link">
         
   
   
@@ -211,9 +215,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../docs/DEPLOYMENT.md" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -232,7 +238,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/TROUBLESHOOTING.md" class="md-tabs__link">
+      <a href="../TROUBLESHOOTING/" class="md-tabs__link">
         
   
   
@@ -285,7 +291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/INDEX.md" class="md-nav__link">
+      <a href="../INDEX/" class="md-nav__link">
         
   
   
@@ -307,7 +313,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/DEVELOPMENT.md" class="md-nav__link">
+      <a href="../DEVELOPMENT.md" class="md-nav__link">
         
   
   
@@ -326,10 +332,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../docs/DEPLOYMENT.md" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Deploy
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -340,6 +368,500 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-em-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌐 Deploy em Produção
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🌐 Deploy em Produção">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-requisitos-para-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pré-requisitos para Produção
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preparacao-do-servidor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparação do Servidor
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preparação do Servidor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-atualizacao-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Atualização do Sistema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-instalacao-de-dependencias" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Instalação de Dependências
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuracao-do-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuração do PostgreSQL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configuracao-do-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Configuração do Redis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy da Aplicação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploy da Aplicação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-preparacao-do-usuario-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Preparação do Usuário de Deploy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-clone-e-configuracao" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Clone e Configuração
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuracao-de-ambiente" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuração de Ambiente
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-inicializacao-do-banco" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Inicialização do Banco
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-teste-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Teste da Aplicação
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-do-nginx" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração do Nginx
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração do Nginx">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-do-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração do Site
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ssl-com-lets-encrypt" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. SSL com Let's Encrypt
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-do-supervisor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração do Supervisor
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração do Supervisor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-da-aplicacao-principal" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração da Aplicação Principal
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-de-firewall" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração de Firewall
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração de Firewall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ufw-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. UFW (Ubuntu)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manutencao-e-monitoramento" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Manutenção e Monitoramento
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Manutenção e Monitoramento">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs do Sistema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logs do Sistema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração de Logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-monitoramento-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Monitoramento de Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-automatizado" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup Automatizado
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup Automatizado">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Backup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoramento-de-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoramento de Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoramento de Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-monitoramento-com-htop" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Monitoramento com htop
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-monitoramento-de-disco" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Monitoramento de Disco
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-monitoramento-do-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Monitoramento do PostgreSQL
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atualizacao-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualização da Aplicação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Atualização da Aplicação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Deploy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-check-e-alertas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Check e Alertas
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health Check e Alertas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Health Check
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metricas-e-observabilidade" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Métricas e Observabilidade
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Métricas e Observabilidade">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prometheus-e-grafana-opcional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prometheus e Grafana (Opcional)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prometheus e Grafana (Opcional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-instalacao-do-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Instalação do Prometheus
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-de-ssltls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração de SSL/TLS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração de SSL/TLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ssl-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. SSL Hardening
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-de-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting de Produção
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting de Produção">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-comandos-uteis" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Comandos Úteis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-restart-de-emergencia" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Restart de Emergência
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -351,7 +873,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/TROUBLESHOOTING.md" class="md-nav__link">
+      <a href="../TROUBLESHOOTING/" class="md-nav__link">
         
   
   

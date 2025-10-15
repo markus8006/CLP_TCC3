@@ -11,6 +11,8 @@
         <link rel="canonical" href="https://markus8006.github.io/CLP_TCC3/TROUBLESHOOTING/">
       
       
+        <link rel="prev" href="../DEPLOYMENT/">
+      
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -18,7 +20,7 @@
     
     
       
-        <title>🔧 Troubleshooting - Solução de Problemas - Documentação do Sistema SCADA</title>
+        <title>Troubleshooting - Documentação do Sistema SCADA</title>
       
     
     
@@ -102,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              🔧 Troubleshooting - Solução de Problemas
+              Troubleshooting
             
           </span>
         </div>
@@ -175,7 +177,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/INDEX.md" class="md-tabs__link">
+      <a href="../INDEX/" class="md-tabs__link">
         
   
   
@@ -194,7 +196,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/DEVELOPMENT.md" class="md-tabs__link">
+      <a href="../DEVELOPMENT.md" class="md-tabs__link">
         
   
   
@@ -213,7 +215,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../docs/DEPLOYMENT.md" class="md-tabs__link">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
         
   
   
@@ -230,9 +232,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../docs/TROUBLESHOOTING.md" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -285,7 +289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/INDEX.md" class="md-nav__link">
+      <a href="../INDEX/" class="md-nav__link">
         
   
   
@@ -307,7 +311,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/DEVELOPMENT.md" class="md-nav__link">
+      <a href="../DEVELOPMENT.md" class="md-nav__link">
         
   
   
@@ -329,7 +333,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docs/DEPLOYMENT.md" class="md-nav__link">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
         
   
   
@@ -348,10 +352,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../docs/TROUBLESHOOTING.md" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -362,6 +388,365 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problemas-comuns-e-solucoes" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Problemas Comuns e Soluções
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Problemas Comuns e Soluções">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-instalacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Instalação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Instalação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pythonpip-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Python/Pip Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependencias-snap7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependências Snap7
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-banco-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Banco de Dados
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Banco de Dados">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sqlite-locked" class="md-nav__link">
+    <span class="md-ellipsis">
+      SQLite Locked
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-connection-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      PostgreSQL Connection Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-comunicacao-com-plcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Comunicação com PLCs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Comunicação com PLCs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modbus-tcp-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modbus TCP Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#siemens-s7-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Siemens S7 Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Polling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Polling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polling-not-starting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polling Not Starting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-cpu-usage-in-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      High CPU Usage in Polling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slow-database-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Slow Database Queries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-leaks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Leaks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-seguranca" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Segurança
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Segurança">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#csrf-token-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSRF Token Missing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Deploy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Deploy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nginx-502-bad-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nginx 502 Bad Gateway
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Denied Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-tools-e-comandos-uteis" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔍 Debug Tools e Comandos Úteis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔍 Debug Tools e Comandos Úteis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verificacao-de-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verificação de Sistema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-de-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug de Aplicação
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comandos-de-banco-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comandos de Banco de Dados
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-de-protocolos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug de Protocolos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-pedir-ajuda" class="md-nav__link">
+    <span class="md-ellipsis">
+      📞 Quando Pedir Ajuda
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📞 Quando Pedir Ajuda">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#informacoes-a-coletar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Informações a Coletar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#canais-de-suporte" class="md-nav__link">
+    <span class="md-ellipsis">
+      Canais de Suporte
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-para-reportar-problemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template para Reportar Problemas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
