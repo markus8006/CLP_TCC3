@@ -1,5 +1,5 @@
 from src.app import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class SecurityEvent(db.Model):
     """Eventos de segurança detectados pelo sistema"""
@@ -11,7 +11,7 @@ class SecurityEvent(db.Model):
     url = db.Column(db.Text, nullable=False)
     method = db.Column(db.String(10), nullable=False)
     threat_score = db.Column(db.Integer, nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     
     def __repr__(self):
         return f'<SecurityEvent {self.ip_address} - Score: {self.threat_score}>'

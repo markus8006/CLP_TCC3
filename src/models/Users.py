@@ -1,5 +1,5 @@
 from src.app import db
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 
 
@@ -16,16 +16,10 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'), nullable=False)
+    role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.USER)
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     last_login = db.Column(db.DateTime)
     failed_login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime)
     
-    
-class Permission(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    resource = db.Column(db.String(50), nullable=False)  
-    action = db.Column(db.String(20), nullable=False)    

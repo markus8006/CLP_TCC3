@@ -1,5 +1,5 @@
 from src.app import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class AuditLog(db.Model):
     """Log de todas as ações no sistema"""
@@ -20,4 +20,4 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(15))
     user_agent = db.Column(db.Text)
     
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
