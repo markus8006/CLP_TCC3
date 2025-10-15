@@ -1,0 +1,1525 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://markus8006.github.io/CLP_TCC3/DEPLOYMENT/">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>🚀 Manual de Deploy e Produção - Documentação do Sistema SCADA</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#manual-de-deploy-e-producao" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentação do Sistema SCADA" class="md-header__button md-logo" aria-label="Documentação do Sistema SCADA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentação do Sistema SCADA
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              🚀 Manual de Deploy e Produção
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/INDEX.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Início
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/DEVELOPMENT.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Desenvolvimento
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/DEPLOYMENT.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deploy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/TROUBLESHOOTING.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentação do Sistema SCADA" class="md-nav__button md-logo" aria-label="Documentação do Sistema SCADA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Documentação do Sistema SCADA
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/INDEX.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Início
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/DEVELOPMENT.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Desenvolvimento
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/DEPLOYMENT.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/TROUBLESHOOTING.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#deploy-em-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      🌐 Deploy em Produção
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🌐 Deploy em Produção">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pre-requisitos-para-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pré-requisitos para Produção
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preparacao-do-servidor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preparação do Servidor
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Preparação do Servidor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-atualizacao-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Atualização do Sistema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-instalacao-de-dependencias" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Instalação de Dependências
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuracao-do-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuração do PostgreSQL
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-configuracao-do-redis" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Configuração do Redis
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deploy-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Deploy da Aplicação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deploy da Aplicação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-preparacao-do-usuario-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Preparação do Usuário de Deploy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-clone-e-configuracao" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Clone e Configuração
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-configuracao-de-ambiente" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Configuração de Ambiente
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-inicializacao-do-banco" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Inicialização do Banco
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-teste-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Teste da Aplicação
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-do-nginx" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração do Nginx
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração do Nginx">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-do-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração do Site
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-ssl-com-lets-encrypt" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. SSL com Let's Encrypt
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-do-supervisor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração do Supervisor
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração do Supervisor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-da-aplicacao-principal" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração da Aplicação Principal
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-de-firewall" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração de Firewall
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração de Firewall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ufw-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. UFW (Ubuntu)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#manutencao-e-monitoramento" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Manutenção e Monitoramento
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Manutenção e Monitoramento">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs do Sistema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logs do Sistema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-configuracao-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Configuração de Logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-monitoramento-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Monitoramento de Logs
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-automatizado" class="md-nav__link">
+    <span class="md-ellipsis">
+      Backup Automatizado
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup Automatizado">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Backup
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoramento-de-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoramento de Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoramento de Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-monitoramento-com-htop" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Monitoramento com htop
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-monitoramento-de-disco" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Monitoramento de Disco
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-monitoramento-do-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Monitoramento do PostgreSQL
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atualizacao-da-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualização da Aplicação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Atualização da Aplicação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Deploy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-check-e-alertas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Check e Alertas
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Health Check e Alertas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-script-de-health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Script de Health Check
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metricas-e-observabilidade" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Métricas e Observabilidade
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Métricas e Observabilidade">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prometheus-e-grafana-opcional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prometheus e Grafana (Opcional)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prometheus e Grafana (Opcional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-instalacao-do-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Instalação do Prometheus
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuracao-de-ssltls" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuração de SSL/TLS
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuração de SSL/TLS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-ssl-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. SSL Hardening
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-de-producao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting de Produção
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting de Produção">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-comandos-uteis" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Comandos Úteis
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-restart-de-emergencia" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Restart de Emergência
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="manual-de-deploy-e-producao">🚀 Manual de Deploy e Produção</h1>
+<h2 id="deploy-em-producao">🌐 Deploy em Produção</h2>
+<h3 id="pre-requisitos-para-producao">Pré-requisitos para Produção</h3>
+<ul>
+<li><strong>Servidor Linux</strong> (Ubuntu 20.04+ ou CentOS 8+)</li>
+<li><strong>Python 3.8+</strong></li>
+<li><strong>PostgreSQL 12+</strong></li>
+<li><strong>Redis 6+</strong></li>
+<li><strong>Nginx</strong> (proxy reverso)</li>
+<li><strong>Supervisor</strong> (gerenciamento de processos)</li>
+<li><strong>SSL Certificate</strong> (Let's Encrypt recomendado)</li>
+</ul>
+<h3 id="preparacao-do-servidor">Preparação do Servidor</h3>
+<h4 id="1-atualizacao-do-sistema">1. Atualização do Sistema</h4>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt update &amp;&amp; sudo apt upgrade -y
+
+# CentOS/RHEL
+sudo yum update -y
+</code></pre>
+<h4 id="2-instalacao-de-dependencias">2. Instalação de Dependências</h4>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt install -y python3 python3-pip python3-venv nginx postgresql postgresql-contrib redis-server supervisor git
+
+# CentOS/RHEL
+sudo yum install -y python3 python3-pip nginx postgresql postgresql-server redis supervisor git
+</code></pre>
+<h4 id="3-configuracao-do-postgresql">3. Configuração do PostgreSQL</h4>
+<pre><code class="language-bash"># Inicializar PostgreSQL (CentOS)
+sudo postgresql-setup initdb
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Ubuntu (já iniciado automaticamente)
+sudo systemctl enable postgresql
+
+# Criar banco e usuário
+sudo -u postgres psql &lt;&lt; EOF
+CREATE DATABASE scada_prod;
+CREATE USER scada_user WITH PASSWORD 'SuaSenhaForteAqui123!';
+GRANT ALL PRIVILEGES ON DATABASE scada_prod TO scada_user;
+ALTER USER scada_user CREATEDB;
+\q
+EOF
+</code></pre>
+<h4 id="4-configuracao-do-redis">4. Configuração do Redis</h4>
+<pre><code class="language-bash"># Iniciar e habilitar Redis
+sudo systemctl start redis
+sudo systemctl enable redis
+
+# Configurar Redis para produção
+sudo cp /etc/redis/redis.conf /etc/redis/redis.conf.backup
+sudo sed -i 's/# maxmemory-policy noeviction/maxmemory-policy allkeys-lru/' /etc/redis/redis.conf
+sudo sed -i 's/# maxmemory &lt;bytes&gt;/maxmemory 512mb/' /etc/redis/redis.conf
+sudo systemctl restart redis
+</code></pre>
+<h3 id="deploy-da-aplicacao">Deploy da Aplicação</h3>
+<h4 id="1-preparacao-do-usuario-de-deploy">1. Preparação do Usuário de Deploy</h4>
+<pre><code class="language-bash"># Criar usuário para a aplicação
+sudo useradd -m -s /bin/bash scada
+sudo usermod -aG sudo scada  # Se necessário acesso sudo
+
+# Trocar para usuário scada
+sudo su - scada
+</code></pre>
+<h4 id="2-clone-e-configuracao">2. Clone e Configuração</h4>
+<pre><code class="language-bash"># Clonar repositório
+git clone https://github.com/seu-usuario/CLP_TCC2.git /opt/scada
+cd /opt/scada
+
+# Criar ambiente virtual
+python3 -m venv venv
+source venv/bin/activate
+
+# Instalar dependências de produção
+pip install --upgrade pip
+pip install -r requirements/production.txt
+</code></pre>
+<h4 id="3-configuracao-de-ambiente">3. Configuração de Ambiente</h4>
+<pre><code class="language-bash"># Criar arquivo de configuração de produção
+cat &gt; .env &lt;&lt; EOF
+FLASK_ENV=production
+SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')
+ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+
+# Banco de dados
+DATABASE_URL=postgresql://scada_user:SuaSenhaForteAqui123!@localhost/scada_prod
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
+
+# Email (configurar com seu provedor)
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=seu-email@empresa.com
+MAIL_PASSWORD=sua-senha-de-app
+
+# Configurações de produção
+SESSION_COOKIE_SECURE=True
+WTF_CSRF_ENABLED=True
+EOF
+
+# Proteger arquivo de configuração
+chmod 600 .env
+</code></pre>
+<h4 id="4-inicializacao-do-banco">4. Inicialização do Banco</h4>
+<pre><code class="language-bash"># Inicializar banco de dados
+python scripts/init_db.py
+
+# Executar migrações se existirem
+flask db upgrade
+</code></pre>
+<h4 id="5-teste-da-aplicacao">5. Teste da Aplicação</h4>
+<pre><code class="language-bash"># Testar se a aplicação inicia
+python wsgi.py
+
+# Testar endpoints básicos
+curl http://localhost:5000/api/health
+</code></pre>
+<h3 id="configuracao-do-nginx">Configuração do Nginx</h3>
+<h4 id="1-configuracao-do-site">1. Configuração do Site</h4>
+<pre><code class="language-bash">sudo tee /etc/nginx/sites-available/scada &lt;&lt; 'EOF'
+upstream scada_app {
+    server 127.0.0.1:5000;
+    server 127.0.0.1:5001 backup;
+}
+
+server {
+    listen 80;
+    server_name seu-dominio.com www.seu-dominio.com;
+
+    # Redirect HTTP to HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name seu-dominio.com www.seu-dominio.com;
+
+    # SSL Configuration
+    ssl_certificate /etc/letsencrypt/live/seu-dominio.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/seu-dominio.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security Headers
+    add_header Strict-Transport-Security &quot;max-age=31536000; includeSubDomains&quot; always;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options DENY;
+    add_header X-XSS-Protection &quot;1; mode=block&quot;;
+    add_header Referrer-Policy &quot;strict-origin-when-cross-origin&quot;;
+
+    # Logs
+    access_log /var/log/nginx/scada_access.log;
+    error_log /var/log/nginx/scada_error.log;
+
+    # Static files
+    location /static/ {
+        alias /opt/scada/app/static/;
+        expires 30d;
+        add_header Cache-Control &quot;public, immutable&quot;;
+    }
+
+    # WebSocket support
+    location /socket.io/ {
+        proxy_pass http://scada_app;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection &quot;upgrade&quot;;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Application
+    location / {
+        proxy_pass http://scada_app;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+
+        # Buffer settings
+        proxy_buffer_size 4k;
+        proxy_buffers 8 4k;
+        proxy_busy_buffers_size 8k;
+    }
+
+    # Health check
+    location /health {
+        access_log off;
+        proxy_pass http://scada_app;
+    }
+}
+EOF
+
+# Habilitar site
+sudo ln -s /etc/nginx/sites-available/scada /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Testar configuração
+sudo nginx -t
+
+# Reiniciar Nginx
+sudo systemctl restart nginx
+sudo systemctl enable nginx
+</code></pre>
+<h4 id="2-ssl-com-lets-encrypt">2. SSL com Let's Encrypt</h4>
+<pre><code class="language-bash"># Instalar Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obter certificado SSL
+sudo certbot --nginx -d seu-dominio.com -d www.seu-dominio.com
+
+# Configurar renovação automática
+sudo crontab -e
+# Adicionar linha:
+0 12 * * * /usr/bin/certbot renew --quiet
+</code></pre>
+<h3 id="configuracao-do-supervisor">Configuração do Supervisor</h3>
+<h4 id="1-configuracao-da-aplicacao-principal">1. Configuração da Aplicação Principal</h4>
+<pre><code class="language-bash">sudo tee /etc/supervisor/conf.d/scada.conf &lt;&lt; 'EOF'
+[program:scada]
+command=/opt/scada/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 4 --worker-class eventlet --worker-connections 1000 --timeout 60 --keepalive 2 --max-requests 1000 --max-requests-jitter 50 wsgi:app
+directory=/opt/scada
+user=scada
+group=scada
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/scada.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=10
+environment=PATH=&quot;/opt/scada/venv/bin&quot;
+
+[program:scada-worker]
+command=/opt/scada/venv/bin/python -m app.services.background_worker
+directory=/opt/scada
+user=scada
+group=scada
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/supervisor/scada-worker.log
+stdout_logfile_maxbytes=50MB
+stdout_logfile_backups=10
+environment=PATH=&quot;/opt/scada/venv/bin&quot;
+
+[group:scada-app]
+programs=scada,scada-worker
+priority=999
+EOF
+
+# Atualizar Supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start scada-app:*
+</code></pre>
+<h3 id="configuracao-de-firewall">Configuração de Firewall</h3>
+<h4 id="1-ufw-ubuntu">1. UFW (Ubuntu)</h4>
+<pre><code class="language-bash"># Habilitar UFW
+sudo ufw enable
+
+# Permitir SSH
+sudo ufw allow ssh
+
+# Permitir HTTP e HTTPS
+sudo ufw allow 'Nginx Full'
+
+# Permitir PostgreSQL apenas localmente
+sudo ufw allow from 127.0.0.1 to any port 5432
+
+# Status do firewall
+sudo ufw status
+</code></pre>
+<h2 id="manutencao-e-monitoramento">🔧 Manutenção e Monitoramento</h2>
+<h3 id="logs-do-sistema">Logs do Sistema</h3>
+<h4 id="1-configuracao-de-logs">1. Configuração de Logs</h4>
+<pre><code class="language-bash"># Configurar rotação de logs
+sudo tee /etc/logrotate.d/scada &lt;&lt; 'EOF'
+/opt/scada/logs/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0644 scada scada
+    postrotate
+        supervisorctl restart scada-app:*
+    endscript
+}
+EOF
+</code></pre>
+<h4 id="2-monitoramento-de-logs">2. Monitoramento de Logs</h4>
+<pre><code class="language-bash"># Ver logs em tempo real
+sudo tail -f /var/log/supervisor/scada.log
+sudo tail -f /var/log/nginx/scada_access.log
+sudo tail -f /opt/scada/logs/app.log
+
+# Pesquisar erros
+sudo grep -i error /var/log/supervisor/scada.log
+sudo grep -i &quot;5[0-9][0-9]&quot; /var/log/nginx/scada_access.log
+</code></pre>
+<h3 id="backup-automatizado">Backup Automatizado</h3>
+<h4 id="1-script-de-backup">1. Script de Backup</h4>
+<pre><code class="language-bash">sudo tee /opt/scada/scripts/backup.sh &lt;&lt; 'EOF'
+#!/bin/bash
+
+# Configurações
+BACKUP_DIR=&quot;/opt/backups/scada&quot;
+DATE=$(date +%Y%m%d_%H%M%S)
+RETENTION_DAYS=30
+
+# Criar diretório de backup
+mkdir -p $BACKUP_DIR
+
+# Backup do banco de dados
+export PGPASSWORD=&quot;SuaSenhaForteAqui123!&quot;
+pg_dump -h localhost -U scada_user -d scada_prod &gt; $BACKUP_DIR/database_$DATE.sql
+
+# Backup dos arquivos da aplicação
+tar -czf $BACKUP_DIR/application_$DATE.tar.gz -C /opt scada --exclude=scada/venv --exclude=scada/.git
+
+# Backup das configurações
+cp /opt/scada/.env $BACKUP_DIR/env_$DATE
+cp /etc/nginx/sites-available/scada $BACKUP_DIR/nginx_$DATE.conf
+cp /etc/supervisor/conf.d/scada.conf $BACKUP_DIR/supervisor_$DATE.conf
+
+# Limpar backups antigos
+find $BACKUP_DIR -name &quot;*.sql&quot; -mtime +$RETENTION_DAYS -delete
+find $BACKUP_DIR -name &quot;*.tar.gz&quot; -mtime +$RETENTION_DAYS -delete
+
+echo &quot;Backup realizado: $DATE&quot;
+EOF
+
+chmod +x /opt/scada/scripts/backup.sh
+
+# Agendar backup diário
+sudo crontab -e
+# Adicionar linha:
+0 2 * * * /opt/scada/scripts/backup.sh &gt;&gt; /var/log/scada_backup.log 2&gt;&amp;1
+</code></pre>
+<h3 id="monitoramento-de-performance">Monitoramento de Performance</h3>
+<h4 id="1-monitoramento-com-htop">1. Monitoramento com htop</h4>
+<pre><code class="language-bash"># Instalar htop
+sudo apt install htop
+
+# Monitorar processos
+htop
+</code></pre>
+<h4 id="2-monitoramento-de-disco">2. Monitoramento de Disco</h4>
+<pre><code class="language-bash"># Espaço em disco
+df -h
+
+# Uso por diretório
+du -sh /opt/scada/*
+du -sh /var/log/*
+</code></pre>
+<h4 id="3-monitoramento-do-postgresql">3. Monitoramento do PostgreSQL</h4>
+<pre><code class="language-bash"># Status do PostgreSQL
+sudo systemctl status postgresql
+
+# Conexões ativas
+sudo -u postgres psql -c &quot;SELECT count(*) FROM pg_stat_activity;&quot;
+
+# Tamanho do banco
+sudo -u postgres psql -c &quot;SELECT pg_size_pretty(pg_database_size('scada_prod'));&quot;
+</code></pre>
+<h3 id="atualizacao-da-aplicacao">Atualização da Aplicação</h3>
+<h4 id="1-script-de-deploy">1. Script de Deploy</h4>
+<pre><code class="language-bash">sudo tee /opt/scada/scripts/deploy.sh &lt;&lt; 'EOF'
+#!/bin/bash
+
+set -e
+
+# Cores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e &quot;${GREEN}Iniciando deploy...${NC}&quot;
+
+# Backup antes do deploy
+echo -e &quot;${YELLOW}Fazendo backup...${NC}&quot;
+/opt/scada/scripts/backup.sh
+
+# Atualizar código
+echo -e &quot;${YELLOW}Atualizando código...${NC}&quot;
+cd /opt/scada
+git fetch origin
+git reset --hard origin/main
+
+# Ativar ambiente virtual
+source venv/bin/activate
+
+# Atualizar dependências
+echo -e &quot;${YELLOW}Atualizando dependências...${NC}&quot;
+pip install -r requirements/production.txt
+
+# Executar migrações
+echo -e &quot;${YELLOW}Executando migrações...${NC}&quot;
+python -c &quot;
+from app import create_app
+from app.extensions import db
+app = create_app('production')
+with app.app_context():
+    db.create_all()
+&quot;
+
+# Coletar arquivos estáticos
+echo -e &quot;${YELLOW}Coletando arquivos estáticos...${NC}&quot;
+# Se você tiver assets build process, executar aqui
+
+# Reiniciar aplicação
+echo -e &quot;${YELLOW}Reiniciando aplicação...${NC}&quot;
+sudo supervisorctl restart scada-app:*
+
+# Verificar se aplicação está rodando
+sleep 5
+if curl -f http://localhost:5000/api/health &gt; /dev/null 2&gt;&amp;1; then
+    echo -e &quot;${GREEN}Deploy realizado com sucesso!${NC}&quot;
+else
+    echo -e &quot;${RED}Erro no deploy! Aplicação não responde.${NC}&quot;
+    exit 1
+fi
+EOF
+
+chmod +x /opt/scada/scripts/deploy.sh
+</code></pre>
+<h3 id="health-check-e-alertas">Health Check e Alertas</h3>
+<h4 id="1-script-de-health-check">1. Script de Health Check</h4>
+<pre><code class="language-bash">sudo tee /opt/scada/scripts/health_check.sh &lt;&lt; 'EOF'
+#!/bin/bash
+
+# Função para enviar alerta
+send_alert() {
+    local message=$1
+    echo &quot;$(date): $message&quot; &gt;&gt; /var/log/scada_health.log
+
+    # Enviar email (configurar sendmail ou usar API)
+    # curl -X POST &quot;https://api.sendgrid.com/v3/mail/send&quot; \
+    #   -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+    #   -H &quot;Content-Type: application/json&quot; \
+    #   -d '{...}'
+}
+
+# Verificar se aplicação responde
+if ! curl -f http://localhost:5000/api/health &gt; /dev/null 2&gt;&amp;1; then
+    send_alert &quot;CRÍTICO: Aplicação não responde&quot;
+fi
+
+# Verificar PostgreSQL
+if ! pg_isready -h localhost -U scada_user &gt; /dev/null 2&gt;&amp;1; then
+    send_alert &quot;CRÍTICO: PostgreSQL não responde&quot;
+fi
+
+# Verificar Redis
+if ! redis-cli ping &gt; /dev/null 2&gt;&amp;1; then
+    send_alert &quot;CRÍTICO: Redis não responde&quot;
+fi
+
+# Verificar espaço em disco
+DISK_USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+if [ $DISK_USAGE -gt 80 ]; then
+    send_alert &quot;ALERTA: Disco com ${DISK_USAGE}% de uso&quot;
+fi
+
+# Verificar memória
+MEM_USAGE=$(free | awk 'NR==2{printf &quot;%.0f&quot;, $3*100/$2}')
+if [ $MEM_USAGE -gt 90 ]; then
+    send_alert &quot;ALERTA: Memória com ${MEM_USAGE}% de uso&quot;
+fi
+EOF
+
+chmod +x /opt/scada/scripts/health_check.sh
+
+# Executar a cada 5 minutos
+sudo crontab -e
+# Adicionar linha:
+*/5 * * * * /opt/scada/scripts/health_check.sh
+</code></pre>
+<h2 id="metricas-e-observabilidade">📊 Métricas e Observabilidade</h2>
+<h3 id="prometheus-e-grafana-opcional">Prometheus e Grafana (Opcional)</h3>
+<h4 id="1-instalacao-do-prometheus">1. Instalação do Prometheus</h4>
+<pre><code class="language-bash"># Baixar e instalar Prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.40.0/prometheus-2.40.0.linux-amd64.tar.gz
+tar xzf prometheus-2.40.0.linux-amd64.tar.gz
+sudo mv prometheus-2.40.0.linux-amd64 /opt/prometheus
+sudo useradd --no-create-home --shell /bin/false prometheus
+sudo chown -R prometheus:prometheus /opt/prometheus
+
+# Configurar como serviço
+sudo tee /etc/systemd/system/prometheus.service &lt;&lt; 'EOF'
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/opt/prometheus/prometheus \
+  --config.file=/opt/prometheus/prometheus.yml \
+  --storage.tsdb.path=/opt/prometheus/data \
+  --web.console.templates=/opt/prometheus/consoles \
+  --web.console.libraries=/opt/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl start prometheus
+sudo systemctl enable prometheus
+</code></pre>
+<h3 id="configuracao-de-ssltls">Configuração de SSL/TLS</h3>
+<h4 id="1-ssl-hardening">1. SSL Hardening</h4>
+<pre><code class="language-bash"># Gerar DH params
+sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048
+
+# Atualizar configuração do Nginx
+sudo tee -a /etc/nginx/sites-available/scada &lt;&lt; 'EOF'
+    ssl_dhparam /etc/nginx/dhparam.pem;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 8.8.8.8 8.8.4.4 valid=300s;
+    resolver_timeout 5s;
+EOF
+
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx
+</code></pre>
+<h3 id="troubleshooting-de-producao">Troubleshooting de Produção</h3>
+<h4 id="1-comandos-uteis">1. Comandos Úteis</h4>
+<pre><code class="language-bash"># Status dos serviços
+sudo systemctl status nginx
+sudo systemctl status postgresql
+sudo systemctl status redis
+sudo supervisorctl status
+
+# Logs de erro
+sudo journalctl -u nginx -f
+sudo journalctl -u postgresql -f
+sudo tail -f /var/log/supervisor/scada.log
+
+# Processos da aplicação
+ps aux | grep scada
+netstat -tulpn | grep :5000
+
+# Conexões do banco
+sudo -u postgres psql -c &quot;SELECT * FROM pg_stat_activity WHERE datname='scada_prod';&quot;
+
+# Cache do Redis
+redis-cli info memory
+redis-cli keys &quot;*&quot;
+</code></pre>
+<h4 id="2-restart-de-emergencia">2. Restart de Emergência</h4>
+<pre><code class="language-bash"># Restart completo
+sudo supervisorctl stop scada-app:*
+sudo systemctl restart postgresql
+sudo systemctl restart redis
+sudo systemctl restart nginx
+sudo supervisorctl start scada-app:*
+
+# Verificar status
+curl -I http://localhost:5000/api/health
+</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

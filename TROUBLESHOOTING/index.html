@@ -1,0 +1,1286 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://markus8006.github.io/CLP_TCC3/TROUBLESHOOTING/">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.22">
+    
+    
+      
+        <title>🔧 Troubleshooting - Solução de Problemas - Documentação do Sistema SCADA</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.84d31ad4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#troubleshooting-solucao-de-problemas" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Documentação do Sistema SCADA" class="md-header__button md-logo" aria-label="Documentação do Sistema SCADA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Documentação do Sistema SCADA
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              🔧 Troubleshooting - Solução de Problemas
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/INDEX.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Início
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/DEVELOPMENT.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Desenvolvimento
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/DEPLOYMENT.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deploy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../docs/TROUBLESHOOTING.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Documentação do Sistema SCADA" class="md-nav__button md-logo" aria-label="Documentação do Sistema SCADA" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Documentação do Sistema SCADA
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/INDEX.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Início
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/DEVELOPMENT.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Desenvolvimento
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/DEPLOYMENT.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deploy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docs/TROUBLESHOOTING.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Troubleshooting
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#problemas-comuns-e-solucoes" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Problemas Comuns e Soluções
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Problemas Comuns e Soluções">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-instalacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Instalação
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Instalação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pythonpip-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Python/Pip Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dependencias-snap7" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dependências Snap7
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-banco-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Banco de Dados
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Banco de Dados">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sqlite-locked" class="md-nav__link">
+    <span class="md-ellipsis">
+      SQLite Locked
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#postgresql-connection-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      PostgreSQL Connection Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-comunicacao-com-plcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Comunicação com PLCs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Comunicação com PLCs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#modbus-tcp-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modbus TCP Issues
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#siemens-s7-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Siemens S7 Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Polling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Polling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#polling-not-starting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polling Not Starting
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#high-cpu-usage-in-polling" class="md-nav__link">
+    <span class="md-ellipsis">
+      High CPU Usage in Polling
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Performance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Performance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slow-database-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Slow Database Queries
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-leaks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Leaks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-seguranca" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Segurança
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Segurança">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#csrf-token-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSRF Token Missing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problemas-de-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Problemas de Deploy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Problemas de Deploy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nginx-502-bad-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nginx 502 Bad Gateway
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permission-denied-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      Permission Denied Issues
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debug-tools-e-comandos-uteis" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔍 Debug Tools e Comandos Úteis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔍 Debug Tools e Comandos Úteis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verificacao-de-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verificação de Sistema
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-de-aplicacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug de Aplicação
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#comandos-de-banco-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      Comandos de Banco de Dados
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debug-de-protocolos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debug de Protocolos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quando-pedir-ajuda" class="md-nav__link">
+    <span class="md-ellipsis">
+      📞 Quando Pedir Ajuda
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📞 Quando Pedir Ajuda">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#informacoes-a-coletar" class="md-nav__link">
+    <span class="md-ellipsis">
+      Informações a Coletar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#canais-de-suporte" class="md-nav__link">
+    <span class="md-ellipsis">
+      Canais de Suporte
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-para-reportar-problemas" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template para Reportar Problemas
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="troubleshooting-solucao-de-problemas">🔧 Troubleshooting - Solução de Problemas</h1>
+<h2 id="problemas-comuns-e-solucoes">🚨 Problemas Comuns e Soluções</h2>
+<h3 id="problemas-de-instalacao">Problemas de Instalação</h3>
+<h4 id="pythonpip-issues">Python/Pip Issues</h4>
+<p><strong>Problema:</strong> <code>pip install</code> falha com erros de compilação</p>
+<pre><code class="language-bash"># Solução: Instalar dependências de desenvolvimento
+# Ubuntu/Debian
+sudo apt-get install python3-dev build-essential libffi-dev libssl-dev
+
+# CentOS/RHEL
+sudo yum groupinstall &quot;Development Tools&quot;
+sudo yum install python3-devel libffi-devel openssl-devel
+</code></pre>
+<p><strong>Problema:</strong> Erro de permissão no pip</p>
+<pre><code class="language-bash"># Solução: Usar usuário virtual environment
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+</code></pre>
+<h4 id="dependencias-snap7">Dependências Snap7</h4>
+<p><strong>Problema:</strong> <code>ImportError: snap7.dll not found</code> (Windows)</p>
+<pre><code class="language-bash"># Solução: 
+1. Baixar snap7 library de https://snap7.sourceforge.net/
+2. Extrair snap7.dll para uma pasta no PATH
+3. Ou colocar na pasta do projeto
+</code></pre>
+<p><strong>Problema:</strong> <code>libsnap7.so not found</code> (Linux)</p>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt-get install libsnap7-1 libsnap7-dev
+
+# Ou instalar manualmente:
+wget https://github.com/gijzelaerr/python-snap7/files/2432652/snap7-full-1.4.2.tar.gz
+tar -xzf snap7-full-1.4.2.tar.gz
+cd snap7-full-1.4.2/build/unix
+make -f x86_64_linux.mk
+sudo cp ../bin/x86_64-linux/libsnap7.so /usr/lib/
+</code></pre>
+<h3 id="problemas-de-banco-de-dados">Problemas de Banco de Dados</h3>
+<h4 id="sqlite-locked">SQLite Locked</h4>
+<p><strong>Problema:</strong> <code>database is locked</code></p>
+<pre><code class="language-python"># Solução: Verificar conexões pendentes
+from app import create_app
+from app.extensions import db
+
+app = create_app()
+with app.app_context():
+    db.session.close()
+    db.engine.dispose()
+</code></pre>
+<h4 id="postgresql-connection-issues">PostgreSQL Connection Issues</h4>
+<p><strong>Problema:</strong> <code>FATAL: password authentication failed</code></p>
+<pre><code class="language-bash"># Verificar configurações
+sudo -u postgres psql
+\l  # Listar bancos
+\du # Listar usuários
+
+# Recriar usuário se necessário
+DROP USER IF EXISTS scada_user;
+CREATE USER scada_user WITH PASSWORD 'nova_senha';
+GRANT ALL PRIVILEGES ON DATABASE scada TO scada_user;
+</code></pre>
+<p><strong>Problema:</strong> <code>could not connect to server</code></p>
+<pre><code class="language-bash"># Verificar se PostgreSQL está rodando
+sudo systemctl status postgresql
+sudo systemctl start postgresql
+
+# Verificar configuração de rede
+sudo grep -n &quot;listen_addresses&quot; /etc/postgresql/*/main/postgresql.conf
+sudo grep -n &quot;port&quot; /etc/postgresql/*/main/postgresql.conf
+</code></pre>
+<h3 id="problemas-de-comunicacao-com-plcs">Problemas de Comunicação com PLCs</h3>
+<h4 id="modbus-tcp-issues">Modbus TCP Issues</h4>
+<p><strong>Problema:</strong> <code>ConnectionException: Modbus Error: [Connection] Failed to connect</code></p>
+<pre><code class="language-python"># Debug step-by-step
+import socket
+
+def test_tcp_connection(host, port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        result = sock.connect_ex((host, port))
+        sock.close()
+
+        if result == 0:
+            print(f&quot;✅ Conexão TCP OK para {host}:{port}&quot;)
+            return True
+        else:
+            print(f&quot;❌ Não foi possível conectar em {host}:{port}&quot;)
+            return False
+    except Exception as e:
+        print(f&quot;❌ Erro na conexão: {e}&quot;)
+        return False
+
+# Testar conectividade
+test_tcp_connection('192.168.1.100', 502)
+</code></pre>
+<p><strong>Problema:</strong> <code>ModbusIOException: Modbus Error: [Invalid Message]</code></p>
+<pre><code class="language-python"># Verificar configurações do Modbus
+from pymodbus.client.sync import ModbusTcpClient
+
+client = ModbusTcpClient('192.168.1.100', port=502)
+client.connect()
+
+# Testar leitura simples
+try:
+    result = client.read_holding_registers(0, 1, unit=1)
+    if result.isError():
+        print(f&quot;Erro Modbus: {result}&quot;)
+    else:
+        print(f&quot;Valor lido: {result.registers[0]}&quot;)
+except Exception as e:
+    print(f&quot;Erro na leitura: {e}&quot;)
+finally:
+    client.close()
+</code></pre>
+<h4 id="siemens-s7-issues">Siemens S7 Issues</h4>
+<p><strong>Problema:</strong> <code>S7 Communication Error</code></p>
+<pre><code class="language-python"># Debug S7 connection
+import snap7
+from snap7.util import *
+
+def test_s7_connection(ip, rack=0, slot=1):
+    plc = snap7.client.Client()
+
+    try:
+        plc.connect(ip, rack, slot)
+        print(f&quot;✅ Conectado ao S7 PLC em {ip}&quot;)
+
+        # Testar leitura de DB
+        data = plc.db_read(1, 0, 2)  # DB1, offset 0, 2 bytes
+        value = get_int(data, 0)
+        print(f&quot;Valor lido do DB1: {value}&quot;)
+
+        return True
+    except Exception as e:
+        print(f&quot;❌ Erro S7: {e}&quot;)
+        return False
+    finally:
+        plc.disconnect()
+
+# Testar
+test_s7_connection('192.168.1.100')
+</code></pre>
+<h3 id="problemas-de-polling">Problemas de Polling</h3>
+<h4 id="polling-not-starting">Polling Not Starting</h4>
+<p><strong>Problema:</strong> Polling não inicia ou para inesperadamente</p>
+<pre><code class="language-python"># Debug no PollingManager
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Verificar logs específicos
+tail -f logs/polling.log | grep ERROR
+
+# Verificar se PLC está configurado corretamente
+from app import create_app
+from app.models.plc import PLC
+from app.models.register import Register
+
+app = create_app()
+with app.app_context():
+    plc = PLC.query.filter_by(ip_address='192.168.1.100').first()
+    if plc:
+        print(f&quot;PLC encontrado: {plc.name}&quot;)
+        print(f&quot;Protocolo: {plc.protocol}&quot;)
+        print(f&quot;Registradores ativos: {len([r for r in plc.registers if r.is_active])}&quot;)
+    else:
+        print(&quot;PLC não encontrado no banco de dados&quot;)
+</code></pre>
+<h4 id="high-cpu-usage-in-polling">High CPU Usage in Polling</h4>
+<p><strong>Problema:</strong> CPU alto durante polling</p>
+<pre><code class="language-python"># Ajustar intervalos e timeouts
+# Em app/config.py
+class Config:
+    POLLING_DEFAULT_INTERVAL = 2000  # Aumentar de 1000ms para 2000ms
+    POLLING_TIMEOUT = 10  # Aumentar timeout
+
+# Verificar número de registradores por polling
+# Dividir em múltiplos jobs se necessário
+</code></pre>
+<h3 id="problemas-de-performance">Problemas de Performance</h3>
+<h4 id="slow-database-queries">Slow Database Queries</h4>
+<p><strong>Problema:</strong> Queries lentas</p>
+<pre><code class="language-sql">-- Verificar queries lentas no PostgreSQL
+SELECT query, mean_time, calls 
+FROM pg_stat_statements 
+ORDER BY mean_time DESC 
+LIMIT 10;
+
+-- Verificar índices
+SELECT schemaname, tablename, indexname, indexdef
+FROM pg_indexes 
+WHERE tablename IN ('data_log', 'alarm', 'register');
+</code></pre>
+<p><strong>Solução:</strong> Adicionar índices</p>
+<pre><code class="language-python"># Em migrations ou manualmente
+CREATE INDEX idx_data_log_timestamp_plc ON data_log(timestamp, plc_id);
+CREATE INDEX idx_data_log_register_time ON data_log(register_id, timestamp);
+CREATE INDEX idx_alarm_state_priority ON alarm(state, priority);
+</code></pre>
+<h4 id="memory-leaks">Memory Leaks</h4>
+<p><strong>Problema:</strong> Uso crescente de memória</p>
+<pre><code class="language-python"># Debug memory usage
+import psutil
+import os
+
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    memory_mb = process.memory_info().rss / 1024 / 1024
+    print(f&quot;Uso de memória: {memory_mb:.2f} MB&quot;)
+
+# Adicionar ao polling loop
+log_memory_usage()
+</code></pre>
+<p><strong>Solução:</strong> Gerenciar conexões de banco</p>
+<pre><code class="language-python"># Em app/services/polling_service.py
+class DataProcessor:
+    def _process_data(self):
+        while self.running:
+            try:
+                # Processar dados
+                pass
+            finally:
+                # Importante: fechar sessões
+                db.session.remove()
+</code></pre>
+<h3 id="problemas-de-seguranca">Problemas de Segurança</h3>
+<h4 id="csrf-token-missing">CSRF Token Missing</h4>
+<p><strong>Problema:</strong> <code>The CSRF token is missing</code></p>
+<pre><code class="language-html">&lt;!-- Adicionar em todos os formulários --&gt;
+&lt;form method=&quot;POST&quot;&gt;
+    {{ csrf_token() }}
+    &lt;!-- ou --&gt;
+    &lt;input type=&quot;hidden&quot; name=&quot;csrf_token&quot; value=&quot;{{ csrf_token() }}&quot;/&gt;
+&lt;/form&gt;
+</code></pre>
+<h4 id="session-issues">Session Issues</h4>
+<p><strong>Problema:</strong> Usuário deslogado constantemente</p>
+<pre><code class="language-python"># Verificar configurações de sessão
+# Em app/config.py
+class Config:
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    SESSION_COOKIE_SECURE = False  # True apenas em HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+</code></pre>
+<h3 id="problemas-de-deploy">Problemas de Deploy</h3>
+<h4 id="nginx-502-bad-gateway">Nginx 502 Bad Gateway</h4>
+<p><strong>Problema:</strong> Erro 502 no Nginx</p>
+<pre><code class="language-bash"># Verificar se aplicação está rodando
+curl http://localhost:5000/api/health
+
+# Verificar logs do Nginx
+sudo tail -f /var/log/nginx/error.log
+
+# Verificar logs da aplicação
+sudo tail -f /var/log/supervisor/scada.log
+
+# Reiniciar serviços
+sudo supervisorctl restart scada
+sudo systemctl restart nginx
+</code></pre>
+<h4 id="permission-denied-issues">Permission Denied Issues</h4>
+<p><strong>Problema:</strong> Permissões incorretas em produção</p>
+<pre><code class="language-bash"># Corrigir propriedade dos arquivos
+sudo chown -R scada:scada /opt/scada
+sudo chmod -R 755 /opt/scada
+sudo chmod 600 /opt/scada/.env
+
+# Verificar logs de permissão
+sudo tail -f /var/log/auth.log | grep scada
+</code></pre>
+<h2 id="debug-tools-e-comandos-uteis">🔍 Debug Tools e Comandos Úteis</h2>
+<h3 id="verificacao-de-sistema">Verificação de Sistema</h3>
+<pre><code class="language-bash"># Status geral dos serviços
+systemctl status nginx postgresql redis supervisor
+
+# Uso de recursos
+top -u scada
+htop
+df -h
+free -h
+
+# Conexões de rede
+netstat -tulpn | grep :5000
+netstat -tulpn | grep :5432
+ss -tulpn | grep scada
+</code></pre>
+<h3 id="debug-de-aplicacao">Debug de Aplicação</h3>
+<pre><code class="language-python"># Debug mode no Flask
+# Em .env
+FLASK_ENV=development
+FLASK_DEBUG=1
+
+# Debug de SQL queries
+# Em app/config.py
+SQLALCHEMY_ECHO = True
+
+# Debug logging personalizado
+import logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(name)s %(levelname)s: %(message)s'
+)
+</code></pre>
+<h3 id="comandos-de-banco-de-dados">Comandos de Banco de Dados</h3>
+<pre><code class="language-bash"># PostgreSQL
+sudo -u postgres psql scada_prod
+
+# Verificar tamanho das tabelas
+SELECT 
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) AS size
+FROM pg_tables 
+WHERE schemaname = 'public'
+ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC;
+
+# Verificar conexões ativas
+SELECT * FROM pg_stat_activity WHERE datname = 'scada_prod';
+
+# SQLite (desenvolvimento)
+sqlite3 instance/scada.db
+.tables
+.schema user
+SELECT COUNT(*) FROM data_log;
+</code></pre>
+<h3 id="debug-de-protocolos">Debug de Protocolos</h3>
+<pre><code class="language-python"># Test script para Modbus
+#!/usr/bin/env python3
+import sys
+from pymodbus.client.sync import ModbusTcpClient
+
+def test_modbus(host, port=502):
+    client = ModbusTcpClient(host, port=port)
+
+    if client.connect():
+        print(f&quot;✅ Conectado ao Modbus em {host}:{port}&quot;)
+
+        # Testar diferentes tipos de registradores
+        tests = [
+            (&quot;Holding Registers&quot;, lambda: client.read_holding_registers(0, 10, unit=1)),
+            (&quot;Input Registers&quot;, lambda: client.read_input_registers(0, 10, unit=1)),
+            (&quot;Coils&quot;, lambda: client.read_coils(0, 10, unit=1)),
+            (&quot;Discrete Inputs&quot;, lambda: client.read_discrete_inputs(0, 10, unit=1)),
+        ]
+
+        for test_name, test_func in tests:
+            try:
+                result = test_func()
+                if not result.isError():
+                    print(f&quot;✅ {test_name}: OK&quot;)
+                else:
+                    print(f&quot;❌ {test_name}: {result}&quot;)
+            except Exception as e:
+                print(f&quot;❌ {test_name}: {e}&quot;)
+
+        client.close()
+    else:
+        print(f&quot;❌ Não foi possível conectar ao Modbus em {host}:{port}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    if len(sys.argv) != 2:
+        print(&quot;Uso: python test_modbus.py &lt;IP_DO_PLC&gt;&quot;)
+        sys.exit(1)
+
+    test_modbus(sys.argv[1])
+</code></pre>
+<pre><code class="language-python"># Test script para S7
+#!/usr/bin/env python3
+import sys
+import snap7
+
+def test_s7(host, rack=0, slot=1):
+    plc = snap7.client.Client()
+
+    try:
+        plc.connect(host, rack, slot)
+        print(f&quot;✅ Conectado ao S7 PLC em {host}&quot;)
+
+        # Informações do PLC
+        cpu_info = plc.get_cpu_info()
+        print(f&quot;CPU: {cpu_info}&quot;)
+
+        # Testar leitura de diferentes áreas
+        tests = [
+            (&quot;DB1 (2 bytes)&quot;, lambda: plc.db_read(1, 0, 2)),
+            (&quot;Inputs (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaPE, 0, 0, 1)),
+            (&quot;Outputs (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaPA, 0, 0, 1)),
+            (&quot;Merkers (1 byte)&quot;, lambda: plc.read_area(snap7.types.S7AreaMK, 0, 0, 1)),
+        ]
+
+        for test_name, test_func in tests:
+            try:
+                result = test_func()
+                print(f&quot;✅ {test_name}: {len(result)} bytes lidos&quot;)
+            except Exception as e:
+                print(f&quot;❌ {test_name}: {e}&quot;)
+
+    except Exception as e:
+        print(f&quot;❌ Erro S7: {e}&quot;)
+    finally:
+        plc.disconnect()
+
+if __name__ == &quot;__main__&quot;:
+    if len(sys.argv) != 2:
+        print(&quot;Uso: python test_s7.py &lt;IP_DO_PLC&gt;&quot;)
+        sys.exit(1)
+
+    test_s7(sys.argv[1])
+</code></pre>
+<h2 id="quando-pedir-ajuda">📞 Quando Pedir Ajuda</h2>
+<h3 id="informacoes-a-coletar">Informações a Coletar</h3>
+<p>Antes de reportar um problema, colete estas informações:</p>
+<ol>
+<li><strong>Versão do Sistema</strong></li>
+</ol>
+<pre><code class="language-bash">python --version
+pip list | grep -E &quot;(Flask|SQLAlchemy|pymodbus|snap7)&quot;
+cat /etc/os-release
+</code></pre>
+<ol>
+<li><strong>Logs Relevantes</strong></li>
+</ol>
+<pre><code class="language-bash"># Últimas 100 linhas de cada log
+tail -n 100 logs/app.log
+tail -n 100 /var/log/supervisor/scada.log
+tail -n 100 /var/log/nginx/error.log
+</code></pre>
+<ol>
+<li><strong>Configuração</strong></li>
+</ol>
+<pre><code class="language-bash"># Configuração sanitizada (sem senhas)
+grep -v &quot;PASSWORD\|SECRET\|KEY&quot; .env
+</code></pre>
+<ol>
+<li><strong>Status dos Serviços</strong></li>
+</ol>
+<pre><code class="language-bash">systemctl status nginx postgresql redis supervisor
+supervisorctl status
+</code></pre>
+<h3 id="canais-de-suporte">Canais de Suporte</h3>
+<ul>
+<li><strong>Issues no GitHub</strong>: Para bugs e feature requests</li>
+<li><strong>Email</strong>: suporte@scada.local</li>
+<li><strong>Documentação</strong>: https://github.com/seu-usuario/CLP_TCC2/wiki</li>
+</ul>
+<h3 id="template-para-reportar-problemas">Template para Reportar Problemas</h3>
+<pre><code class="language-markdown">## Descrição do Problema
+[Descreva o problema detalhadamente]
+
+## Passos para Reproduzir
+1. [Primeiro passo]
+2. [Segundo passo]
+3. [Terceiro passo]
+
+## Comportamento Esperado
+[O que deveria acontecer]
+
+## Comportamento Atual
+[O que está acontecendo]
+
+## Ambiente
+- OS: [Ubuntu 20.04, CentOS 8, etc.]
+- Python: [3.8.10]
+- Flask: [2.3.3]
+- Browser: [Chrome 115, Firefox 116, etc.]
+
+## Logs
+</code></pre>
+<p>[Cole os logs relevantes aqui]</p>
+<pre><code>
+## Screenshots
+[Se aplicável, adicione screenshots]
+</code></pre>
+<p>Este guia de troubleshooting deve cobrir a maioria dos problemas comuns que você pode encontrar. Mantenha-o atualizado conforme novos problemas e soluções surgirem!</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.top"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
