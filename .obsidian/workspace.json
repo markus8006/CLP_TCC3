@@ -1,0 +1,192 @@
+{
+  "main": {
+    "id": "53f4f697a8c8d58b",
+    "type": "split",
+    "children": [
+      {
+        "id": "9dbd1702e10bb2bf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e5bdda08cabd8f84",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "docs/DEVELOPMENT.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "DEVELOPMENT"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a24dbfa536372e9f",
+    "type": "split",
+    "children": [
+      {
+        "id": "7e1f11a83db37049",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b08e62fda62a02f7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "e02b19d9a715bdd1",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "803a6ca228bb175e",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "82679f3656463e70",
+    "type": "split",
+    "children": [
+      {
+        "id": "aa042b39b4c3b231",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4bae5ca29db63c01",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "docs/DEVELOPMENT.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for DEVELOPMENT"
+            }
+          },
+          {
+            "id": "9948151fbe82a558",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "docs/DEVELOPMENT.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from DEVELOPMENT"
+            }
+          },
+          {
+            "id": "b8139f4e0240f14b",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "0128f9fccb7ec1a1",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "docs/DEVELOPMENT.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of DEVELOPMENT"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "e5bdda08cabd8f84",
+  "lastOpenFiles": [
+    "src/app/layouts/index.html",
+    "src/app/layouts/base.html",
+    "src/app/layouts",
+    "src/app/views/routes/templates/layouts/index.html",
+    "src/app/views/routes/templates/layouts/base.html",
+    "src/app/views/routes/templates/layouts",
+    "src/app/views/routes/templates",
+    "src/app/views/templates/users_page/user_info.html",
+    "src/app/views/templates/users_page/users_base.html",
+    "src/app/views/templates/users_page/register.html",
+    "src/app/views/templates/users_page/login.html",
+    "src/app/views/static/imgs/clp_imagem.png",
+    "src/app/views/static/imgs/clp_imagem0.png",
+    "docs/INDEX.md",
+    "docs/TROUBLESHOOTING.md",
+    "docs/DEPLOYMENT.md",
+    "docs/DEVELOPMENT.md"
+  ]
+}

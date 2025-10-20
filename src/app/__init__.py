@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, Blueprint
 from src.utils.logs import logger
 from src.app.extensions import db, migrate, login_manager, csrf
 from src.app.config import config
@@ -7,6 +7,7 @@ from src.app.config import config
 
 
 def create_app(config_name='development'):
+    
     logger.process("Criando app")
     app = Flask(__name__)
     logger.info("app criado")
@@ -51,18 +52,17 @@ def create_app(config_name='development'):
         from src.models import AlarmDefinition, Alarm, AuditLog, DataLog, Register, Organization, PLC, SecurityEvent, User, UserRole
         with app.app_context():
             db.create_all()
+            logger.info("Registrando blueprints")
+            register_blueprints(app)
         logger.info("db criado")
     except Exception as e:
         logger.debug(f"Import models failed (ok for tests if models imported elsewhere). {e}")
 
-
-    # register_blueprints(app)
-
     return app
 
-# def register_blueprints(app):
-#     """Registra todos os blueprints"""
-#     from app.auth.routes import auth_bp
+def register_blueprints(app):
+     """Registra todos os blueprints"""
+     from src.app.views.routes.main_route import main as main_bp
 #     from app.web.main import main_bp
 #     from app.web.plc_management import plc_bp
 #     from app.web.user_management import user_bp
@@ -70,7 +70,7 @@ def create_app(config_name='development'):
 #     from app.web.polling_control import polling_bp
 #     from app.api import api_bp
     
-#     app.register_blueprint(auth_bp, url_prefix='/auth')
+     app.register_blueprint(main_bp)
 #     app.register_blueprint(main_bp)
 #     app.register_blueprint(plc_bp, url_prefix='/plc')
 #     app.register_blueprint(user_bp, url_prefix='/users')
@@ -79,18 +79,18 @@ def create_app(config_name='development'):
 #     app.register_blueprint(api_bp, url_prefix='/api')
 
 # def initialize_services(app):
-    """Inicializa serviços do sistema"""
-    from app.services.polling_service import PollingManager, DataProcessor
-    from app.services.backup_service import BackupManager
-    from app.services.security_service import AuditService
+#     """Inicializa serviços do sistema"""
+#     from app.services.polling_service import PollingManager, DataProcessor
+#     from app.services.backup_service import BackupManager
+#     from app.services.security_service import AuditService
     
-    # Polling system
-    app.polling_manager = PollingManager(app, db)
-    app.data_processor = DataProcessor(app, db, app.polling_manager)
+#     # Polling system
+#     app.polling_manager = PollingManager(app, db)
+#     app.data_processor = DataProcessor(app, db, app.polling_manager)
     
-    # Outros serviços
-    app.backup_manager = BackupManager(app)
-    app.audit_service = AuditService(db)
+#     # Outros serviços
+#     app.backup_manager = BackupManager(app)
+#     app.audit_service = AuditService(db)
     
-    # Iniciar processamento de dados
-    app.data_processor.start()
+#     # Iniciar processamento de dados
+#     app.data_processor.start()

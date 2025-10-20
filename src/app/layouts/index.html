@@ -1,0 +1,29 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}CLPs Detectados{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/layouts/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<h1>CLPs Detectados</h1>
+
+<div class="clp-grid">
+    {% if clps %}
+        {% for key, clp in clps.items() %}
+        <article class="clp-card">
+            <a href="/clp/{{ clp.ip }}">
+                <img class="clp-card__image" src="{{ url_for('static', filename='imgs/clp_imagem.png') }}" alt="Ícone de CLP">
+                <div class="clp-card__details">
+                    <p class="clp-card__nome">{{ clp.nome }}</p>
+                    <p class="clp-card__ip">{{ clp.ip_address }}</p>
+                </div>
+            </a>
+        </article>
+        {% endfor %}
+    {% else %}
+        <p>Nenhum CLP encontrado.</p>
+    {% endif %}
+</div>
+{% endblock %}
