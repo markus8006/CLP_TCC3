@@ -22,4 +22,29 @@ class User(db.Model):
     last_login = db.Column(db.DateTime)
     failed_login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime)
+
+    def is_admin(self):
+        return self.role == UserRole.ADMIN
     
+    def is_moderator(self):
+        return self.role == UserRole.MODERATOR
+    
+    def is_user(self):
+        return self.role == UserRole.USER
+    
+    def has_permission(self, min_role):
+
+        hierarchy = {
+            UserRole.USER: 1,
+            UserRole.MODERATOR: 2,
+            UserRole.ADMIN: 3
+        }
+    
+        if isinstance(min_role, str):
+            try: 
+                min_role = UserRole(min_role)
+            except:
+                raise ValueError(f"Role: {min_role} invalida")
+        user_level = hierarchy.get(self.role, 0)
+        required_level = hierarchy.get(min_role, 0)
+        return user_level >= required_level
