@@ -8,7 +8,12 @@ from src.manager.client_polling_manager import SimpleManager, wait_for_port
 from src.simulations.modbus_simulation import (add_register_test_modbus,
                                                 start_modbus_simulator)
 from src.utils.logs import logger
-from src.services.client_polling_service import run_async_polling
+from src.models.Alarms import AlarmDefinition
+from src.repository.Alarms_repository import AlarmRepo
+from src.repository.Registers_repository import RegRepo
+
+
+AlarmRepo = AlarmRepo()
 
 # --- Configurações ---
 HOST = "127.0.0.1"
@@ -60,6 +65,16 @@ if __name__ == "__main__":
             add_register_test_modbus(plc_name="PLCMod2", host="127.0.0.2", port=5020, address=0)
         
         logger.info("Dados de teste configurados.")
+
+
+        #cria o alarm
+        alarm = AlarmDefinition(
+            id = 1,
+            plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
+            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
+            name = "alarmTeste",
+        )
+        AlarmRepo.add(alarm)
 
     # ETAPA 3: Iniciar o serviço de polling em background
     

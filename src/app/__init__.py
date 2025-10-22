@@ -62,8 +62,8 @@ def create_app(config_name='development'):
 
 def register_blueprints(app):
      """Registra todos os blueprints"""
-     from src.app.views.routes.main_route import main as main_bp
-     from src.app.views.routes.clps_routes.detalhes_clp import clp_bp
+     from src.app.routes.main_route import main as main_bp
+     from src.app.routes.clps_routes.detalhes_clp import clp_bp
 #     from app.web.plc_management import plc_bp
 #     from app.web.user_management import user_bp
 #     from app.web.alarm_views import alarm_bp

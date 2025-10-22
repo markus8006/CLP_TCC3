@@ -22,4 +22,4 @@ def clps() -> dict:
 @main.route('/', methods=['GET', 'POST'])
 def index():
     print(clps())
-    return render_template("layouts/index.html", clps=clps())
+    return render_template("index/index.html", clps=clps())
