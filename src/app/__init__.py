@@ -63,7 +63,7 @@ def create_app(config_name='development'):
 def register_blueprints(app):
      """Registra todos os blueprints"""
      from src.app.views.routes.main_route import main as main_bp
-#     from app.web.main import main_bp
+     from src.app.views.routes.clps_routes.detalhes_clp import clp_bp
 #     from app.web.plc_management import plc_bp
 #     from app.web.user_management import user_bp
 #     from app.web.alarm_views import alarm_bp
@@ -71,7 +71,7 @@ def register_blueprints(app):
 #     from app.api import api_bp
     
      app.register_blueprint(main_bp)
-#     app.register_blueprint(main_bp)
+     app.register_blueprint(clp_bp)
 #     app.register_blueprint(plc_bp, url_prefix='/plc')
 #     app.register_blueprint(user_bp, url_prefix='/users')
 #     app.register_blueprint(alarm_bp, url_prefix='/alarms')

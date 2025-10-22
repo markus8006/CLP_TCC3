@@ -67,15 +67,15 @@ if __name__ == "__main__":
     polling_manager = SimpleManager()
     
     # 3.2. Inicia a thread do serviço, injetando o app e o gerente
-    polling_service_thread = threading.Thread(
-        target=run_async_polling,
-        args=(app, polling_manager),  # Passa o gerente como argumento
-        daemon=True
-    )
-    polling_service_thread.start()
+    # polling_service_thread = threading.Thread(
+    #     target=run_async_polling,
+    #     args=(app, polling_manager),  # Passa o gerente como argumento
+    #     daemon=True
+    # )
+    # polling_service_thread.start()
     logger.info("Serviço de polling rodando em background.")
 
     # ETAPA 4: Iniciar o Servidor Web Flask (Aplicação Principal)
-    logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
+    logger.process("Iniciando servidor Flask em http://0.0.0.0:5001")
     # use_reloader=False é importante ao rodar serviços em threads
-    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=5001, debug=True, use_reloader=False)

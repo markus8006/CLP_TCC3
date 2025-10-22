@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template
-from flask_login import current_user
+from flask_login import current_user, login_required
 from src.repository.PLC_repository import Plcrepo
+from src.utils import role_required
 
-main = Blueprint('main', __name__, template_folder=)
+main = Blueprint('main', __name__)
 
 
 def clps() -> dict: 
@@ -14,7 +15,8 @@ def clps() -> dict:
     return plc_dict
 
 
-
+# @login_required
+# @role_required("user")
 @main.route('/', methods=['GET', 'POST'])
 def index():
     print(clps())

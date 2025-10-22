@@ -13,7 +13,7 @@
     {% if clps %}
         {% for key, clp in clps.items() %}
         <article class="clp-card">
-            <a href="/clp/{{ clp.ip }}">
+            <a href="/clp/{{ clp.ip_address }}">
                 <img class="clp-card__image" src="{{ url_for('static', filename='imgs/clp_imagem.png') }}" alt="Ícone de CLP">
                 <div class="clp-card__details">
                     <p class="clp-card__nome">{{ clp.nome }}</p>
