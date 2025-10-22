@@ -1,11 +1,17 @@
 {% extends "layouts/base.html" %}
 
+
+<!--Titulo-->
 {% block title %}CLPs Detectados{% endblock %}
 
+
+<!--Sttyle-->
 {% block css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles/layouts/index.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/index/index.css') }}">
 {% endblock %}
 
+
+<!--Conteudo principal-->
 {% block content %}
 <h1>CLPs Detectados</h1>
 

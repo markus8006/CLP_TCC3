@@ -1,0 +1,149 @@
+/* --- Layout Geral e Reset Básico --- */
+:root {
+    --primary-color: #8400ff;
+    --secondary-color: #cc00ff;
+    --dark-bg: #0a0018;
+    --light-dark-bg: #1b0030;
+    --text-color: whitesmoke;
+    --text-muted: #adb5bd;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    color: var(--text-color);
+    background: radial-gradient(circle at top left, var(--dark-bg) 0%, #090016 90%, #1b0030 100%);
+    min-height: 100vh;
+}
+
+a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--text-color);
+}
+
+h1, h2 {
+    color: var(--secondary-color);
+    text-shadow: 0 2px 8px rgba(8, 0, 20, 0.2);
+    letter-spacing: 1px;
+}
+
+.main-content {
+    padding: 20px;
+    margin-left: 60px; /* Espaço para o menu fechado */
+    transition: margin-left 0.3s;
+}
+
+/* --- Navegação / Sidebar --- */
+#menuBtn {
+    font-size: 24px;
+    cursor: pointer;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    color: #6e0096;
+    z-index: 1001; /* Maior que o sidenav */
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+#menuBtn:hover {
+    color: white;
+    background: #6e0096;
+    transform: scale(1.1);
+}
+
+.sidenav {
+    height: 100%;
+    width: 0; /* Começa fechado */
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    background: linear-gradient(160deg, #111 40%, #6e0096 100%);
+    overflow-x: hidden;
+    transition: 0.3s;
+    padding-top: 80px; /* Espaço para o botão não sobrepor */
+}
+
+.sidenav nav a {
+    padding: 10px 24px;
+    font-size: 20px;
+    display: block;
+}
+
+/* Classe para ser controlada via JS */
+.sidenav-open {
+    width: 250px;
+}
+.main-content-shifted {
+    margin-left: 250px;
+}
+
+
+
+/* BOOTSTRAP */
+.navbar.bg-dark {
+            background: linear-gradient(160deg, #111 40%, #1b0030 100%) !important;
+            border-bottom: 1px solid var(--primary-color);
+        }
+
+        .navbar-brand {
+            color: var(--secondary-color) !important;
+            font-weight: bold;
+        }
+
+        .navbar-brand:hover {
+            color: var(--text-color) !important;
+        }
+
+        .nav-link {
+            color: var(--text-muted) !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-color) !important;
+            transform: translateY(-2px);
+        }
+        
+        .navbar-text {
+            color: var(--text-muted);
+        }
+        
+        /* Cor do ícone do menu hamburger */
+        .navbar-dark .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(204, 0, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        .navbar-toggler {
+            border-color: rgba(132, 0, 255, 0.5);
+        }
+
+        /* --- Estilização dos Alertas --- */
+        .alert {
+            background-color: var(--light-dark-bg);
+            border: 1px solid var(--secondary-color);
+            color: var(--text-color);
+        }
+        .alert .close {
+            color: var(--text-color);
+        }
+        .alert a {
+            font-weight: bold;
+        }
+        .alert-success { border-color: #28a745; }
+        .alert-danger { border-color: #dc3545; }
+        .alert-warning { border-color: #ffc107; }
+        .alert-info { border-color: #17a2b8; }

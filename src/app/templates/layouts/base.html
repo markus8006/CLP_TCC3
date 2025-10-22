@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!--Titulo-->
     <title>{% block title %}Minha Aplicação{% endblock %}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+
+    <!--Styles-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/layouts/base.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     {% block css %}{% endblock %}
 
 
@@ -33,6 +38,8 @@
   {% endif %}
 {% endwith %}
 
+
+    <!--NavBar-->
     <button id="menuBtn">☰</button>
     <div id="mySidenav" class="sidenav">
         <nav>
@@ -45,10 +52,14 @@
 
     </div>
 
+
+    <!--Conteudo principal-->
     <main id="main-content" class="main-content">
         {% block content %}{% endblock %}
     </main>
 
+
+    <!--Scripts-->
     <script src="{{ url_for('static', filename='scripts/sidebar.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
