@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from src.app.routes.login_routes.forms_auht import LoginForm, RegistrationForm
 from src.models.Users import User, UserRole
-from src.utils.role import role_required
+from src.utils import role_required
 from src.app import db 
 
 # Cria um Blueprint para as rotas de autenticação
