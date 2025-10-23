@@ -13,6 +13,17 @@ class AlarmDefinitionRepo(BaseRepo):
 
     def list_by_plc(self, plc_id: int) -> List[AlarmDefinition]:
         return self.find_by(plc_id=plc_id)
+    
+    def get_by_register_id(self, register_id: int) -> Optional[AlarmDefinition]:
+        return self.first_by(register_id=register_id, is_active=True)
+
+    def list_by_plc_and_register(self, plc_id: int, register_id: int) -> List[AlarmDefinition]:
+        return self.find_by(plc_id=plc_id, register_id=register_id, is_active=True)
+    
+    def get_active_by_definition(self, alarm_definition_id: int) -> Optional[Alarm]:
+        return self.first_by(alarm_definition_id=alarm_definition_id, state='ACTIVE')
+
+
 
 
 class AlarmRepo(BaseRepo):

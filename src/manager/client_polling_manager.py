@@ -1,4 +1,4 @@
-# src/services/client_service.py
+# src/manager/client_polling_manager.py
 import asyncio
 import time
 import socket

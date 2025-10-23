@@ -9,11 +9,15 @@ from src.simulations.modbus_simulation import (add_register_test_modbus,
                                                 start_modbus_simulator)
 from src.utils.logs import logger
 from src.models.Alarms import AlarmDefinition
-from src.repository.Alarms_repository import AlarmRepo
+from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.Registers_repository import RegRepo
+from src.models.Alarms import AlarmDefinition
+from src.services.client_polling_service import run_async_polling
 
 
-AlarmRepo = AlarmRepo()
+AlarmRepo = AlarmDefinitionRepo()
+
+
 
 # --- Configurações ---
 HOST = "127.0.0.1"
@@ -69,26 +73,28 @@ if __name__ == "__main__":
 
         #cria o alarm
         alarm = AlarmDefinition(
-            id = 1,
             plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
             register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
             name = "alarmTeste",
+            setpoint = 10
         )
         AlarmRepo.add(alarm)
 
     # ETAPA 3: Iniciar o serviço de polling em background
     
     # 3.1. Cria a instância única do gerente de polling
-    polling_manager = SimpleManager()
+        polling_manager = SimpleManager()
     
-    # 3.2. Inicia a thread do serviço, injetando o app e o gerente
-    # polling_service_thread = threading.Thread(
-    #     target=run_async_polling,
-    #     args=(app, polling_manager),  # Passa o gerente como argumento
-    #     daemon=True
-    # )
-    # polling_service_thread.start()
-    logger.info("Serviço de polling rodando em background.")
+    #3.2. Inicia a thread do serviço, injetando o app e o gerente
+        polling_service_thread = threading.Thread(
+         target=run_async_polling,
+         args=(app, polling_manager),  # Passa o gerente como argumento
+         daemon=True
+        )
+        polling_service_thread.start()
+        logger.info("Serviço de polling rodando em background.")
+
+
 
     # ETAPA 4: Iniciar o Servidor Web Flask (Aplicação Principal)
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5001")

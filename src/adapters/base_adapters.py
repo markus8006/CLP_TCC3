@@ -1,7 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
+from src.repository.Alarms_repository import AlarmDefinitionRepo
+
+
+
 
 class BaseAdapter(ABC):
+    def __inti__(self):
+        AlarmRepo = AlarmDefinitionRepo()
     
     @abstractmethod
     async def connect(self) -> bool:
@@ -27,3 +33,8 @@ class BaseAdapter(ABC):
     def is_connected(self) -> bool:
         """Verifica se está conectado"""
         pass
+
+    def _verify_alarm(self, id):
+        return AlarmRepo.alarm_by_register_id(id)
+
+

@@ -67,6 +67,7 @@ class ModbusAdapter:
             addr = int(getattr(register_config, "address", 0))
             reg_type = getattr(register_config, 'register_type', 'holding')
             slave = int(getattr(register_config, "slave", 1))
+            id = int(getattr(register_config, "id"))
 
             if reg_type == 'holding':
                 print(slave)
@@ -93,6 +94,10 @@ class ModbusAdapter:
                 raw_value = None
 
             converted_value = self._convert_value(raw_value, getattr(register_config, 'data_type', 'int16'))
+
+            
+
+
 
             return {
                 'register_id': getattr(register_config, 'id'),

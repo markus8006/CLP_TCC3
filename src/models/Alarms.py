@@ -26,12 +26,11 @@ class AlarmDefinition(db.Model):
     # deadband/hysteresis em unidades da variável (ex.: 0.5)
     deadband = db.Column(db.Float, default=0.0)
 
-    priority = db.Column(db.String(20), default='MEDIUM')
+    priority = db.Column(db.String(20), default='ADMIN')
     is_active = db.Column(db.Boolean, default=True)
     auto_acknowledge = db.Column(db.Boolean, default=False)
 
     email_enabled = db.Column(db.Boolean, default=False)
-    email_recipients = db.Column(db.Text)
 
     # opcional: severidade numérica para ordenação/alertas
     severity = db.Column(db.Integer, default=3)

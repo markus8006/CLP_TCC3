@@ -1,4 +1,4 @@
-# tests/unit_test_alarm_service.py
+# tests/test_alarm.py
 import sys
 from datetime import datetime, timezone
 
