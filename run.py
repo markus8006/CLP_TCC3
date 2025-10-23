@@ -72,18 +72,25 @@ if __name__ == "__main__":
 
 
         #cria o alarm
-        alarm = AlarmDefinition(
+
+        exists = AlarmRepo.first_by(
             plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
             register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
-            name = "alarmTeste",
-            setpoint = 10
         )
-        AlarmRepo.add(alarm)
+        print(exists)
+        if not exists:
+            alarm = AlarmDefinition(
+                plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
+                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
+                name = "alarmTeste",
+                setpoint = 10
+            )
+            AlarmRepo.add(alarm)
 
     # ETAPA 3: Iniciar o serviço de polling em background
     
     # 3.1. Cria a instância única do gerente de polling
-        polling_manager = SimpleManager()
+        polling_manager = SimpleManager(app)
     
     #3.2. Inicia a thread do serviço, injetando o app e o gerente
         polling_service_thread = threading.Thread(

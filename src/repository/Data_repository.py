@@ -26,7 +26,7 @@ class DataLogRepo(BaseRepo):
             logger.exception("Erro list_recent datalog plc=%s reg=%s", plc_id, register_id)
             return []
 
-    def bulk_insert(self, records: Iterable[Dict[str, Any]], commit: bool = True, batch_size: int = 1000) -> int:
+    def bulk_insert(self, records: Iterable[Dict[str, Any]], commit: bool = True, batch_size: int = 10) -> int:
         """Insere muitos registros de uma vez.
 
         records: iterável de dicionários compatíveis com o modelo DataLog (keys: plc_id, register_id, timestamp, raw_value, value_float...)

@@ -28,7 +28,7 @@ def wait_for_port(host: str, port: int, timeout: float = 8.0, interval: float = 
 
 # ---------- Active client (async) que mantém uma conexão por PLC ----------
 class ActivePLCPoller:
-    def __init__(self, plc_orm: PLC, registers_provider: Any):
+    def __init__(self, plc_orm: PLC, registers_provider: Any, flask_app):
         """
         plc_orm: PLC SQLAlchemy object
         registers_provider: callable (sync or async) -> list of register dicts
@@ -39,6 +39,7 @@ class ActivePLCPoller:
         self._task: Optional[asyncio.Task] = None
         self._stop = False
         self._backoff = 1.0
+        self.context = flask_app
 
         self.alarm_service = AlarmService()
         self.datalog_repo = DataLogRepo()
@@ -55,28 +56,29 @@ class ActivePLCPoller:
         IMPORTANTE: essa função é síncrona e deve rodar em executor para não bloquear o loop.
         """
         # note: alarm_service e datalog_repo usam sessões síncronas (Flask-SQLAlchemy).
-        try:
-            for rec in batch:
-                plc_id = rec.get('plc_id')
-                register_id = rec.get('register_id')
-                value = rec.get('value_float')
-                try:
+        with self.context.app_context():
+            try:
+                for rec in batch:
+                    plc_id = rec.get('plc_id')
+                    register_id = rec.get('register_id')
+                    value = rec.get('value_float')
+                    try:
                     # check_and_handle retorna True se disparou alarme
-                    triggered = self.alarm_service.check_and_handle(plc_id, register_id, value)
-                    if triggered:
-                        rec['is_alarm'] = True
-                except Exception:
+                        triggered = self.alarm_service.check_and_handle(plc_id, register_id, value)
+                        if triggered:
+                            rec['is_alarm'] = True
+                    except Exception:
                     # garantir que uma exceção em um registro não pare o resto
-                    logger.exception("Erro em AlarmService para plc=%s reg=%s", plc_id, register_id)
+                        logger.exception("Erro em AlarmService para plc=%s reg=%s", plc_id, register_id)
 
             # após processar os alarms, insere tudo em lote
-            try:
+                try:
                 # adapte para os campos que seu DataLogRepo espera
-                self.datalog_repo.bulk_insert(batch)
+                    self.datalog_repo.bulk_insert(batch)
+                except Exception:
+                    logger.exception("Erro ao inserir batch de DataLog")
             except Exception:
-                logger.exception("Erro ao inserir batch de DataLog")
-        except Exception:
-            logger.exception("Erro geral em _process_batch_sync")
+                logger.exception("Erro geral em _process_batch_sync")
 
     def _key(self) -> str:
         return f"{self.plc_orm.ip_address}|{self.plc_orm.vlan_id or 0}"
@@ -160,9 +162,10 @@ class ActivePLCPoller:
 
 # ---------- Simple manager that keeps pollers by key (ip|vlan) ----------
 class SimpleManager:
-    def __init__(self):
+    def __init__(self, flask_app):
         self._pollers: Dict[str, ActivePLCPoller] = {}
         self._lock = asyncio.Lock()
+        self.flask_app = flask_app
 
     @staticmethod
     def make_key(ip: str, vlan: Optional[int]) -> str:
@@ -174,7 +177,7 @@ class SimpleManager:
             if key in self._pollers:
                 logger.info(f"PLC already managed: {key}")
                 return self._pollers[key]
-            poller = ActivePLCPoller(plc_orm, registers_provider)
+            poller = ActivePLCPoller(plc_orm, registers_provider, flask_app=self.flask_app)
             self._pollers[key] = poller
             await poller.start()
             logger.info(f"Added plc poller {key}")

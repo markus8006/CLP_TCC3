@@ -1,10 +1,13 @@
+# src/adapters/modbus_adapter.py
 import asyncio
 from pymodbus.client import AsyncModbusTcpClient
 import logging
-from typing import List, Dict, Optional, Any
-from src.repository.PLC_repository import Plcrepo  # ajuste se necessário
+from typing import Optional, Any, Dict
+from src.repository.PLC_repository import Plcrepo
+from datetime import datetime, timezone  # ← IMPORTANTE: Importar datetime
 
 logger = logging.getLogger(__name__)
+
 
 class ModbusAdapter:
     def __init__(self, orm):
@@ -18,23 +21,24 @@ class ModbusAdapter:
     async def connect(self) -> bool:
         """Conecta ao PLC (async)."""
         try:
-            self.client = AsyncModbusTcpClient(host=self.ip_address, port=self.port, timeout=self.timeout)
+            self.client = AsyncModbusTcpClient(
+                host=self.ip_address, 
+                port=self.port, 
+                timeout=self.timeout
+            )
             await self.client.connect()
-            # alguns clients definem .connected
             self._connected = getattr(self.client, "connected", True)
+            
             if self._connected:
                 logger.info("Conectado ao PLC %s:%s", self.ip_address, self.port)
-                # Atualizar ORM e persistir via repo — ajuste Plcrepo.update conforme sua implementação
                 try:
                     self.orm.is_online = True
-                    # Se Plcrepo.update for método de classe/estático que aceita instância:
                     Plcrepo.update(self.orm)
                 except Exception:
-                    # Se seu repo precisar ser instanciado com db/session, faça isso no seu código real
-                    logger.debug("Não foi possível atualizar Plcrepo automaticamente (verifique a API do repo).")
+                    logger.debug("Não foi possível atualizar Plcrepo.")
             return self._connected
         except Exception as e:
-            logger.exception("Erro ao conectar PLC %s: %s", self.ip_address, self.port, e)
+            logger.exception("Erro ao conectar PLC %s:%s", self.ip_address, self.port)
             self._connected = False
             return False
 
@@ -58,7 +62,10 @@ class ModbusAdapter:
             logger.exception("Erro ao desconectar do PLC %s", self.ip_address)
 
     async def read_register(self, register_config: Any) -> Optional[Dict]:
-        """Lê um único registrador (async)."""
+        """
+        Lê um único registrador (async).
+        IMPORTANTE: Apenas lê o valor, NÃO verifica alarmes aqui.
+        """
         if not self._connected or self.client is None:
             logger.debug("Tentativa de leitura sem conexão.")
             return None
@@ -67,10 +74,11 @@ class ModbusAdapter:
             addr = int(getattr(register_config, "address", 0))
             reg_type = getattr(register_config, 'register_type', 'holding')
             slave = int(getattr(register_config, "slave", 1))
-            id = int(getattr(register_config, "id"))
+            register_id = int(getattr(register_config, "id"))
+            data_type = getattr(register_config, 'data_type', 'int16')
 
+            # Lê baseado no tipo de registrador
             if reg_type == 'holding':
-                print(slave)
                 resp = await self.client.read_holding_registers(addr, count=1, slave=slave)
             elif reg_type == 'input':
                 resp = await self.client.read_input_registers(addr, 1, slave=slave)
@@ -79,50 +87,55 @@ class ModbusAdapter:
             else:
                 logger.warning("Tipo de registrador desconhecido: %s", reg_type)
                 return None
-            
 
+            # Verifica erro na resposta
             if hasattr(resp, "isError") and resp.isError():
                 logger.warning("Resposta com erro do PLC: %s", resp)
                 return None
 
-            # extrair raw
+            # Extrai valor bruto
+            raw_value = None
             if hasattr(resp, "registers") and resp.registers:
                 raw_value = resp.registers[0]
             elif hasattr(resp, "bits") and resp.bits:
                 raw_value = int(resp.bits[0])
-            else:
-                raw_value = None
 
-            converted_value = self._convert_value(raw_value, getattr(register_config, 'data_type', 'int16'))
+            # Converte o valor
+            value_float = self._convert_value(raw_value, data_type)
+            value_int = int(raw_value) if raw_value is not None else None
 
-            
-
-
-
+            # ✅ CORREÇÃO AQUI: Use datetime.now(timezone.utc)
             return {
-                'register_id': getattr(register_config, 'id'),
+                'plc_id': getattr(self.orm, 'id', None),
+                'register_id': register_id,
                 'raw_value': raw_value,
-                'converted_value': converted_value,
+                'value_float': value_float,
+                'value_int': value_int,
                 'quality': 'good' if raw_value is not None else 'bad',
-                'timestamp': asyncio.get_event_loop().time()
+                'timestamp': datetime.now(timezone.utc)  # ← ✅ CORRETO! datetime object
             }
+            
         except Exception as e:
             logger.exception("Erro ao ler registrador %s: %s", register_config, e)
             return None
 
     def _convert_value(self, raw_value: int, data_type: str) -> Optional[float]:
+        """Converte valor bruto baseado no tipo de dado."""
         if raw_value is None:
             return None
         try:
             if data_type == 'int16':
-                return raw_value - 65536 if raw_value > 32767 else raw_value
-            if data_type == 'uint16':
+                return float(raw_value - 65536 if raw_value > 32767 else raw_value)
+            elif data_type == 'uint16':
                 return float(raw_value)
-            if data_type == 'bool':
+            elif data_type == 'bool':
                 return float(bool(raw_value))
-            return float(raw_value)
+            else:
+                return float(raw_value)
         except Exception:
+            logger.warning("Erro ao converter valor %s para tipo %s", raw_value, data_type)
             return None
 
     def is_connected(self) -> bool:
+        """Verifica se está conectado."""
         return self._connected and (self.client is not None)
