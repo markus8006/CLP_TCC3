@@ -26,12 +26,7 @@ class DataLogRepo(BaseRepo):
             logger.exception("Erro list_recent datalog plc=%s reg=%s", plc_id, register_id)
             return []
 
-    def bulk_insert(self, records: Iterable[Dict[str, Any]], commit: bool = True, batch_size: int = 10) -> int:
-        """Insere muitos registros de uma vez.
-
-        records: iterável de dicionários compatíveis com o modelo DataLog (keys: plc_id, register_id, timestamp, raw_value, value_float...)
-        Retorna número de registros inseridos (apenas tentativa).
-        """
+    def bulk_insert(self, records: Iterable[Dict[str, Any]], commit: bool = True, batch_size: int = 1000) -> int:
         objs = []
         inserted = 0
         try:
@@ -48,6 +43,20 @@ class DataLogRepo(BaseRepo):
                 if commit:
                     self.session.commit()
                 inserted += len(objs)
+
+            # Limpa registros antigos por plc_id e register_id, mantendo no máximo 30
+            keys = set((rec['plc_id'], rec['register_id']) for rec in records)
+            for plc_id, register_id in keys:
+                subquery = (self.session.query(self.model.id)
+                                    .filter_by(plc_id=plc_id, register_id=register_id)
+                                    .order_by(self.model.timestamp.desc())
+                                    .offset(30)
+                                    )
+                old_ids = [r[0] for r in subquery.all()]
+                if old_ids:
+                    self.session.query(self.model).filter(self.model.id.in_(old_ids)).delete(synchronize_session=False)
+                    if commit:
+                        self.session.commit()
             return inserted
         except SQLAlchemyError:
             self.session.rollback()
