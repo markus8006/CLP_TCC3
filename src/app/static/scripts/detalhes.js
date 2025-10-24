@@ -256,28 +256,34 @@ function processApiPayload(payload) {
         dataByRegister[rid].push(p);
     }
 
+    const MAX_POINTS = 100;
+
     for (const rid of registers) {
-        const series = dataByRegister[rid] || [];
-        series.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const series = (dataByRegister[rid] || []).slice().sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        let buffer = chartDataBuffers.get(rid);
-        if (!buffer) buffer = { labels: [], values: [], rawPoints: [] };
+        // --- Novo comportamento: resetar os buffers com os dados da resposta ---
+        const newLabels = [];
+        const newValues = [];
+        const newRawPoints = [];
+        const seenTs = new Set();
 
-        const seen = new Set(buffer.rawPoints.map(p => p.timestamp));
         for (const pt of series) {
-            if (seen.has(pt.timestamp)) continue;
+            if (seenTs.has(pt.timestamp)) continue;
+            seenTs.add(pt.timestamp);
+
             const value = Number(pt.value_float ?? pt.value_int ?? pt.raw_value ?? NaN);
             const def = defsByRegister[rid];
             const violated = violatesCondition(value, def);
-            buffer.labels.push(fmtShort(pt.timestamp));
-            buffer.values.push(value);
-            buffer.rawPoints.push({ timestamp: pt.timestamp, value, violated, payload: pt });
-            if (buffer.labels.length > 100) {
-                buffer.labels.shift();
-                buffer.values.shift();
-                buffer.rawPoints.shift();
-            }
+
+            newLabels.push(fmtShort(pt.timestamp));
+            newValues.push(value);
+            newRawPoints.push({ timestamp: pt.timestamp, value, violated, payload: pt });
+
+            if (newLabels.length >= MAX_POINTS) break;
         }
+
+        // substitui o buffer por completo (reset)
+        const buffer = { labels: newLabels, values: newValues, rawPoints: newRawPoints };
         chartDataBuffers.set(rid, buffer);
 
         const unit = (series.at(-1)?.unit) ?? (defsByRegister[rid]?.unit) ?? '';
