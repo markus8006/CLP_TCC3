@@ -8,6 +8,7 @@ clp_bp = Blueprint("clp_bp", __name__)
 
 
 @clp_bp.route("/clp/<ip>", methods=["GET"])
+@login_required
 def clp(ip):
     CLP = Plcrepo.first_by(ip_address = ip).__dict__
     return render_template("clp/detalhes.html", clp=CLP)

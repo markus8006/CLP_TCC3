@@ -13,6 +13,7 @@ from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.Registers_repository import RegRepo
 from src.models.Alarms import AlarmDefinition
 from src.services.client_polling_service import run_async_polling
+import logging
 
 
 AlarmRepo = AlarmDefinitionRepo()
@@ -25,7 +26,7 @@ MODBUS_PORT = 5020
 
 # --- Cria a Aplicação Flask ---
 app = create_app()
-
+logger.setLevel(logging.ERROR)
 
 # --- Inicialização e Execução ---
 if __name__ == "__main__":
@@ -77,7 +78,6 @@ if __name__ == "__main__":
             plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
             register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
         )
-        print(exists)
         if not exists:
             alarm = AlarmDefinition(
                 plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
@@ -93,13 +93,13 @@ if __name__ == "__main__":
         polling_manager = SimpleManager(app)
     
     #3.2. Inicia a thread do serviço, injetando o app e o gerente
-        # polling_service_thread = threading.Thread(
-        # target=run_async_polling,
-        # args=(app, polling_manager),  # Passa o gerente como argumento
-        # daemon=True
-        # )
-        # polling_service_thread.start()
-        # logger.info("Serviço de polling rodando em background.")
+        polling_service_thread = threading.Thread(
+        target=run_async_polling,
+        args=(app, polling_manager),  # Passa o gerente como argumento
+        daemon=True
+        )
+        polling_service_thread.start()
+        logger.info("Serviço de polling rodando em background.")
 
 
 
@@ -107,3 +107,5 @@ if __name__ == "__main__":
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
     # use_reloader=False é importante ao rodar serviços em threads
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+
+    

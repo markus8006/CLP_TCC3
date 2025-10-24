@@ -62,3 +62,6 @@ class DataLogRepo(BaseRepo):
             self.session.rollback()
             logger.exception("Erro bulk_insert DataLog")
             raise
+
+
+DataRepo = DataLogRepo()

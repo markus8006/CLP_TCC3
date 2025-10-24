@@ -24,3 +24,4 @@ class DataLog(db.Model):
 
     def __repr__(self):
         return f"<DataLog plc={self.plc_id} reg={self.register_id} ts={self.timestamp} alarm={self.is_alarm}>"
+

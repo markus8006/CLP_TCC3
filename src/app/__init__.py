@@ -63,6 +63,8 @@ def create_app(config_name='development'):
     except Exception as e:
         logger.debug(f"Import models failed (ok for tests if models imported elsewhere). {e}")
 
+
+
     return app
 
 def register_blueprints(app):
@@ -70,15 +72,17 @@ def register_blueprints(app):
     from src.app.routes.main_route import main as main_bp
     from src.app.routes.clps_routes.detalhes_clp import clp_bp
     from src.app.routes.login_routes.auth_routes import auth_bp
-#     from app.web.user_management import user_bp
-#     from app.web.alarm_views import alarm_bp
+    from src.app.routes.api.api_routes import api_bp
+#   from app.web.alarm_views import alarm_bp
 #     from app.web.polling_control import polling_bp
 #     from app.api import api_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(clp_bp)
     app.register_blueprint(auth_bp)
-#     app.register_blueprint(user_bp, url_prefix='/users')
+    logger.info("INICIANDO API")
+    app.register_blueprint(api_bp, url_prefix='/api')
+    logger.info("FIM API")
 #     app.register_blueprint(alarm_bp, url_prefix='/alarms')
 #     app.register_blueprint(polling_bp, url_prefix='/polling')
 #     app.register_blueprint(api_bp, url_prefix='/api')

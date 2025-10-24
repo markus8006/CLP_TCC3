@@ -10,7 +10,7 @@ from src.models.PLCs import PLC
 from concurrent.futures import ThreadPoolExecutor
 
 from src.services.Alarms_service import AlarmService
-from src.repository.Data_repository import DataLogRepo
+from src.repository.Data_repository import DataRepo
 
 
 
@@ -42,7 +42,7 @@ class ActivePLCPoller:
         self.context = flask_app
 
         self.alarm_service = AlarmService()
-        self.datalog_repo = DataLogRepo()
+        self.datalog_repo = DataRepo
         # executor para operações bloqueantes com DB
         self._executor = ThreadPoolExecutor(max_workers=2)
 
@@ -124,6 +124,7 @@ class ActivePLCPoller:
                 results_batch = []
                 for r in regs:
                     read_result = await self.adapter.read_register(r)
+
                     if read_result:
                         rec = {
                             'plc_id': read_result.get('plc_id') or getattr(self.plc_orm, 'id', None),

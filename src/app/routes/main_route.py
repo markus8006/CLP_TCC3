@@ -18,8 +18,10 @@ def clps() -> dict:
 
 
 # @role_required("user")
-@login_required
 @main.route('/', methods=['GET', 'POST'])
+@login_required
 def index():
     print(clps())
     return render_template("index/index.html", clps=clps())
+
+

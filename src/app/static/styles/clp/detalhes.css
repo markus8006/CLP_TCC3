@@ -190,8 +190,8 @@ h1, h2 {
 }
 
 .grafico-container {
-    flex: 1 1 320px;
-    max-width: 100%;
+    flex: 1 1 320px !important;
+    max-width: 100% !important;
     min-width: 0;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 14px;
@@ -212,6 +212,32 @@ h1, h2 {
     /* ocupa largura total do container */
     height: 100%;
     /* ocupa altura do container */
+}
+
+.register-card {
+    background-color: rgba(0,0,0,0.15);
+    padding: 10px;
+    border-radius: 5px;
+
+    /* Adicionadas restrições para evitar crescimento do chart */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Garante que o canvas não expanda o card e respeite uma altura fixa */
+.register-card canvas {
+    display: block;
+    width: 100% !important;
+    height: 220px !important;      /* altura fixa desejada */
+    max-height: 220px !important;
+    box-sizing: border-box;
+}
+
+/* Ajuste para o wrapper que o Chart.js injeta */
+.register-card > .chartjs-size-monitor,
+.register-card > .chartjs-size-monitor-expand,
+.register-card > .chartjs-size-monitor-shrink {
+    display: none !important;
 }
 
 @media (max-width: 900px) {

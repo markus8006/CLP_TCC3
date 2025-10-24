@@ -2,7 +2,7 @@ from src.app import db
 from datetime import datetime, timezone
 import enum
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from flask_login import UserMixin
 
 class UserRole(enum.Enum):
     USER = 'user'
@@ -10,7 +10,7 @@ class UserRole(enum.Enum):
     ADMIN = 'admin'
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -54,8 +54,3 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
-    def is_authenticated(self):
-        return self.is_active
-
-    def get_id(self):
-        return self.id
