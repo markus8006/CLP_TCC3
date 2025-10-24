@@ -1,3 +1,6 @@
+#src/app/__init__.py
+
+
 import os
 from flask import Flask, Blueprint
 from src.utils.logs import logger
@@ -16,6 +19,8 @@ def create_app(config_name='development'):
     logger.process("Configurando app")
     app.config.from_object(config[config_name])
     logger.info("app configurado")
+
+    
 
     # Criar diretórios somente se fizer sentido (evita erro com sqlite:///:memory:)
     db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')

@@ -1,0 +1,72 @@
+{% extends "users_page/users_base.html" %}
+
+{% block title %}Registar - Gerenciador de CLPs{% endblock %}
+
+{% block css %} <link rel="stylesheet" href="{{ url_for('static', filename='styles/users_page/register.css') }}"> {% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Criar Conta</h2>
+                
+                <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+                    
+                    {{ form.hidden_tag() }}
+
+                    <div class="form-group">
+                        {{ form.username.label(class="font-weight-bold") }}
+                        {{ form.username(class="form-control", placeholder="Escolha um nome de utilizador") }}
+                        
+                        {% for error in form.username.errors %}
+                            <span class="text-danger small">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.user_type.label(class="font-weight-bold") }}
+                        {{ form.user_type(class="form-control") }}
+                        
+                        {% for error in form.user_type.errors %}
+                            <span class="text-danger small">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.password.label(class="font-weight-bold") }}
+                        {{ form.password(class="form-control", placeholder="Crie uma senha") }}
+                        
+                        {% for error in form.password.errors %}
+                            <span class="text-danger small">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.email.label(class="font-weight-bold") }}
+                        {{ form.email(class="form-control", placeholder="Email") }}
+                        
+                        {% for error in form.password.errors %}
+                            <span class="text-danger small">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.password2.label(class="font-weight-bold") }}
+                        {{ form.password2(class="form-control", placeholder="Confirme a senha") }}
+                        
+                        {% for error in form.password2.errors %}
+                            <span class="text-danger small">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    {{ form.submit(class="btn btn-success btn-block") }}
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <small>Já tem uma conta? <a href="{{ url_for('auth.login') }}">Faça o login</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

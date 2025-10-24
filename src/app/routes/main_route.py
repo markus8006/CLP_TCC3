@@ -17,8 +17,8 @@ def clps() -> dict:
 
 
 
-# @login_required
 # @role_required("user")
+@login_required
 @main.route('/', methods=['GET', 'POST'])
 def index():
     print(clps())

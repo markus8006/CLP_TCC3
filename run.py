@@ -93,13 +93,13 @@ if __name__ == "__main__":
         polling_manager = SimpleManager(app)
     
     #3.2. Inicia a thread do serviço, injetando o app e o gerente
-        polling_service_thread = threading.Thread(
-        target=run_async_polling,
-        args=(app, polling_manager),  # Passa o gerente como argumento
-        daemon=True
-        )
-        polling_service_thread.start()
-        logger.info("Serviço de polling rodando em background.")
+        # polling_service_thread = threading.Thread(
+        # target=run_async_polling,
+        # args=(app, polling_manager),  # Passa o gerente como argumento
+        # daemon=True
+        # )
+        # polling_service_thread.start()
+        # logger.info("Serviço de polling rodando em background.")
 
 
 
