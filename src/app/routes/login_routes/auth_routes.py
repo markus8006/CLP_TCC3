@@ -67,7 +67,6 @@ def register():
         try:
             db.session.commit()
         except IntegrityError as e:
-            print(e)
             db.session.rollback()
             flash('Erro ao registar: nome de utilizador já existe', 'danger')
             return render_template('users_page/register.html', form=form, first_user=first_user)

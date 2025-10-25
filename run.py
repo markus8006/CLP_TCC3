@@ -1,127 +1,154 @@
 # run.py
 import threading
+import time
 from src.app import create_app
 from src.models import PLC
 from src.repository.PLC_repository import Plcrepo
-# Importa a CLASSE, não uma instância global
-from src.manager.client_polling_manager import SimpleManager, wait_for_port
-from src.simulations.modbus_simulation import (add_register_test_modbus,
-                                                start_modbus_simulator)
-from src.utils.logs import logger
-from src.models.Alarms import AlarmDefinition
-from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.Registers_repository import RegRepo
+from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.models.Alarms import AlarmDefinition
+from src.manager.client_polling_manager import SimpleManager, wait_for_port
+from src.simulations.modbus_simulation import add_register_test_modbus, start_modbus_simulator
 from src.services.client_polling_service import run_async_polling
+from src.utils.logs import logger
 import logging
 
-
+# Instância do repo de definições de alarme
 AlarmRepo = AlarmDefinitionRepo()
 
-
-
 # --- Configurações ---
-HOST = "127.0.0.1"
-MODBUS_PORT = 5020
+HOST = "127.0.0.1"     # bind host dos simuladores (usado apenas para start modbus, veja observações)
+MODBUS_PORT = 5020     # porta base para todos (pode ser mantida igual se cada simulador bind em IP diferente)
+NUM_CLPS = 50        # quantos PLCs quer criar
+# --- Fim Configurações ---
 
-# --- Cria a Aplicação Flask ---
 app = create_app()
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
-# --- Inicialização e Execução ---
+def ip_from_index(index: int, first_octet: int = 127) -> str:
+    """
+    Gera um IP sequencial para index >= 1 no bloco first_octet.x.y.z.
+    Mapeamento: index=1 -> first_octet.0.0.1, index=256 -> first_octet.0.1.0, etc.
+    Suporta até ~16 milhões (index <= 16777215).
+    """
+    if index < 1:
+        raise ValueError("index deve ser >= 1")
+    n = index - 1
+    second = (n // (256*256)) % 256
+    third = (n // 256) % 256
+    fourth = n % 256 + 1
+    return f"{first_octet}.{second}.{third}.{fourth}"
+
 if __name__ == "__main__":
     with app.app_context():
-        # ETAPA 1: Iniciar os CLPs Simulados para teste
-        logger.process(f"Iniciando simuladores Modbus...")
-        
-        # Simulador para 127.0.0.1
-        modbus_thread_1 = threading.Thread(
-            target=start_modbus_simulator, args=(HOST, MODBUS_PORT), daemon=True
-        )
-        modbus_thread_1.start()
+        logger.process(f"Configurando {NUM_CLPS} PLCs de teste no banco de dados...")
 
-        # Simulador para 127.0.0.2
-        modbus_thread_2 = threading.Thread(
-            target=start_modbus_simulator, args=("127.0.0.2", MODBUS_PORT), daemon=True
-        )
-        modbus_thread_2.start()
+        # pequena defesa: limite prático (você pode ajustar/remover)
+        MAX_SUPPORTED = 16_777_215
+        if NUM_CLPS > MAX_SUPPORTED:
+            logger.warning(f"NUM_CLPS muito grande ({NUM_CLPS}), limite prático = {MAX_SUPPORTED}. Truncando.")
+            effective_num = MAX_SUPPORTED
+        else:
+            effective_num = NUM_CLPS
 
-        # Aguarda o primeiro simulador ficar pronto para continuar
-        if not wait_for_port(HOST, MODBUS_PORT, timeout=5.0):
-            logger.error(f"Simulador Modbus em {HOST}:{MODBUS_PORT} não iniciou. Abortando.")
-            exit(1)
-        logger.info("Simuladores Modbus iniciados com sucesso.")
+        # loop de criação
+        for i in range(1, effective_num + 1):
+            plc_name = f"PLCMod{i}"
+            plc_ip = ip_from_index(i, first_octet=127)
 
-        # ETAPA 2: Popular o banco de dados com dados de teste, se necessário
-        logger.process("Configurando dados de teste no banco de dados...")
-        
-        # Garante que o PLC 'PLCMod' existe
-        if not Plcrepo.first_by(name='PLCMod'):
-            logger.info("PLC 'PLCMod' não encontrado, criando um novo...")
-            plc_to_add = PLC(name='PLCMod', ip_address='127.0.0.1', protocol='modbus', port=5020, unit_id=1, is_active=True)
-            Plcrepo.add(plc_to_add, commit=True)
-            add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=0)
-            add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=1, register_name="CALOR")
-            
+            # inicia um simulador ligado ao ip gerado (se seu start_modbus_simulator fizer bind por IP)
+            try:
+                t = threading.Thread(
+                    target=start_modbus_simulator, args=(plc_ip, MODBUS_PORT), daemon=True
+                )
+                t.start()
+            except Exception as e:
+                logger.error(f"Erro ao iniciar simulador para {plc_ip}:{MODBUS_PORT}: {e}")
+                # não aborta todo loop, apenas registra e continua
+                continue
 
-        # Garante que o PLC 'PLCMod2' existe
-        if not Plcrepo.first_by(name='PLCMod2'):
-            logger.info("PLC 'PLCMod2' não encontrado, criando um novo...")
-            plc_to_add_2 = PLC(name='PLCMod2', ip_address='127.0.0.2', protocol='modbus', port=5020, unit_id=1, is_active=True)
-            Plcrepo.add(plc_to_add_2, commit=True)
-            add_register_test_modbus(plc_name="PLCMod2", host="127.0.0.2", port=5020, address=0)
-        
-        logger.info("Dados de teste configurados.")
+            # aguarda porta (curto timeout). se não der, apenas loga e continua
+            try:
+                if not wait_for_port(plc_ip, MODBUS_PORT, timeout=3.0):
+                    logger.warning(f"Simulador Modbus em {plc_ip}:{MODBUS_PORT} não respondeu no timeout.")
+                else:
+                    logger.info(f"Simulador Modbus iniciado para {plc_name} em {plc_ip}:{MODBUS_PORT}")
+            except Exception as e:
+                logger.warning(f"wait_for_port falhou para {plc_ip}:{MODBUS_PORT}: {e}")
 
+            # cria PLC no DB (se não existir)
+            existing_plc = Plcrepo.first_by(ip_address=plc_ip) or Plcrepo.first_by(name=plc_name)
+            if not existing_plc:
+                try:
+                    plc_to_add = PLC(
+                        name=plc_name,
+                        ip_address=plc_ip,
+                        protocol='modbus',
+                        port=MODBUS_PORT,
+                        unit_id=1,
+                        is_active=True
+                    )
+                    Plcrepo.add(plc_to_add, commit=True)
+                    # reconsulta para garantir id preenchido
+                    existing_plc = Plcrepo.first_by(ip_address=plc_ip) or Plcrepo.first_by(name=plc_name)
+                    logger.info(f"PLC criado: {plc_name} ({plc_ip}) id={getattr(existing_plc,'id',None)}")
+                except Exception as e:
+                    logger.error(f"Erro ao criar PLC {plc_name} ({plc_ip}): {e}")
+                    continue
 
-        #cria o alarm
+            # cria registradores de teste (add_register_test_modbus verifica e garante plc_id)
+            try:
+                reg0 = add_register_test_modbus(plc_name=plc_name, host=plc_ip, port=MODBUS_PORT, address=0, register_name="Temperatura Teste")
+                reg1 = add_register_test_modbus(plc_name=plc_name, host=plc_ip, port=MODBUS_PORT, address=1, register_name="CALOR")
+            except Exception as e:
+                logger.error(f"Erro ao adicionar registers para {plc_name}: {e}")
+                reg0 = reg1 = None
 
-        exists = AlarmRepo.first_by(
-            plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=0).id,
-        )
-        if not exists:
-            alarm = AlarmDefinition(
-                plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=0).id,
-                name = "alarmTeste",
-                setpoint = 10
-            )
-            AlarmRepo.add(alarm)
+            # busca registros (caso helper não retorne)
+            if not reg0:
+                try:
+                    reg0 = RegRepo.first_by(plc_id=existing_plc.id, address=0)
+                except Exception:
+                    reg0 = None
+            if not reg1:
+                try:
+                    reg1 = RegRepo.first_by(plc_id=existing_plc.id, address=1)
+                except Exception:
+                    reg1 = None
 
-        
-        exists = AlarmRepo.first_by(
-            plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=1).id,
-        )
-        if not exists:
-            alarm = AlarmDefinition(
-                plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=1).id,
-                name = "alarmTeste",
-                setpoint = 12
-            )
-            AlarmRepo.add(alarm)
+            # cria/altera definitions de alarme (setpoint 10 e 12)
+            if reg0:
+                try:
+                    exists0 = AlarmRepo.first_by(plc_id=existing_plc.id, register_id=reg0.id)
+                    if not exists0:
+                        AlarmRepo.add(AlarmDefinition(plc_id=existing_plc.id, register_id=reg0.id, name="alarmTeste_10", setpoint=10), commit=True)
+                except Exception as e:
+                    logger.error(f"Erro ao criar AlarmDefinition para {plc_name} reg0: {e}")
 
-    # ETAPA 3: Iniciar o serviço de polling em background
-    
-    # 3.1. Cria a instância única do gerente de polling
+            if reg1:
+                try:
+                    exists1 = AlarmRepo.first_by(plc_id=existing_plc.id, register_id=reg1.id)
+                    if not exists1:
+                        AlarmRepo.add(AlarmDefinition(plc_id=existing_plc.id, register_id=reg1.id, name="alarmTeste_12", setpoint=12), commit=True)
+                except Exception as e:
+                    logger.error(f"Erro ao criar AlarmDefinition para {plc_name} reg1: {e}")
+
+            logger.info(f"PLC {plc_name} ({plc_ip}) configurado com registradores e alarmes.")
+            # throttle pequeno para evitar sobrecarga instantânea do sistema
+            time.sleep(0.01)
+
+        logger.info("Todos PLCs de teste configurados (loop concluído).")
+
+        # ETAPA 3: Iniciar o serviço de polling em background
         polling_manager = SimpleManager(app)
-    
-    #3.2. Inicia a thread do serviço, injetando o app e o gerente
         polling_service_thread = threading.Thread(
-        target=run_async_polling,
-        args=(app, polling_manager),  # Passa o gerente como argumento
-        daemon=True
+            target=run_async_polling,
+            args=(app, polling_manager),
+            daemon=True
         )
         polling_service_thread.start()
         logger.info("Serviço de polling rodando em background.")
 
-
-
     # ETAPA 4: Iniciar o Servidor Web Flask (Aplicação Principal)
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
-    # use_reloader=False é importante ao rodar serviços em threads
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
-
-    

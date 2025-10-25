@@ -55,8 +55,6 @@ class BaseRepo:
             return []
 
     def first_by(self, **filters) -> Optional[Any]:
-        for k, v in filters.items():
-            print(k, v, type(v))
         try:
             return self.session.query(self.model).filter_by(**filters).first()
         except SQLAlchemyError:

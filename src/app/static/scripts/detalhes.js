@@ -64,7 +64,7 @@ function violatesCondition(value, def) {
 }
 
 // cria um canvas/card para o registrador
-function ensureRegisterCard(registerId, unit, registerAddr) {
+function ensureRegisterCard(registerId, unit, registerName) {
     const linhaGraficos = document.querySelector('.graficos .linha-graficos');
     if (!linhaGraficos) return null;
 
@@ -75,7 +75,7 @@ function ensureRegisterCard(registerId, unit, registerAddr) {
     card.className = 'grafico-container'; // segue o estilo dos cards fixos
     card.id = `register-card-${registerId}`;
     card.innerHTML = `
-        <h3>Register ${registerAddr ?? registerId}</h3>
+        <h3>${registerName ? `${registerName}` : `Register ${registerId}`}</h3>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <div style="font-size:0.85em; color:var(--text-muted)">Unidade: ${unit ?? '-'}</div>
             <div class="register-val" id="register-val-${registerId}">--</div>
@@ -197,7 +197,7 @@ function createOrUpdateChart(registerId, unit, def) {
                     borderWidth: 2,
                     displayColors: true,
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const v = context.raw;
                             const p = buffer.rawPoints[context.dataIndex];
                             let msg = `${context.dataset.label}: ${v}`;
@@ -237,20 +237,26 @@ function createOrUpdateChart(registerId, unit, def) {
 // processa o payload da API e alimenta buffers e gráficos
 function processApiPayload(payload) {
     if (!payload) return;
-    const registers = payload.register_ids || [];
+
+    // novo modelo: payload.registers é um objeto { id: "nome", ... }
+    const registersMap = payload.registers || {};
+    const registers = Object.keys(registersMap); // array de ids (strings)
+
     const data = payload.data || [];
     const defs = payload.definitions_alarms || [];
     const alarms = payload.alarms || [];
 
+    // indexa definições por register_id (usar string keys)
     const defsByRegister = {};
     for (const d of defs) {
         if (d.register_id == null) continue;
-        defsByRegister[d.register_id] = d;
+        defsByRegister[String(d.register_id)] = d;
     }
 
+    // agrupa dados por register_id (usar string keys)
     const dataByRegister = {};
     for (const p of data) {
-        const rid = p.register_id;
+        const rid = String(p.register_id);
         if (!dataByRegister[rid]) dataByRegister[rid] = [];
         dataByRegister[rid].push(p);
     }
@@ -258,7 +264,8 @@ function processApiPayload(payload) {
     const MAX_POINTS = 100;
 
     for (const rid of registers) {
-        const series = (dataByRegister[rid] || []).slice().sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const registerName = registersMap[rid]; // nome a exibir
+        const series = (dataByRegister[rid] || []).slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         const newLabels = [];
         const newValues = [];
@@ -285,10 +292,10 @@ function processApiPayload(payload) {
         const buffer = { labels: newLabels, values: newValues, rawPoints: newRawPoints };
         chartDataBuffers.set(rid, buffer);
 
-        console.log(`[DEBUG] Register ${rid}: ${newLabels.length} pontos processados, ${violatedCount} violados.`);
+        console.log(`[DEBUG] Register ${rid} (${registerName}): ${newLabels.length} pontos processados, ${violatedCount} violados.`);
 
         const unit = (series.at(-1)?.unit) ?? (defsByRegister[rid]?.unit) ?? '';
-        ensureRegisterCard(rid, unit, rid);
+        ensureRegisterCard(rid, unit, registerName);
         const last = buffer.rawPoints.at(-1);
         const valEl = document.getElementById(`register-val-${rid}`);
         if (valEl) {
