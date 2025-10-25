@@ -26,7 +26,7 @@ def get_data(ip):
     if not isinstance(register, list):
         register = [register]
 
-    register_ids = [r.id for r in register]
+    register = [r.id for r in register]
 
     # coleções agregadas
     data = []
@@ -73,7 +73,7 @@ def get_data(ip):
 
     mensagem = {
         "clp_id": clp.id,
-        "register_ids": register_ids,
+        "register": register_ids,
         "data": data,
         "alarms": alarms_data,
         "definitions_alarms": defi_data

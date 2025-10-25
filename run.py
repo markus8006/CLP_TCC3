@@ -61,6 +61,8 @@ if __name__ == "__main__":
             plc_to_add = PLC(name='PLCMod', ip_address='127.0.0.1', protocol='modbus', port=5020, unit_id=1, is_active=True)
             Plcrepo.add(plc_to_add, commit=True)
             add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=0)
+            add_register_test_modbus(plc_name="PLCMod", host="127.0.0.1", port=5020, address=1, register_name="CALOR")
+            
 
         # Garante que o PLC 'PLCMod2' existe
         if not Plcrepo.first_by(name='PLCMod2'):
@@ -76,14 +78,28 @@ if __name__ == "__main__":
 
         exists = AlarmRepo.first_by(
             plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
+            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=0).id,
         )
         if not exists:
             alarm = AlarmDefinition(
                 plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
-                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id).id,
+                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=0).id,
                 name = "alarmTeste",
                 setpoint = 10
+            )
+            AlarmRepo.add(alarm)
+
+        
+        exists = AlarmRepo.first_by(
+            plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
+            register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=1).id,
+        )
+        if not exists:
+            alarm = AlarmDefinition(
+                plc_id = Plcrepo.first_by(ip_address="127.0.0.1").id,
+                register_id = RegRepo.first_by(plc_id=Plcrepo.first_by(ip_address="127.0.0.1").id, address=1).id,
+                name = "alarmTeste",
+                setpoint = 12
             )
             AlarmRepo.add(alarm)
 

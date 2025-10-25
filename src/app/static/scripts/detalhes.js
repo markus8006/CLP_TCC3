@@ -16,7 +16,7 @@ const themeColors = [
 
 // state
 const charts = new Map(); // registerId -> Chart instance
-const chartDataBuffers = new Map(); // registerId -> {labels:[], values:[]}
+const chartDataBuffers = new Map(); // registerId -> {labels:[], values:[], rawPoints:[]}
 
 // util: pega IP do template (data-ip dos botões)
 function getClpIpFromDom() {
@@ -40,7 +40,6 @@ function violatesCondition(value, def) {
     if (!def) return false;
     const cond = (def.condition_type || '').toLowerCase();
     const sp = Number(def.setpoint ?? NaN);
-    const dband = Number(def.deadband ?? 0);
     const low = def.threshold_low != null ? Number(def.threshold_low) : (def.low ?? NaN);
     const high = def.threshold_high != null ? Number(def.threshold_high) : (def.high ?? NaN);
 
@@ -66,27 +65,28 @@ function violatesCondition(value, def) {
 
 // cria um canvas/card para o registrador
 function ensureRegisterCard(registerId, unit, registerAddr) {
-    const container = document.getElementById('registers-container');
+    const linhaGraficos = document.querySelector('.graficos .linha-graficos');
+    if (!linhaGraficos) return null;
+
     let card = document.getElementById(`register-card-${registerId}`);
     if (card) return card;
 
     card = document.createElement('div');
-    card.className = 'register-card';
+    card.className = 'grafico-container'; // segue o estilo dos cards fixos
     card.id = `register-card-${registerId}`;
     card.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div class="register-addr">Register ${registerAddr ?? registerId}</div>
-                <div style="font-size:0.85em; color:var(--text-muted)">Unidade: ${unit ?? '-'}</div>
-            </div>
+        <h3>Register ${registerAddr ?? registerId}</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:0.85em; color:var(--text-muted)">Unidade: ${unit ?? '-'}</div>
             <div class="register-val" id="register-val-${registerId}">--</div>
         </div>
-        <canvas id="chart-register-${registerId}" width="600" height="220" style="width:100%; height:220px; margin-top:8px;"></canvas>
+        <canvas id="chart-register-${registerId}" width="600" height="220" style="width:100%; height:220px;"></canvas>
         <div id="alarm-legend-${registerId}" style="margin-top:6px; font-size:0.85em; color: var(--text-muted);"></div>
     `;
-    container.appendChild(card);
+    linhaGraficos.appendChild(card);
     return card;
 }
+
 
 // cria ou atualiza um chart a partir dos buffers
 function createOrUpdateChart(registerId, unit, def) {
@@ -95,7 +95,7 @@ function createOrUpdateChart(registerId, unit, def) {
     if (!canvas) return;
 
     // 🔧 fixar tamanho real do canvas (evita height crescendo)
-    canvas.width = canvas.clientWidth;
+    canvas.width = canvas.parentElement.clientWidth;
     canvas.height = 220;
 
     const buffer = chartDataBuffers.get(registerId) || { labels: [], values: [], rawPoints: [] };
@@ -167,63 +167,62 @@ function createOrUpdateChart(registerId, unit, def) {
 
     const datasets = [valueDataset, ...limitDatasets];
 
+    // 🔥 reset completo: destrói chart antigo antes de criar novo
     if (charts.has(registerId)) {
-        const chart = charts.get(registerId);
-        chart.data.labels = labels;
-        chart.data.datasets = datasets;
-        chart.update();
-    } else {
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: { labels, datasets },
-            options: {
-                animation: false,
-                maintainAspectRatio: false,
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#fff',
-                            font: { weight: 'bold', size: 11 },
-                            padding: 10
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: '#1b0030',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: themeColors[1],
-                        borderWidth: 2,
-                        displayColors: true,
-                        callbacks: {
-                            label: function(context) {
-                                const v = context.raw;
-                                const p = buffer.rawPoints[context.dataIndex];
-                                let msg = `${context.dataset.label}: ${v}`;
-                                if (p?.violated) msg += ' ⚠️ (Violado!)';
-                                if (p?.payload && p.payload.timestamp) {
-                                    msg += ` | ${fmtShort(p.payload.timestamp)}`;
-                                }
-                                return msg;
-                            }
-                        }
+        charts.get(registerId).destroy();
+        charts.delete(registerId);
+    }
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            animation: false,
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#fff',
+                        font: { weight: 'bold', size: 11 },
+                        padding: 10
                     }
                 },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(132, 0, 255, 0.15)' },
-                        ticks: { color: '#fff', maxTicksLimit: 8 },
-                    },
-                    y: {
-                        grid: { color: 'rgba(132, 0, 255, 0.08)' },
-                        ticks: { color: '#fff' }
+                tooltip: {
+                    backgroundColor: '#1b0030',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: themeColors[1],
+                    borderWidth: 2,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const v = context.raw;
+                            const p = buffer.rawPoints[context.dataIndex];
+                            let msg = `${context.dataset.label}: ${v}`;
+                            if (p?.violated) msg += ' ⚠️ (Violado!)';
+                            if (p?.payload && p.payload.timestamp) {
+                                msg += ` | ${fmtShort(p.payload.timestamp)}`;
+                            }
+                            return msg;
+                        }
                     }
                 }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(132, 0, 255, 0.15)' },
+                    ticks: { color: '#fff', maxTicksLimit: 8 },
+                },
+                y: {
+                    grid: { color: 'rgba(132, 0, 255, 0.08)' },
+                    ticks: { color: '#fff' }
+                }
             }
-        });
-        charts.set(registerId, chart);
-    }
+        }
+    });
+    charts.set(registerId, chart);
 
     const legendEl = document.getElementById(`alarm-legend-${registerId}`);
     if (legendEl) {
@@ -261,11 +260,11 @@ function processApiPayload(payload) {
     for (const rid of registers) {
         const series = (dataByRegister[rid] || []).slice().sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        // --- Novo comportamento: resetar os buffers com os dados da resposta ---
         const newLabels = [];
         const newValues = [];
         const newRawPoints = [];
         const seenTs = new Set();
+        let violatedCount = 0;
 
         for (const pt of series) {
             if (seenTs.has(pt.timestamp)) continue;
@@ -274,6 +273,7 @@ function processApiPayload(payload) {
             const value = Number(pt.value_float ?? pt.value_int ?? pt.raw_value ?? NaN);
             const def = defsByRegister[rid];
             const violated = violatesCondition(value, def);
+            if (violated) violatedCount++;
 
             newLabels.push(fmtShort(pt.timestamp));
             newValues.push(value);
@@ -282,9 +282,10 @@ function processApiPayload(payload) {
             if (newLabels.length >= MAX_POINTS) break;
         }
 
-        // substitui o buffer por completo (reset)
         const buffer = { labels: newLabels, values: newValues, rawPoints: newRawPoints };
         chartDataBuffers.set(rid, buffer);
+
+        console.log(`[DEBUG] Register ${rid}: ${newLabels.length} pontos processados, ${violatedCount} violados.`);
 
         const unit = (series.at(-1)?.unit) ?? (defsByRegister[rid]?.unit) ?? '';
         ensureRegisterCard(rid, unit, rid);
@@ -333,5 +334,3 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     startPolling();
 });
-
-
