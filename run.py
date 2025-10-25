@@ -12,6 +12,7 @@ from src.simulations.modbus_simulation import add_register_test_modbus, start_mo
 from src.services.client_polling_service import run_async_polling
 from src.utils.logs import logger
 import logging
+from flask_sqlalchemy import SQLAlchemy
 
 # Instância do repo de definições de alarme
 AlarmRepo = AlarmDefinitionRepo()
@@ -19,11 +20,11 @@ AlarmRepo = AlarmDefinitionRepo()
 # --- Configurações ---
 HOST = "127.0.0.1"     # bind host dos simuladores (usado apenas para start modbus, veja observações)
 MODBUS_PORT = 5020     # porta base para todos (pode ser mantida igual se cada simulador bind em IP diferente)
-NUM_CLPS = 50        # quantos PLCs quer criar
+NUM_CLPS = 2       # quantos PLCs quer criar
 # --- Fim Configurações ---
 
 app = create_app()
-logger.setLevel(logging.INFO)
+# logger.setLevel(logging.INFO)
 
 def ip_from_index(index: int, first_octet: int = 127) -> str:
     """
@@ -151,4 +152,8 @@ if __name__ == "__main__":
 
     # ETAPA 4: Iniciar o Servidor Web Flask (Aplicação Principal)
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
+    logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.CRITICAL)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.CRITICAL)
+
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)

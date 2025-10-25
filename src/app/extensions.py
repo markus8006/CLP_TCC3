@@ -1,26 +1,13 @@
-#src/app/extensions.py
-
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 
-# Inicializar extensões
-global db
+# Inicializar extensões globais
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-
-
-# onde criar engine / logo ao iniciar app
-from sqlalchemy import create_engine, text
-
-engine = create_engine("sqlite:///db.sqlite", connect_args={"check_same_thread": False})
-with engine.begin() as conn:
-    conn.execute(text("PRAGMA journal_mode=WAL;"))
-    conn.execute(text("PRAGMA synchronous=NORMAL;"))
-
 
 # Configurar login manager
 login_manager.login_view = 'auth.login'

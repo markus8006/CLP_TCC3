@@ -13,6 +13,12 @@ from src.services.Alarms_service import AlarmService
 from src.repository.Data_repository import DataRepo
 
 
+# src/manager/client_polling_manager.py
+import os
+max_workers = min(32, (os.cpu_count() or 4) * 4)
+
+
+
 
 # ---------- util: espera porta tcp abrir ----------
 def wait_for_port(host: str, port: int, timeout: float = 8.0, interval: float = 0.2) -> bool:
@@ -44,7 +50,7 @@ class ActivePLCPoller:
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
         # executor para operações bloqueantes com DB
-        self._executor = ThreadPoolExecutor(max_workers=2)
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
 
     def _process_batch_sync(self, batch: List[Dict[str, Any]]):

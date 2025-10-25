@@ -35,6 +35,8 @@ class AlarmDefinition(db.Model):
     # opcional: severidade numérica para ordenação/alertas
     severity = db.Column(db.Integer, default=3)
 
+    register = db.relationship("Register", back_populates="alarm_definitions")
+
 
 class Alarm(db.Model):
     __tablename__ = 'alarm'
@@ -56,3 +58,5 @@ class Alarm(db.Model):
     current_value = db.Column(db.Float)
 
     last_updated_at = db.Column(db.DateTime, nullable=True)
+
+    register = db.relationship("Register", back_populates="alarms")

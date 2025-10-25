@@ -39,5 +39,9 @@ class Register(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
+    datalogs = db.relationship("DataLog", back_populates="register")
+    alarms = db.relationship("Alarm", back_populates="register")
+    alarm_definitions = db.relationship("AlarmDefinition", back_populates="register")
+
     def __repr__(self):
         return f"<Register id={self.id} plc={self.plc_id} name={self.name} addr={self.address}>"

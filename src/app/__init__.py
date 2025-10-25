@@ -18,6 +18,7 @@ def create_app(config_name='development'):
     # Configuração
     logger.process("Configurando app")
     app.config.from_object(config[config_name])
+    logger.warning(f"USANDO DB: {app.config['SQLALCHEMY_DATABASE_URI']}")
     logger.info("app configurado")
 
     

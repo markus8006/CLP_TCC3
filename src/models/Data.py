@@ -18,6 +18,8 @@ class DataLog(db.Model):
     tags = db.Column(db.JSON)
     is_alarm = db.Column(Boolean, nullable=False, default=False, index=True)
 
+    register = db.relationship("Register", back_populates="datalogs")
+
     __table_args__ = (
         Index('ix_data_plc_register_time', 'plc_id', 'register_id', 'timestamp'),
     )
