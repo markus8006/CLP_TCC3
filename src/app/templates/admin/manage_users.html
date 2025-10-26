@@ -7,89 +7,99 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
-    <h1>Gestão de Utilizadores</h1>
-    <p>Crie novas contas, actualize permissões e controle o acesso ao sistema.</p>
-</section>
+<div class="management-container">
+    <section class="page-header">
+        <h1>Gestão de Utilizadores</h1>
+        <p>Crie novas contas, actualize permissões e controle o acesso ao sistema.</p>
+    </section>
 
-<section class="card">
-    <h2>Criar novo utilizador</h2>
-    <form method="POST" novalidate>
-        {{ create_form.hidden_tag() }}
-        <div class="form-grid">
-            <label>
-                <span>Nome de utilizador</span>
-                {{ create_form.username(class_='input') }}
-            </label>
-            <label>
-                <span>Email</span>
-                {{ create_form.email(class_='input') }}
-            </label>
-            <label>
-                <span>Senha provisória</span>
-                {{ create_form.password(class_='input') }}
-            </label>
-            <label>
-                <span>Função</span>
-                {{ create_form.role(class_='input') }}
-            </label>
+    <section class="card">
+        <div>
+            <h2>Criar novo utilizador</h2>
+            <p class="card__description">Defina rapidamente as credenciais iniciais e escolha a responsabilidade de cada membro da equipa.</p>
         </div>
-        <div class="actions">
-            {{ create_form.submit(class_='btn primary') }}
+        <div class="card__content">
+            <form method="POST" novalidate>
+                {{ create_form.hidden_tag() }}
+                <div class="form-grid">
+                    <label>
+                        <span>Nome de utilizador</span>
+                        {{ create_form.username(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Email</span>
+                        {{ create_form.email(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Senha provisória</span>
+                        {{ create_form.password(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Função</span>
+                        {{ create_form.role(class_='input') }}
+                    </label>
+                </div>
+                <div class="actions">
+                    {{ create_form.submit(class_='btn primary') }}
+                </div>
+            </form>
         </div>
-    </form>
-</section>
+    </section>
 
-<section class="card">
-    <h2>Utilizadores registados</h2>
-    {% if users %}
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Função</th>
-                        <th>Estado</th>
-                        <th>Criado em</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for user in users %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>
-                            <form method="POST" action="{{ url_for('admin.update_user', user_id=user.id) }}" class="inline-form">
-                                {{ update_forms[user.id].hidden_tag() }}
-                                {{ update_forms[user.id].role(class_='input small') }}
-                        </td>
-                        <td>
-                                <label class="checkbox">
-                                    {{ update_forms[user.id].is_active() }} Activo
-                                </label>
-                        </td>
-                        <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
-                        <td class="actions">
-                                {{ update_forms[user.id].submit(class_='btn secondary') }}
-                            </form>
-                            {% if user.id != current_user.id %}
-                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn danger" onclick="return confirm('Remover este utilizador?');">Remover</button>
-                            </form>
-                            {% else %}
-                                <span class="badge">Sessão actual</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+    <section class="card">
+        <div>
+            <h2>Utilizadores registados</h2>
+            <p class="card__description">Acompanhe o estado das contas e ajuste permissões directamente a partir desta vista.</p>
         </div>
-    {% else %}
-        <p>Nenhum utilizador registado ainda.</p>
-    {% endif %}
-</section>
+        {% if users %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                            <th>Estado</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.update_user', user_id=user.id) }}" class="inline-form">
+                                    {{ update_forms[user.id].hidden_tag() }}
+                                    {{ update_forms[user.id].role(class_='input small') }}
+                            </td>
+                            <td>
+                                    <label class="checkbox">
+                                        {{ update_forms[user.id].is_active() }} Activo
+                                    </label>
+                            </td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
+                            <td class="actions">
+                                    {{ update_forms[user.id].submit(class_='btn secondary') }}
+                                </form>
+                                {% if user.id != current_user.id %}
+                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn danger" onclick="return confirm('Remover este utilizador?');">Remover</button>
+                                </form>
+                                {% else %}
+                                    <span class="badge">Sessão actual</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">Nenhum utilizador registado ainda.</p>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

@@ -45,10 +45,21 @@
         <nav>
             <a href="/">Home</a>
             <a href="/coleta/">Coleta IPs</a>
+            {% if current_user.is_authenticated and current_user.has_permission('admin') %}
             <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.has_permission('moderator') %}
             <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>
             <a href="{{ url_for('admin.manage_registers') }}">Registradores</a>
-            <a href="/logout">Logout</a>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.has_permission('alarmdefinition') %}
+            <a href="{{ url_for('admin.manage_alarm_definitions') }}">Alarmes</a>
+            {% endif %}
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
         </nav>
 
     </div>

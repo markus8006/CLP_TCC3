@@ -16,6 +16,7 @@ from src.models.Users import UserRole
 
 ROLE_LABELS = {
     UserRole.USER: "Utilizador",
+    UserRole.ALARM_DEFINITION: "Gestor de Alarmes",
     UserRole.MODERATOR: "Moderador",
     UserRole.ADMIN: "Administrador",
 }
@@ -99,3 +100,51 @@ class RegisterCreationForm(FlaskForm):
     offset = FloatField("Offset", validators=[Optional()], default=0.0)
     tag = StringField("Tag", validators=[Optional(), Length(max=50)])
     submit = SubmitField("Adicionar Registrador")
+
+
+class AlarmDefinitionForm(FlaskForm):
+    plc_id = SelectField("CLP", coerce=int, validators=[DataRequired()])
+    register_id = SelectField(
+        "Registrador",
+        coerce=int,
+        validators=[Optional()],
+        default=0,
+    )
+    name = StringField("Nome", validators=[DataRequired(), Length(max=100)])
+    description = TextAreaField("Descrição", validators=[Optional()])
+    condition_type = SelectField(
+        "Condição",
+        choices=[
+            ("above", "Valor acima do limite"),
+            ("below", "Valor abaixo do limite"),
+            ("outside_range", "Fora do intervalo"),
+            ("inside_range", "Dentro do intervalo"),
+            ("change", "Mudança brusca"),
+        ],
+        validators=[DataRequired()],
+        default="above",
+    )
+    setpoint = FloatField("Setpoint", validators=[Optional()])
+    threshold_low = FloatField("Limite inferior", validators=[Optional()])
+    threshold_high = FloatField("Limite superior", validators=[Optional()])
+    deadband = FloatField("Histérese", validators=[Optional()], default=0.0)
+    priority = SelectField(
+        "Prioridade",
+        choices=[
+            ("LOW", "Baixa"),
+            ("MEDIUM", "Média"),
+            ("HIGH", "Alta"),
+            ("CRITICAL", "Crítica"),
+        ],
+        validators=[DataRequired()],
+        default="MEDIUM",
+    )
+    severity = IntegerField(
+        "Severidade",
+        validators=[Optional(), NumberRange(min=1, max=5)],
+        default=3,
+    )
+    is_active = BooleanField("Activo", default=True)
+    auto_acknowledge = BooleanField("Auto reconhecer")
+    email_enabled = BooleanField("Enviar email")
+    submit = SubmitField("Criar definição")

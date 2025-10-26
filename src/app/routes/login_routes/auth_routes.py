@@ -25,8 +25,10 @@ def login():
         if user is None or not user.check_password(form.password.data):
             flash('Utilizador ou senha inválidos.', 'danger')
             return redirect(url_for('auth.login'))
-        
+
         login_user(user)
+        if user.role == UserRole.ALARM_DEFINITION:
+            flash('Bem-vindo! Reveja as definições de alarme pendentes e confirme se todas estão activas.', 'info')
         # Redireciona para a página principal (que está no blueprint 'main')
         return redirect(url_for('main.index'))
     

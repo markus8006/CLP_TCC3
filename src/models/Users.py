@@ -6,6 +6,7 @@ from flask_login import UserMixin
 
 class UserRole(enum.Enum):
     USER = 'user'
+    ALARM_DEFINITION = 'alarmdefinition'
     MODERATOR = 'moderator'
     ADMIN = 'admin'
 
@@ -35,8 +36,9 @@ class User(db.Model, UserMixin):
 
         hierarchy = {
             UserRole.USER: 1,
-            UserRole.MODERATOR: 2,
-            UserRole.ADMIN: 3
+            UserRole.ALARM_DEFINITION: 2,
+            UserRole.MODERATOR: 3,
+            UserRole.ADMIN: 4,
         }
     
         if isinstance(min_role, str):
