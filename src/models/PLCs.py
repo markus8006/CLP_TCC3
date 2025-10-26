@@ -22,9 +22,14 @@ class Organization(db.Model):
 
 
 # models/plc.py
+import json
+from typing import Iterable, List
+
 from src.app import db
 from datetime import datetime
 from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy.ext.mutable import MutableList
+from src.utils.tags import parse_tags
 
 class PLC(db.Model):
     __tablename__ = "plc"
@@ -58,9 +63,11 @@ class PLC(db.Model):
 
     # use JSON se seu DB suportar (Postgres). Caso contrário Text.
     try:
-        tags = db.Column(db.JSON)
+        tags = db.Column(MutableList.as_mutable(db.JSON), default=list)
     except Exception:
-        tags = db.Column(db.Text)
+        # SQLite anterior e alguns bancos não suportam JSON nativamente.
+        # Mantemos Text mas garantimos serialização consistente.
+        tags = db.Column(db.Text, default="[]")
 
     is_active = db.Column(db.Boolean, default=True)
     is_online = db.Column(db.Boolean, default=False)
@@ -84,3 +91,46 @@ class PLC(db.Model):
 
     def __repr__(self):
         return f"<PLC id={self.id} name={self.name} ip={self.ip_address} vlan={self.vlan_id}>"
+
+    # --- Utilidades para Tags -------------------------------------------------
+    def tags_as_list(self) -> List[str]:
+        """Retorna as tags como lista normalizada."""
+        value = getattr(self, "tags", None)
+        if not value:
+            return []
+        if isinstance(value, list):
+            return [str(tag).strip() for tag in value if str(tag).strip()]
+        if isinstance(value, (set, tuple)):
+            return [str(tag).strip() for tag in value if str(tag).strip()]
+
+        # Se for texto (fallback de coluna Text), tentar desserializar JSON
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(tag).strip() for tag in parsed if str(tag).strip()]
+            except (TypeError, ValueError):
+                pass
+            return [str(tag).strip() for tag in value.split(',') if str(tag).strip()]
+
+        return [str(value).strip()] if str(value).strip() else []
+
+    def set_tags(self, tags: Iterable[str]) -> None:
+        """Normaliza e define as tags do CLP."""
+        if tags is None:
+            normalized: List[str] = []
+        else:
+            normalized = parse_tags(tags)
+
+        # remove duplicados mantendo ordem
+        seen = set()
+        unique = []
+        for tag in normalized:
+            if tag not in seen:
+                unique.append(tag)
+                seen.add(tag)
+
+        if isinstance(self.__table__.c.tags.type, MutableList):
+            self.tags = unique
+        else:
+            self.tags = json.dumps(unique, ensure_ascii=False)

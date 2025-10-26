@@ -63,8 +63,8 @@
         <li><strong>IP:</strong> <span id="clpIp">{{ clp.ip_address }}</span></li>
         <li><strong>Tags Associadas:</strong>
             <ul class="tag-list" id="tag-list-container">
-                {% if clp.tags %}
-                    {% for tag in clp.tags %}
+                {% if tags %}
+                    {% for tag in tags %}
                         <li class="tag-item">
                             <span>{{ tag }}</span>
                             <span class="remove-tag" data-tag="{{ tag }}" title="Remover Tag">&times;</span>
@@ -90,6 +90,43 @@
         <button id="btnAddTag" class="btn-acao">Adicionar</button>
     </form>
     <div id="tagMessage" style="margin-top: 10px;"></div>
+</div>
+
+<div class="informacao_clp">
+    <h2>Segurança Industrial</h2>
+    <div class="security-overview" data-level="{{ security_report.level|lower|replace('í', 'i') }}">
+        <div class="security-score">
+            <span class="score-value">{{ security_report.score }}</span>
+            <span class="score-label">Score</span>
+            <span class="score-level">Risco {{ security_report.level }}</span>
+        </div>
+        <div class="security-highlights">
+            <h3>Principais destaques</h3>
+            {% if security_report.highlights %}
+                <ul>
+                    {% for item in security_report.highlights %}
+                        <li>
+                            <strong class="severity severity-{{ item.severity }}">{{ item.severity|capitalize }}</strong>
+                            <div>
+                                <span class="highlight-title">{{ item.title }}</span>
+                                <p>{{ item.description }}</p>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Sem achados críticos registados.</p>
+            {% endif %}
+        </div>
+        <div class="security-recommendations">
+            <h3>Recomendações</h3>
+            <ol>
+                {% for recommendation in security_report.recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
 </div>
 
 <div class="informacao_clp">

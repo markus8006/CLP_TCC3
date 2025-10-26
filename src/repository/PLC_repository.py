@@ -4,7 +4,7 @@ from src.utils.logs import logger
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from src.app import db
-from typing import Optional, Any
+from typing import Iterable, Optional, Any
 
 
 
@@ -57,6 +57,20 @@ class PLCRepo(BaseRepo):
         except SQLAlchemyError:
             self.session.rollback()
             logger.exception("Erro ao adicionar %s", getattr(self.model, '__name__', str(self.model)))
+            raise
+
+    def update_tags(self, plc: PLC, tags: Iterable[str], commit: bool = True) -> PLC:
+        """Actualiza a lista de tags normalizada para um CLP."""
+        try:
+            plc.set_tags(tags)
+            if commit:
+                self.session.commit()
+            else:
+                self.session.flush()
+            return plc
+        except SQLAlchemyError:
+            self.session.rollback()
+            logger.exception("Erro ao actualizar tags do PLC %s", plc.id if plc else "desconhecido")
             raise
     
     

@@ -113,3 +113,26 @@
     padding: 0.2rem 0.8rem;
     font-size: 0.75rem;
 }
+
+.tag-list-inline {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0;
+    margin: 0;
+}
+
+.tag-list-inline li {
+    background: rgba(132, 0, 255, 0.18);
+    border: 1px solid rgba(132, 0, 255, 0.45);
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.55);
+}

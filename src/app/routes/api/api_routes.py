@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_login import login_required
 from sqlalchemy.orm import selectinload
 from src.app.extensions import db
@@ -6,6 +6,8 @@ from src.models.PLCs import PLC
 from src.models.Registers import Register
 from src.models.Data import DataLog
 from src.models.Alarms import Alarm, AlarmDefinition
+from src.repository.PLC_repository import Plcrepo
+from src.utils.tags import normalize_tag
 
 api_bp = Blueprint("apii", __name__)
 
@@ -82,3 +84,45 @@ def get_data_optimized(ip):
         ])
 
     return jsonify(result), 200
+
+
+@api_bp.route("/clps/<ip>/tags", methods=["POST"])
+@login_required
+def add_tag(ip):
+    plc = Plcrepo.first_by(ip_address=ip)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    payload = request.get_json(silent=True) or {}
+    raw_tag = (payload.get("tag") or "").strip()
+    if not raw_tag:
+        return jsonify({"message": "Informe uma tag."}), 400
+
+    tag = normalize_tag(raw_tag)
+    if not tag:
+        return jsonify({"message": "Tag inválida."}), 400
+
+    current_tags = plc.tags_as_list()
+    if tag in current_tags:
+        return jsonify({"tag": tag, "tags": current_tags, "message": "Tag já associada."}), 200
+
+    current_tags.append(tag)
+    Plcrepo.update_tags(plc, current_tags)
+    return jsonify({"tag": tag, "tags": current_tags}), 201
+
+
+@api_bp.route("/clps/<ip>/tags/<tag>", methods=["DELETE"])
+@login_required
+def remove_tag(ip, tag):
+    plc = Plcrepo.first_by(ip_address=ip)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    normalized = normalize_tag(tag)
+    current_tags = plc.tags_as_list()
+    if normalized not in current_tags:
+        return jsonify({"message": "Tag não encontrada."}), 404
+
+    updated = [t for t in current_tags if t != normalized]
+    Plcrepo.update_tags(plc, updated)
+    return jsonify({"tag": normalized, "tags": updated}), 200

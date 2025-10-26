@@ -57,6 +57,11 @@ class PLCForm(FlaskForm):
     manufacturer = StringField("Fabricante", validators=[Optional(), Length(max=50)])
     model = StringField("Modelo", validators=[Optional(), Length(max=50)])
     firmware_version = StringField("Firmware", validators=[Optional(), Length(max=20)])
+    tags = StringField(
+        "Tags",
+        validators=[Optional(), Length(max=200)],
+        description="Separe por vírgula (ex: crítico, linha-1, modbus).",
+    )
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar")
 
