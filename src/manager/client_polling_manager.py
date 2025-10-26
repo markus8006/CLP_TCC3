@@ -1,4 +1,3 @@
-# src/manager/client_polling_manager.py
 import asyncio
 import time
 import socket
@@ -6,18 +5,14 @@ from typing import Dict, Any, Optional, List
 from src.utils.logs import logger
 from src.adapters.modbus_adapter import ModbusAdapter
 from src.models.PLCs import PLC
-
 from concurrent.futures import ThreadPoolExecutor
-
 from src.services.Alarms_service import AlarmService
 from src.repository.Data_repository import DataRepo
-
-
-# src/manager/client_polling_manager.py
 import os
+import inspect
+
+# número máximo de threads
 max_workers = min(32, (os.cpu_count() or 4) * 4)
-
-
 
 
 # ---------- util: espera porta tcp abrir ----------
@@ -37,7 +32,7 @@ class ActivePLCPoller:
     def __init__(self, plc_orm: PLC, registers_provider: Any, flask_app):
         """
         plc_orm: PLC SQLAlchemy object
-        registers_provider: callable (sync or async) -> list of register dicts
+        registers_provider: callable (sync or async) -> list of register dicts/objects
         """
         self.plc_orm = plc_orm
         self.registers_provider = registers_provider
@@ -49,9 +44,10 @@ class ActivePLCPoller:
 
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
-        # executor para operações bloqueantes com DB
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
+        # detecta se adapter.read_register é coroutinefunction
+        self._read_is_coroutine = inspect.iscoroutinefunction(getattr(self.adapter, "read_register", None))
 
     def _process_batch_sync(self, batch: List[Dict[str, Any]]):
         """
@@ -59,9 +55,7 @@ class ActivePLCPoller:
          - chama AlarmService.check_and_handle(plc_id, register_id, value)
          - marca rec['is_alarm'] se check_and_handle retornar True
         Depois faz bulk_insert no DataLogRepo.
-        IMPORTANTE: essa função é síncrona e deve rodar em executor para não bloquear o loop.
         """
-        # note: alarm_service e datalog_repo usam sessões síncronas (Flask-SQLAlchemy).
         with self.context.app_context():
             try:
                 for rec in batch:
@@ -69,17 +63,13 @@ class ActivePLCPoller:
                     register_id = rec.get('register_id')
                     value = rec.get('value_float')
                     try:
-                    # check_and_handle retorna True se disparou alarme
                         triggered = self.alarm_service.check_and_handle(plc_id, register_id, value)
                         if triggered:
                             rec['is_alarm'] = True
                     except Exception:
-                    # garantir que uma exceção em um registro não pare o resto
                         logger.exception("Erro em AlarmService para plc=%s reg=%s", plc_id, register_id)
 
-            # após processar os alarms, insere tudo em lote
                 try:
-                # adapte para os campos que seu DataLogRepo espera
                     self.datalog_repo.bulk_insert(batch)
                 except Exception:
                     logger.exception("Erro ao inserir batch de DataLog")
@@ -97,7 +87,7 @@ class ActivePLCPoller:
         self._stop = True
         if self._task:
             self._task.cancel()
-            await asyncio.sleep(0) # allow task to cancel
+            await asyncio.sleep(0)
             self._task = None
 
     async def _run_loop(self):
@@ -105,6 +95,7 @@ class ActivePLCPoller:
 
         while not self._stop:
             try:
+                # ----- conexão com PLC -----
                 if not self.adapter.is_connected():
                     connected = await self.adapter.connect()
                     if not connected:
@@ -112,11 +103,9 @@ class ActivePLCPoller:
                         await asyncio.sleep(self._backoff)
                         self._backoff = min(self._backoff * 2, 30.0)
                         continue
-                    self._backoff = 1.0 # Reset backoff on successful connection
+                    self._backoff = 1.0
 
-                 # Read registers -> montar batch de registros prontos para o DB
-
-                 # Get registers
+                # ----- obtém registradores -----
                 if asyncio.iscoroutinefunction(self.registers_provider):
                     regs = await self.registers_provider()
                 else:
@@ -126,12 +115,62 @@ class ActivePLCPoller:
                     logger.debug(f"No registers for plc {self._key()}")
                     await asyncio.sleep(1)
                     continue
-                
-                results_batch = []
-                for r in regs:
-                    read_result = await self.adapter.read_register(r)
 
-                    if read_result:
+                # ===============================
+                # 🔁 Leitura concorrente com fila
+                # ===============================
+                loop = asyncio.get_event_loop()
+                results_batch = []
+                tasks: List[asyncio.Task] = []
+                task_to_reg: Dict[asyncio.Task, Any] = {}
+
+                # controla quantas leituras simultâneas
+                max_concurrent_reads = min(16, len(regs))
+                sem = asyncio.Semaphore(max_concurrent_reads)
+
+                async def read_register_concurrent(register):
+                    async with sem:
+                        try:
+                            # Se adapter.read_register for async, await diretamente
+                            if self._read_is_coroutine:
+                                return await self.adapter.read_register(register)
+                            # Caso contrário, rode no executor (função bloqueante/síncrona)
+                            return await loop.run_in_executor(self._executor, self.adapter.read_register, register)
+                        except Exception as e:
+                            logger.error(f"Erro lendo {getattr(register, 'id', register)} @ {getattr(register, 'address', '')}: {e}")
+                            return None
+
+                # cria todas as tarefas de leitura e mapeia cada uma para seu register
+                for r in regs:
+                    t = asyncio.create_task(read_register_concurrent(r))
+                    tasks.append(t)
+                    task_to_reg[t] = r
+
+                # processa conforme as leituras terminam
+                for fut in asyncio.as_completed(tasks):
+                    # fut é o Task/Future; ao await retornamos o resultado
+                    try:
+                        read_result = await fut
+                    except Exception as e:
+                        # proteção extra: se a task levantou
+                        logger.error(f"Task de leitura falhou: {e}")
+                        continue
+
+                    reg_for_task = task_to_reg.get(fut)  # register associado à tarefa
+                    if not read_result:
+                        # leitura falhou ou retornou None; apenas continue
+                        continue
+
+                    # se por algum motivo read_result for coroutine (defesa extra), await-a
+                    if asyncio.iscoroutine(read_result):
+                        try:
+                            read_result = await read_result
+                        except Exception as e:
+                            logger.error(f"Coroutine read_result falhou ao await: {e}")
+                            continue
+
+                    # agora esperamos um dict-like
+                    try:
                         rec = {
                             'plc_id': read_result.get('plc_id') or getattr(self.plc_orm, 'id', None),
                             'register_id': read_result.get('register_id'),
@@ -140,30 +179,38 @@ class ActivePLCPoller:
                             'value_float': read_result.get('value_float'),
                             'value_int': read_result.get('value_int', None),
                             'quality': read_result.get('quality'),
-                            'unit': getattr(r, 'unit', None),
-                            'tags': getattr(r, 'tags', None),
+                            'unit': getattr(reg_for_task, 'unit', None),
+                            'tags': getattr(reg_for_task, 'tags', None),
                             'is_alarm': False,
                         }
                         results_batch.append(rec)
+                    except Exception as e:
+                        logger.exception("Erro ao montar record de leitura: %s", e)
+                        continue
 
-                # Se houver leituras, processe o batch **uma única vez** no executor
+                # processa lote completo (inserção + alarm checks) no executor
                 if results_batch:
-                    loop = asyncio.get_event_loop()
                     await loop.run_in_executor(self._executor, self._process_batch_sync, results_batch)
 
-
-                await asyncio.sleep(1) # Polling interval
+                # intervalo de polling
+                await asyncio.sleep(1)
 
             except asyncio.CancelledError:
                 logger.info(f"Polling loop for {self._key()} was cancelled.")
                 break
             except Exception as e:
                 logger.exception(f"Unexpected error in poll loop for {self._key()}: {e}")
-                await self.adapter.disconnect()
+                try:
+                    await self.adapter.disconnect()
+                except Exception:
+                    logger.exception("Falha ao desconectar adapter após erro.")
                 await asyncio.sleep(self._backoff)
                 self._backoff = min(self._backoff * 2, 30.0)
 
-        await self.adapter.disconnect()
+        try:
+            await self.adapter.disconnect()
+        except Exception:
+            logger.exception("Falha ao desconectar adapter no final do loop.")
         logger.info(f"PLCPoller stopped for {self._key()}")
 
 
