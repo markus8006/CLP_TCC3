@@ -7,71 +7,81 @@
 {% endblock %}
 
 {% block content %}
-<section class="page-header">
-    <h1>Cadastro de Registradores</h1>
-    <p>Associe novos pontos de medição aos CLPs disponíveis e configure unidades, escalas e limites.</p>
-</section>
+<div class="management-container">
+    <section class="page-header">
+        <h1>Cadastro de Registradores</h1>
+        <p>Associe novos pontos de medição aos CLPs disponíveis e configure unidades, escalas e limites.</p>
+    </section>
 
-<section class="card">
-    <h2>Novo registrador</h2>
-    {% if form.plc_id.choices %}
-    <form method="POST">
-        {{ form.hidden_tag() }}
-        <div class="form-grid">
-            <label><span>CLP</span>{{ form.plc_id(class_='input') }}</label>
-            <label><span>Nome</span>{{ form.name(class_='input') }}</label>
-            <label><span>Endereço</span>{{ form.address(class_='input') }}</label>
-            <label><span>Tipo</span>{{ form.register_type(class_='input') }}</label>
-            <label><span>Tipo de Dados</span>{{ form.data_type(class_='input') }}</label>
-            <label><span>Comprimento</span>{{ form.length(class_='input') }}</label>
-            <label><span>Unidade</span>{{ form.unit(class_='input') }}</label>
-            <label><span>Tag</span>{{ form.tag(class_='input') }}</label>
-            <label><span>Fator de Escala</span>{{ form.scale_factor(class_='input') }}</label>
-            <label><span>Offset</span>{{ form.offset(class_='input') }}</label>
+    <section class="card">
+        <div>
+            <h2>Novo registrador</h2>
+            <p class="card__description">Mapeie variáveis de processo e ligue-as ao CLP adequado para iniciar a recolha de dados.</p>
         </div>
-        <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
-        <div class="actions">
-            {{ form.submit(class_='btn primary') }}
+        <div class="card__content">
+            {% if form.plc_id.choices %}
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-grid">
+                    <label><span>CLP</span>{{ form.plc_id(class_='input') }}</label>
+                    <label><span>Nome</span>{{ form.name(class_='input') }}</label>
+                    <label><span>Endereço</span>{{ form.address(class_='input') }}</label>
+                    <label><span>Tipo</span>{{ form.register_type(class_='input') }}</label>
+                    <label><span>Tipo de Dados</span>{{ form.data_type(class_='input') }}</label>
+                    <label><span>Comprimento</span>{{ form.length(class_='input') }}</label>
+                    <label><span>Unidade</span>{{ form.unit(class_='input') }}</label>
+                    <label><span>Tag</span>{{ form.tag(class_='input') }}</label>
+                    <label><span>Fator de Escala</span>{{ form.scale_factor(class_='input') }}</label>
+                    <label><span>Offset</span>{{ form.offset(class_='input') }}</label>
+                </div>
+                <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
+                <div class="actions">
+                    {{ form.submit(class_='btn primary') }}
+                </div>
+            </form>
+            {% else %}
+                <p class="text-muted">Crie um CLP primeiro antes de adicionar registradores.</p>
+            {% endif %}
         </div>
-    </form>
-    {% else %}
-        <p>Crie um CLP primeiro antes de adicionar registradores.</p>
-    {% endif %}
-</section>
+    </section>
 
-<section class="card">
-    <h2>Registradores configurados</h2>
-    {% if registers %}
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>CLP</th>
-                    <th>Nome</th>
-                    <th>Endereço</th>
-                    <th>Tipo</th>
-                    <th>Dados</th>
-                    <th>Unidade</th>
-                    <th>Tag</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for register in registers %}
-                <tr>
-                    <td>{{ register.plc.name if register.plc else '#' ~ register.plc_id }}</td>
-                    <td>{{ register.name }}</td>
-                    <td>{{ register.address }}</td>
-                    <td>{{ register.register_type }}</td>
-                    <td>{{ register.data_type }}</td>
-                    <td>{{ register.unit or '-' }}</td>
-                    <td>{{ register.tag or '-' }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-        <p>Nenhum registrador cadastrado até o momento.</p>
-    {% endif %}
-</section>
+    <section class="card">
+        <div>
+            <h2>Registradores configurados</h2>
+            <p class="card__description">Conferira rapidamente os registos disponíveis e a sua parametrização principal.</p>
+        </div>
+        {% if registers %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>CLP</th>
+                        <th>Nome</th>
+                        <th>Endereço</th>
+                        <th>Tipo</th>
+                        <th>Dados</th>
+                        <th>Unidade</th>
+                        <th>Tag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for register in registers %}
+                    <tr>
+                        <td>{{ register.plc.name if register.plc else '#' ~ register.plc_id }}</td>
+                        <td>{{ register.name }}</td>
+                        <td>{{ register.address }}</td>
+                        <td>{{ register.register_type }}</td>
+                        <td>{{ register.data_type }}</td>
+                        <td>{{ register.unit or '-' }}</td>
+                        <td>{{ register.tag or '-' }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            <p class="text-muted">Nenhum registrador cadastrado até o momento.</p>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

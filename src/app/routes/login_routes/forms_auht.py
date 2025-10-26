@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField
 from wtforms.validators import DataRequired, EqualTo, ValidationError
-from src.models.Users import User
+from src.models.Users import User, UserRole
 from flask_wtf import FlaskForm
 from wtforms import SubmitField
 
@@ -14,19 +14,25 @@ class LoginForm(FlaskForm):
     password = PasswordField('Senha', validators=[DataRequired()])
     submit = SubmitField('Entrar')
 
+ROLE_CHOICES = [
+    (UserRole.USER.value, 'Utilizador Padrão'),
+    (UserRole.ALARM_DEFINITION.value, 'Gestor de Alarmes'),
+    (UserRole.MODERATOR.value, 'Moderador'),
+    (UserRole.ADMIN.value, 'Administrador'),
+]
+
+
 class RegistrationForm(FlaskForm):
     username = StringField('Usuário', validators=[DataRequired()])
     password = PasswordField('Senha', validators=[DataRequired()])
     email = EmailField('Email', validators=[DataRequired()])
     password2 = PasswordField(
         'Repetir Senha', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
-    user_type = SelectField('Tipo de Conta', 
-                            choices=[
-                                ('user', 'Utilizador Padrão'),
-                                ('admin', 'Administrador'),
-                                ('VIEWER', 'Apenas Visualização')
-                            ],
-                            validators=[DataRequired()])
+    user_type = SelectField(
+        'Tipo de Conta',
+        choices=ROLE_CHOICES,
+        validators=[DataRequired()]
+    )
 
     submit = SubmitField('Registrar')
 

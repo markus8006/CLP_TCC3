@@ -1,0 +1,164 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Definições de Alarmes{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <section class="page-header">
+        <h1>Definições de Alarmes</h1>
+        <p>Configure eventos de alarme para registos específicos e mantenha a equipa informada sobre condições críticas.</p>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Criar definição</h2>
+            <p class="card__description">Associe um registrador, configure limites e determine as acções automáticas para cada alarme.</p>
+        </div>
+        <div class="card__content">
+            {% if form.plc_id.choices %}
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="form-grid">
+                    <label>
+                        <span>CLP</span>
+                        {{ form.plc_id(class_='input', id='alarm-plc') }}
+                    </label>
+                    <label>
+                        <span>Registrador</span>
+                        {{ form.register_id(class_='input', id='alarm-register') }}
+                    </label>
+                    <label>
+                        <span>Nome</span>
+                        {{ form.name(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Condição</span>
+                        {{ form.condition_type(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Setpoint</span>
+                        {{ form.setpoint(class_='input', placeholder='ex.: 75.0') }}
+                    </label>
+                    <label>
+                        <span>Limite inferior</span>
+                        {{ form.threshold_low(class_='input', placeholder='Opcional') }}
+                    </label>
+                    <label>
+                        <span>Limite superior</span>
+                        {{ form.threshold_high(class_='input', placeholder='Opcional') }}
+                    </label>
+                    <label>
+                        <span>Histérese</span>
+                        {{ form.deadband(class_='input', placeholder='0.0') }}
+                    </label>
+                    <label>
+                        <span>Prioridade</span>
+                        {{ form.priority(class_='input') }}
+                    </label>
+                    <label>
+                        <span>Severidade</span>
+                        {{ form.severity(class_='input', min=1, max=5) }}
+                    </label>
+                </div>
+                <label>
+                    <span>Descrição</span>
+                    {{ form.description(class_='input', rows=3, placeholder='Contexto ou instruções de resposta.') }}
+                </label>
+                <div class="actions">
+                    <label class="checkbox">{{ form.is_active() }} Activo</label>
+                    <label class="checkbox">{{ form.auto_acknowledge() }} Auto reconhecer</label>
+                    <label class="checkbox">{{ form.email_enabled() }} Notificar por email</label>
+                    {{ form.submit(class_='btn primary') }}
+                </div>
+            </form>
+            {% else %}
+            <p class="text-muted">Crie um CLP e os respectivos registradores antes de definir alarmes.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Alarmes configurados</h2>
+            <p class="card__description">Lista consolidada com os alarmes activos e respectivos limiares. Utilize este painel para auditar rapidamente as protecções existentes.</p>
+        </div>
+        {% if definitions %}
+        <div class="card-list">
+            {% for definition in definitions %}
+            <article class="mini-card">
+                <header>
+                    <h3 class="mini-card__title">{{ definition.name }}</h3>
+                    <div class="mini-card__meta">
+                        <span>#{{ definition.id }}</span>
+                        <span>{{ definition.plc.name if definition.plc else 'CLP #' ~ definition.plc_id }}</span>
+                        {% if definition.register %}
+                        <span>{{ definition.register.name }}</span>
+                        {% endif %}
+                        <span class="badge">{{ definition.priority }}</span>
+                    </div>
+                </header>
+                {% if definition.description %}
+                <p class="card__description">{{ definition.description }}</p>
+                {% endif %}
+                <div class="mini-card__tags">
+                    <span class="mini-card__tag">{{ definition.condition_type }}</span>
+                    {% if definition.setpoint is not none %}<span class="mini-card__tag">Setpoint {{ definition.setpoint }}</span>{% endif %}
+                    {% if definition.threshold_low is not none or definition.threshold_high is not none %}
+                        <span class="mini-card__tag">Limites {{ definition.threshold_low or '-' }} / {{ definition.threshold_high or '-' }}</span>
+                    {% endif %}
+                    <span class="mini-card__tag">Histérese {{ definition.deadband }}</span>
+                </div>
+                <footer class="mini-card__footer">
+                    <span>{{ 'Activo' if definition.is_active else 'Inactivo' }}</span>
+                    <span>Severidade {{ definition.severity }}</span>
+                </footer>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">Nenhuma definição de alarme registada até o momento.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const registersByPlc = {{ registers_by_plc|tojson }};
+    const plcSelect = document.getElementById('alarm-plc');
+    const registerSelect = document.getElementById('alarm-register');
+
+    function buildRegisterOptions(plcId, selectedValue = '0') {
+        const options = [{ value: '0', label: 'Sem registrador associado' }];
+        const registers = registersByPlc[plcId] || [];
+        registers.forEach((register) => {
+            options.push({
+                value: String(register.id),
+                label: register.label,
+            });
+        });
+        registerSelect.innerHTML = '';
+        options.forEach((option) => {
+            const opt = document.createElement('option');
+            opt.value = option.value;
+            opt.textContent = option.label;
+            if (option.value === selectedValue) {
+                opt.selected = true;
+            }
+            registerSelect.appendChild(opt);
+        });
+    }
+
+    if (plcSelect && registerSelect) {
+        const initialValue = '{{ (form.register_id.data or 0) | string }}';
+        buildRegisterOptions(plcSelect.value, initialValue);
+        plcSelect.addEventListener('change', (event) => {
+            buildRegisterOptions(event.target.value);
+        });
+    }
+</script>
+{% endblock %}

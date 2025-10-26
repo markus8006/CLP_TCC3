@@ -6,8 +6,10 @@ from src.app import db
 from src.models.Users import User, UserRole
 from src.models.PLCs import PLC
 from src.models.Registers import Register
+from src.models.Alarms import AlarmDefinition
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
+from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.utils import role_required
 from src.utils.tags import parse_tags
 
@@ -16,7 +18,10 @@ from .admin_forms import (
     UserUpdateForm,
     PLCForm,
     RegisterCreationForm,
+    AlarmDefinitionForm,
 )
+
+AlarmDefRepo = AlarmDefinitionRepo()
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -211,4 +216,77 @@ def manage_registers():
         "registers/manage.html",
         form=form,
         registers=registers,
+    )
+
+
+@admin_bp.route("/alarms/definitions", methods=["GET", "POST"])
+@login_required
+@role_required(UserRole.ALARM_DEFINITION)
+def manage_alarm_definitions():
+    form = AlarmDefinitionForm()
+
+    plcs = PLC.query.order_by(PLC.name.asc()).all()
+    form.plc_id.choices = [
+        (plc.id, f"{plc.name} ({plc.ip_address})") for plc in plcs
+    ]
+
+    registers_by_plc = {}
+    default_register_choices = [(0, "Sem registrador associado")]
+    for plc in plcs:
+        registers = (
+            Register.query.filter_by(plc_id=plc.id)
+            .order_by(Register.name.asc())
+            .all()
+        )
+        registers_by_plc[plc.id] = [
+            {"id": register.id, "label": f"{register.name} ({register.address})"}
+            for register in registers
+        ]
+        default_register_choices.extend(
+            [(register.id, f"{register.name} — {plc.name}") for register in registers]
+        )
+
+    form.register_id.choices = default_register_choices or [(0, "Sem registradores disponíveis")]
+
+    if form.validate_on_submit():
+        register_id = form.register_id.data if form.register_id.data != 0 else None
+        definition = AlarmDefinition(
+            plc_id=form.plc_id.data,
+            register_id=register_id,
+            name=form.name.data,
+            description=form.description.data,
+            condition_type=form.condition_type.data,
+            setpoint=form.setpoint.data,
+            threshold_low=form.threshold_low.data,
+            threshold_high=form.threshold_high.data,
+            deadband=form.deadband.data if form.deadband.data is not None else 0.0,
+            priority=form.priority.data,
+            severity=form.severity.data if form.severity.data is not None else 3,
+            is_active=form.is_active.data,
+            auto_acknowledge=form.auto_acknowledge.data,
+            email_enabled=form.email_enabled.data,
+        )
+
+        try:
+            AlarmDefRepo.add(definition, commit=False)
+            db.session.commit()
+            flash("Definição de alarme criada com sucesso!", "success")
+            return redirect(url_for("admin.manage_alarm_definitions"))
+        except IntegrityError:
+            db.session.rollback()
+            flash(
+                "Já existe uma definição semelhante para este registrador.",
+                "warning",
+            )
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Erro ao criar definição de alarme: {exc}", "danger")
+
+    definitions = AlarmDefRepo.list_all()
+
+    return render_template(
+        "alarms/manage.html",
+        form=form,
+        definitions=definitions,
+        registers_by_plc=registers_by_plc,
     )
