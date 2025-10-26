@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 
+from datetime import datetime, timezone
+
 from src.app import db
+from src.models.Users import UserRole
 
 
 class AlarmDefinition(db.Model):
@@ -23,6 +26,9 @@ class AlarmDefinition(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     auto_acknowledge = db.Column(db.Boolean, default=False)
     email_enabled = db.Column(db.Boolean, default=False)
+    email_min_role = db.Column(
+        db.Enum(UserRole), nullable=False, default=UserRole.ALARM_DEFINITION
+    )
     severity = db.Column(db.Integer, default=3)
 
     created_at = db.Column(

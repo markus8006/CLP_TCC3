@@ -1,152 +1,133 @@
-# src/services/alarm_service.py
-from datetime import datetime, timezone
-from typing import Optional, List, Tuple
+"""Alarm evaluation helpers with email notifications."""
 
-from src.repository.Alarms_repository import AlarmDefinitionRepo, AlarmRepo
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Tuple
+
+from src.app import db
 from src.models.Alarms import Alarm, AlarmDefinition
+from src.models.Users import User, UserRole
+from src.repository.Alarms_repository import AlarmDefinitionRepo, AlarmRepo
+from src.services.email_service import send_email
 from src.utils.logs import logger
 
 
+def evaluate_alarm(defn: AlarmDefinition, value: float, existing_alarm: Optional[Alarm]) -> Tuple[str, Dict[str, object]]:
+    """Determine the action that should be taken for the given reading."""
 
-
-
- # ======HELPER=========
-def evaluate_alarm(defn, value: float, existing_alarm: Optional[Alarm]) -> Tuple[str, dict]:
-    """
-    Retorna (action, info) onde action é: 'trigger', 'clear', 'none'.
-    info é dict com dados úteis (message, trigger_value, now).
-    defn: AlarmDefinition ORM
-    existing_alarm: Alarm ORM ativo (ou None)
-    """
     now = datetime.now(timezone.utc)
     if value is None:
-        return 'none', {}
+        return "none", {}
 
-    cond = defn.condition_type  # ex: 'above', 'below', 'outside_range'
+    cond = defn.condition_type
     low = defn.threshold_low
     high = defn.threshold_high
     sp = defn.setpoint
     dband = defn.deadband or 0.0
 
-    # Helper: is_in_alarm_condition (ignoring deadband)
     in_cond = False
-    if cond == 'above':
+    if cond == "above":
         if sp is None:
-            return 'none', {}
+            return "none", {}
         in_cond = value > sp
         msg = f"Value {value} > setpoint {sp}"
-    elif cond == 'below':
+    elif cond == "below":
         if sp is None:
-            return 'none', {}
+            return "none", {}
         in_cond = value < sp
         msg = f"Value {value} < setpoint {sp}"
-    elif cond == 'outside_range':
+    elif cond == "outside_range":
         if low is None or high is None:
-            return 'none', {}
+            return "none", {}
         in_cond = (value < low) or (value > high)
         msg = f"Value {value} outside [{low}, {high}]"
-    elif cond == 'inside_range':
+    elif cond == "inside_range":
         if low is None or high is None:
-            return 'none', {}
-        in_cond = (low <= value <= high)
+            return "none", {}
+        in_cond = low <= value <= high
         msg = f"Value {value} inside [{low}, {high}]"
     else:
-        # outras condições possíveis: 'change', 'rate', ...
-        return 'none', {}
+        return "none", {}
 
-    # Se não há alarme ativo e condição true => TRIGGER
-    if existing_alarm is None or existing_alarm.state != 'ACTIVE':
+    if existing_alarm is None or existing_alarm.state != "ACTIVE":
         if in_cond:
-            return 'trigger', {
-                'message': msg,
-                'trigger_value': value,
-                'triggered_at': now
+            return "trigger", {
+                "message": msg,
+                "trigger_value": value,
+                "triggered_at": now,
             }
-        return 'none', {}
+        return "none", {}
 
-    # Se já há um alarme ativo: só CLEAR se o valor voltou para dentro da zona segura
-    # aplicando deadband: para 'above' com setpoint=sp:
-    #  - alarme ativado quando value > sp
-    #  - só limpar quando value <= sp - deadband
-    # para 'below':
-    #  - ativado quando value < sp
-    #  - limpar quando value >= sp + deadband
-    if existing_alarm.state == 'ACTIVE':
-        if cond == 'above':
+    if existing_alarm.state == "ACTIVE":
+        if cond == "above":
             safe = value <= (sp - dband)
             if safe:
-                return 'clear', {'cleared_at': now, 'current_value': value}
-        elif cond == 'below':
+                return "clear", {"cleared_at": now, "current_value": value}
+        elif cond == "below":
             safe = value >= (sp + dband)
             if safe:
-                return 'clear', {'cleared_at': now, 'current_value': value}
-        elif cond == 'outside_range':
-            # clear when value enters [low+db, high-db]
+                return "clear", {"cleared_at": now, "current_value": value}
+        elif cond == "outside_range":
             safe = (low + dband) <= value <= (high - dband)
             if safe:
-                return 'clear', {'cleared_at': now, 'current_value': value}
-        elif cond == 'inside_range':
-            # clear when value leaves the inside_range? depends on semantics
-            safe = not ((low <= value <= high))
+                return "clear", {"cleared_at": now, "current_value": value}
+        elif cond == "inside_range":
+            safe = not (low <= value <= high)
             if safe:
-                return 'clear', {'cleared_at': now, 'current_value': value}
+                return "clear", {"cleared_at": now, "current_value": value}
 
-    return 'none', {}
-
-
-
-
+    return "none", {}
 
 
 class AlarmService:
     def __init__(self, session=None):
-        # repos usam db.session por padrão, mas aceitam session opcional
         self.def_repo = AlarmDefinitionRepo(session=session)
         self.alarm_repo = AlarmRepo(session=session)
 
     def _find_active_alarm_for_definition(self, defn: AlarmDefinition) -> Optional[Alarm]:
-        # procura um Alarm ativo para esta definição (um por definição)
-        return self.alarm_repo.first_by(alarm_definition_id=defn.id, state='ACTIVE')
+        return self.alarm_repo.first_by(alarm_definition_id=defn.id, state="ACTIVE")
 
-    def _create_alarm(self, defn: AlarmDefinition, plc_id: int, register_id: int, trigger_value: float, current_value: float, message: str) -> Alarm:
+    def _create_alarm(
+        self,
+        defn: AlarmDefinition,
+        plc_id: int,
+        register_id: int,
+        trigger_value: float,
+        current_value: float,
+        message: str,
+    ) -> Alarm:
         now = datetime.now(timezone.utc)
         alarm = Alarm(
             alarm_definition_id=defn.id,
             plc_id=plc_id,
             register_id=register_id,
-            state='ACTIVE',
-            priority=defn.priority or 'MEDIUM',
+            state="ACTIVE",
+            priority=defn.priority or "MEDIUM",
             message=message,
             triggered_at=now,
             trigger_value=trigger_value,
-            current_value=current_value
+            current_value=current_value,
         )
-        # salva e retorna
         self.alarm_repo.add(alarm)
         logger.info("Alarm triggered: %s (def=%s plc=%s reg=%s)", message, defn.id, plc_id, register_id)
-        # TODO: disparar notificações/alerts aqui (email, ws) se defn.email_enabled
+        self._notify_trigger(defn, alarm)
         return alarm
 
-    def _clear_alarm(self, alarm: Alarm, current_value: float):
+    def _clear_alarm(self, defn: AlarmDefinition, alarm: Alarm, current_value: float) -> None:
         now = datetime.now(timezone.utc)
-        alarm.state = 'CLEARED'
+        alarm.state = "CLEARED"
         alarm.cleared_at = now
         alarm.current_value = current_value
         self.alarm_repo.update(alarm)
         logger.info("Alarm cleared: id=%s def=%s", alarm.id, alarm.alarm_definition_id)
-        # TODO: notificar limpeza se necessário
+        self._notify_clear(defn, alarm)
 
     def check_and_handle(self, plc_id: int, register_id: int, value: Optional[float]) -> bool:
-        """
-        Checa todas as AlarmDefinitions ativas para (plc_id, register_id) e cria/limpa alarms conforme necessário.
-        Retorna True se qualquer alarme foi disparado nesta leitura.
-        """
         if value is None:
             return False
 
         triggered_any = False
-        # Buscar definições ativas para este plc/register.
-        # Você pode querer também buscar definições com register_id is NULL para alarms por plc genéricos.
         defs: List[AlarmDefinition] = self.def_repo.find_by(plc_id=plc_id, register_id=register_id, is_active=True)
 
         for defn in defs:
@@ -154,24 +135,104 @@ class AlarmService:
                 existing_alarm = self._find_active_alarm_for_definition(defn)
                 action, info = evaluate_alarm(defn, value, existing_alarm)
 
-                if action == 'trigger':
-                    # se já existe alarme ativo para essa definição não criar duplicado (mas sua evaluate deveria ter evitado isso)
-                    if existing_alarm is None or existing_alarm.state != 'ACTIVE':
-                        message = info.get('message') or f"Alarm {defn.name} triggered"
-                        trigger_val = info.get('trigger_value', value)
+                if action == "trigger":
+                    if existing_alarm is None or existing_alarm.state != "ACTIVE":
+                        message = info.get("message") or f"Alarm {defn.name} triggered"
+                        trigger_val = info.get("trigger_value", value)
                         self._create_alarm(defn, plc_id, register_id, trigger_val, value, message)
                         triggered_any = True
                     else:
-                        # já ativo -> podemos atualizar current_value e triggered_at se quiser
                         existing_alarm.current_value = value
                         self.alarm_repo.update(existing_alarm)
 
-                elif action == 'clear':
-                    if existing_alarm is not None and existing_alarm.state == 'ACTIVE':
-                        self._clear_alarm(existing_alarm, info.get('current_value', value))
-                # action == 'none' -> nada a fazer
-            except Exception as e:
-                logger.exception("Erro avaliando alarme def=%s: %s", getattr(defn, 'id', None), e)
+                elif action == "clear":
+                    if existing_alarm is not None and existing_alarm.state == "ACTIVE":
+                        self._clear_alarm(defn, existing_alarm, info.get("current_value", value))
+            except Exception as exc:  # pragma: no cover - defensive logging
+                logger.exception("Erro avaliando alarme def=%s: %s", getattr(defn, "id", None), exc)
                 continue
 
         return triggered_any
+
+    # ------------------------------------------------------------------
+    # Email helpers
+    # ------------------------------------------------------------------
+    def _notify_trigger(self, defn: AlarmDefinition, alarm: Alarm) -> None:
+        if not getattr(defn, "email_enabled", False):
+            return
+        recipients = self._resolve_recipients(defn)
+        if not recipients:
+            logger.debug("Nenhum destinatário encontrado para email de alarme def=%s", defn.id)
+            return
+
+        subject = f"[ALARME {defn.priority or 'MEDIUM'}] {defn.name}"
+        body = self._format_trigger_body(defn, alarm)
+        send_email(subject, body, recipients)
+
+    def _notify_clear(self, defn: AlarmDefinition, alarm: Alarm) -> None:
+        if not getattr(defn, "email_enabled", False):
+            return
+        recipients = self._resolve_recipients(defn)
+        if not recipients:
+            return
+
+        subject = f"[ALARME {defn.priority or 'MEDIUM'}] {defn.name} normalizado"
+        body = self._format_clear_body(defn, alarm)
+        send_email(subject, body, recipients)
+
+    def _resolve_recipients(self, defn: AlarmDefinition) -> List[str]:
+        min_role = getattr(defn, "email_min_role", UserRole.ALARM_DEFINITION)
+        if isinstance(min_role, str):
+            try:
+                min_role = UserRole(min_role)
+            except ValueError:
+                min_role = UserRole.ALARM_DEFINITION
+
+        recipients: List[str] = []
+        try:
+            users = db.session.query(User).filter_by(is_active=True).all()
+        except Exception:
+            logger.exception("Erro ao obter utilizadores para notificação de alarme")
+            return recipients
+
+        for user in users:
+            try:
+                if user.has_permission(min_role):
+                    recipients.append(user.email)
+            except Exception:
+                logger.debug("Erro ao avaliar permissões do utilizador %s", getattr(user, "id", "unknown"))
+        return recipients
+
+    def _format_trigger_body(self, defn: AlarmDefinition, alarm: Alarm) -> str:
+        plc_name = getattr(defn.plc, "name", None) if hasattr(defn, "plc") else None
+        register_name = getattr(defn.register, "name", None) if hasattr(defn, "register") else None
+        lines = [
+            f"Alarme: {defn.name}",
+            f"Prioridade: {defn.priority or 'MEDIUM'}",
+            f"PLC: {plc_name or defn.plc_id}",
+            f"Registrador: {register_name or defn.register_id}",
+            f"Mensagem: {alarm.message}",
+            f"Valor actual: {alarm.current_value}",
+            f"Valor de disparo: {alarm.trigger_value}",
+            f"Ocorrido em: {alarm.triggered_at.strftime('%Y-%m-%d %H:%M:%S %Z') if alarm.triggered_at else 'N/D'}",
+        ]
+        if defn.description:
+            lines.extend(["", "Descrição:", defn.description])
+        return "\n".join(str(line) for line in lines if line is not None)
+
+    def _format_clear_body(self, defn: AlarmDefinition, alarm: Alarm) -> str:
+        plc_name = getattr(defn.plc, "name", None) if hasattr(defn, "plc") else None
+        register_name = getattr(defn.register, "name", None) if hasattr(defn, "register") else None
+        lines = [
+            f"O alarme {defn.name} foi normalizado.",
+            f"Prioridade: {defn.priority or 'MEDIUM'}",
+            f"PLC: {plc_name or defn.plc_id}",
+            f"Registrador: {register_name or defn.register_id}",
+            f"Valor actual: {alarm.current_value}",
+            f"Limpado em: {alarm.cleared_at.strftime('%Y-%m-%d %H:%M:%S %Z') if alarm.cleared_at else 'N/D'}",
+        ]
+        return "\n".join(str(line) for line in lines if line is not None)
+
+
+__all__ = ["AlarmService", "evaluate_alarm"]
+

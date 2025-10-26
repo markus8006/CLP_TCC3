@@ -68,6 +68,10 @@
                     <span>Descrição</span>
                     {{ form.description(class_='input', rows=3, placeholder='Contexto ou instruções de resposta.') }}
                 </label>
+                <label>
+                    <span>Função mínima para email</span>
+                    {{ form.email_min_role(class_='input') }}
+                </label>
                 <div class="actions">
                     <label class="checkbox">{{ form.is_active() }} Activo</label>
                     <label class="checkbox">{{ form.auto_acknowledge() }} Auto reconhecer</label>
@@ -111,6 +115,9 @@
                         <span class="mini-card__tag">Limites {{ definition.threshold_low or '-' }} / {{ definition.threshold_high or '-' }}</span>
                     {% endif %}
                     <span class="mini-card__tag">Histérese {{ definition.deadband }}</span>
+                    {% if definition.email_enabled %}
+                        <span class="mini-card__tag">Email ≥ {{ role_labels.get(definition.email_min_role, definition.email_min_role.name if definition.email_min_role else '—') }}</span>
+                    {% endif %}
                 </div>
                 <footer class="mini-card__footer">
                     <span>{{ 'Activo' if definition.is_active else 'Inactivo' }}</span>

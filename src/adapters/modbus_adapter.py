@@ -1,141 +1,173 @@
-# src/adapters/modbus_adapter.py
+"""Adapter implementation for Modbus TCP PLCs."""
+
+from __future__ import annotations
+
 import asyncio
-from pymodbus.client import AsyncModbusTcpClient
 import logging
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
+
+try:  # pragma: no cover - optional dependency
+    from pymodbus.client import AsyncModbusTcpClient
+except Exception:  # pragma: no cover - safeguard if library missing
+    AsyncModbusTcpClient = None  # type: ignore
+
+from src.adapters.base_adapters import BaseAdapter
+from src.simulations.runtime import simulation_registry
 from src.repository.PLC_repository import Plcrepo
-from datetime import datetime, timezone  # ← IMPORTANTE: Importar datetime
 
 logger = logging.getLogger(__name__)
 
 
-class ModbusAdapter:
-    def __init__(self, orm):
-        self.orm = orm
+class ModbusAdapter(BaseAdapter):
+    """Async Modbus TCP adapter built on top of :mod:`pymodbus`."""
+
+    def __init__(self, orm: Any):
+        super().__init__(orm)
         self.ip_address = getattr(self.orm, "ip_address", None)
         self.port = getattr(self.orm, "port", 502)
-        self.timeout = getattr(self.orm, "timeout", 3)
+        timeout_ms = getattr(self.orm, "timeout", 3000) or 3000
+        self.timeout = max(float(timeout_ms) / 1000.0, 0.1)
         self.client: Optional[AsyncModbusTcpClient] = None
-        self._connected: bool = False
 
     async def connect(self) -> bool:
-        """Conecta ao PLC (async)."""
-        try:
+        if self.in_simulation():
+            self._set_connected(True)
+            return True
+
+        if AsyncModbusTcpClient is None:
+            logger.error("pymodbus não está instalado; não é possível abrir conexão Modbus")
+            self._set_connected(False)
+            return False
+
+        async with self._lock:
+            if self.client and self.is_connected():
+                return True
+
             self.client = AsyncModbusTcpClient(
-                host=self.ip_address, 
-                port=self.port, 
-                timeout=self.timeout
+                host=self.ip_address,
+                port=self.port,
+                timeout=self.timeout,
             )
-            await self.client.connect()
-            self._connected = getattr(self.client, "connected", True)
-            
-            if self._connected:
-                logger.info("Conectado ao PLC %s:%s", self.ip_address, self.port)
+            try:
+                await self.client.connect()
+            except Exception:  # pragma: no cover - dependente do ambiente
+                logger.exception("Erro ao conectar ao PLC Modbus %s:%s", self.ip_address, self.port)
+                self._set_connected(False)
+                return False
+
+            connected = getattr(self.client, "connected", True)
+            self._set_connected(bool(connected))
+
+            if self.is_connected():
+                logger.info("Conectado ao PLC Modbus %s:%s", self.ip_address, self.port)
                 try:
                     self.orm.is_online = True
                     Plcrepo.update(self.orm)
                 except Exception:
-                    logger.debug("Não foi possível atualizar Plcrepo.")
-            return self._connected
-        except Exception as e:
-            logger.exception("Erro ao conectar PLC %s:%s", self.ip_address, self.port)
-            self._connected = False
-            return False
+                    logger.debug("Não foi possível atualizar status do PLC no repositório")
+            return self.is_connected()
 
-    async def disconnect(self):
-        """Desconecta do PLC (async)."""
-        try:
-            if self.client:
-                close_fn = getattr(self.client, "close", None)
-                if asyncio.iscoroutinefunction(close_fn):
-                    await close_fn()
-                elif callable(close_fn):
-                    close_fn()
-            self._connected = False
-            logger.info("Desconectado do PLC %s:%s", self.ip_address, self.port)
-            self.orm.is_online = False
+    async def disconnect(self) -> None:
+        if self.in_simulation():
+            self._set_connected(False)
+            return
+
+        async with self._lock:
             try:
-                Plcrepo.update(self.orm)
+                if self.client is not None:
+                    close_fn = getattr(self.client, "close", None)
+                    if asyncio.iscoroutinefunction(close_fn):
+                        await close_fn()
+                    elif callable(close_fn):
+                        close_fn()
             except Exception:
-                logger.debug("Não foi possível atualizar Plcrepo na desconexão.")
-        except Exception:
-            logger.exception("Erro ao desconectar do PLC %s", self.ip_address)
+                logger.exception("Erro ao desconectar do PLC Modbus %s", self.ip_address)
+            finally:
+                self._set_connected(False)
+                self.client = None
+                try:
+                    self.orm.is_online = False
+                    Plcrepo.update(self.orm)
+                except Exception:
+                    logger.debug("Não foi possível atualizar status offline do PLC")
 
-    async def read_register(self, register_config: Any) -> Optional[Dict]:
-        """
-        Lê um único registrador (async).
-        IMPORTANTE: Apenas lê o valor, NÃO verifica alarmes aqui.
-        """
-        if not self._connected or self.client is None:
-            logger.debug("Tentativa de leitura sem conexão.")
+    async def read_register(self, register_config: Any) -> Optional[Dict[str, Any]]:
+        if self.in_simulation():
+            simulated = simulation_registry.next_value(self.protocol_name or "modbus", register_config)
+            return self._build_result(
+                register_id=simulated["register_id"],
+                raw_value=simulated["raw_value"],
+                value_float=simulated["value_float"],
+                value_int=simulated["value_int"],
+                quality=simulated["quality"],
+            )
+
+        if not self.is_connected() or self.client is None:
+            logger.debug("Tentativa de leitura Modbus sem conexão ativa")
             return None
+
+        addr_raw = getattr(register_config, "address", 0)
+        address = self._normalise_address(addr_raw)
+        try:
+            address_int = int(address)
+        except (TypeError, ValueError):
+            logger.warning("Endereço Modbus inválido: %s", address)
+            return None
+
+        reg_type = getattr(register_config, "register_type", "holding")
+        slave = int(getattr(register_config, "slave", getattr(self.orm, "unit_id", 1) or 1))
+        register_id = getattr(register_config, "id", None)
+        data_type = getattr(register_config, "data_type", "int16")
 
         try:
-            addr = int(getattr(register_config, "address", 0))
-            reg_type = getattr(register_config, 'register_type', 'holding')
-            slave = int(getattr(register_config, "slave", 1))
-            register_id = int(getattr(register_config, "id"))
-            data_type = getattr(register_config, 'data_type', 'int16')
-
-            # Lê baseado no tipo de registrador
-            if reg_type == 'holding':
-                resp = await self.client.read_holding_registers(addr, count=1, slave=slave)
-            elif reg_type == 'input':
-                resp = await self.client.read_input_registers(addr, 1, slave=slave)
-            elif reg_type == 'coil':
-                resp = await self.client.read_coils(addr, 1, slave=slave)
+            if reg_type == "holding":
+                response = await self.client.read_holding_registers(address_int, count=1, slave=slave)
+            elif reg_type == "input":
+                response = await self.client.read_input_registers(address_int, count=1, slave=slave)
+            elif reg_type == "coil":
+                response = await self.client.read_coils(address_int, count=1, slave=slave)
             else:
-                logger.warning("Tipo de registrador desconhecido: %s", reg_type)
+                logger.warning("Tipo de registrador Modbus desconhecido: %s", reg_type)
                 return None
-
-            # Verifica erro na resposta
-            if hasattr(resp, "isError") and resp.isError():
-                logger.warning("Resposta com erro do PLC: %s", resp)
-                return None
-
-            # Extrai valor bruto
-            raw_value = None
-            if hasattr(resp, "registers") and resp.registers:
-                raw_value = resp.registers[0]
-            elif hasattr(resp, "bits") and resp.bits:
-                raw_value = int(resp.bits[0])
-
-            # Converte o valor
-            value_float = self._convert_value(raw_value, data_type)
-            value_int = int(raw_value) if raw_value is not None else None
-
-            # ✅ CORREÇÃO AQUI: Use datetime.now(timezone.utc)
-            return {
-                'plc_id': getattr(self.orm, 'id', None),
-                'register_id': register_id,
-                'raw_value': raw_value,
-                'value_float': value_float,
-                'value_int': value_int,
-                'quality': 'good' if raw_value is not None else 'bad',
-                'timestamp': datetime.now(timezone.utc)  # ← ✅ CORRETO! datetime object
-            }
-            
-        except Exception as e:
-            logger.exception("Erro ao ler registrador %s: %s", register_config, e)
+        except Exception:
+            logger.exception("Erro durante leitura do registrador %s", register_id)
             return None
 
-    def _convert_value(self, raw_value: int, data_type: str) -> Optional[float]:
-        """Converte valor bruto baseado no tipo de dado."""
+        if hasattr(response, "isError") and response.isError():
+            logger.warning("Resposta Modbus com erro: %s", response)
+            return None
+
+        raw_value: Optional[int] = None
+        if hasattr(response, "registers") and response.registers:
+            raw_value = response.registers[0]
+        elif hasattr(response, "bits") and response.bits:
+            raw_value = int(bool(response.bits[0]))
+
+        value_float = self._convert_value(raw_value, data_type)
+        value_int = self._coerce_int(raw_value)
+
+        return self._build_result(
+            register_id=register_id,
+            raw_value=raw_value,
+            value_float=value_float,
+            value_int=value_int,
+            quality="good" if raw_value is not None else "bad",
+        )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+    def _convert_value(self, raw_value: Optional[int], data_type: str) -> Optional[float]:
         if raw_value is None:
             return None
         try:
-            if data_type == 'int16':
+            if data_type == "int16":
                 return float(raw_value - 65536 if raw_value > 32767 else raw_value)
-            elif data_type == 'uint16':
+            if data_type == "uint16":
                 return float(raw_value)
-            elif data_type == 'bool':
+            if data_type == "bool":
                 return float(bool(raw_value))
-            else:
-                return float(raw_value)
+            return float(raw_value)
         except Exception:
             logger.warning("Erro ao converter valor %s para tipo %s", raw_value, data_type)
             return None
-
-    def is_connected(self) -> bool:
-        """Verifica se está conectado."""
-        return self._connected and (self.client is not None)

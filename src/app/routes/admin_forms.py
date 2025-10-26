@@ -147,4 +147,10 @@ class AlarmDefinitionForm(FlaskForm):
     is_active = BooleanField("Activo", default=True)
     auto_acknowledge = BooleanField("Auto reconhecer")
     email_enabled = BooleanField("Enviar email")
+    email_min_role = SelectField(
+        "Enviar para função mínima",
+        choices=[(role.value, ROLE_LABELS[role]) for role in UserRole],
+        validators=[DataRequired()],
+        default=UserRole.ALARM_DEFINITION.value,
+    )
     submit = SubmitField("Criar definição")

@@ -3,7 +3,7 @@ import time
 import socket
 from typing import Dict, Any, Optional, List
 from src.utils.logs import logger
-from src.adapters.modbus_adapter import ModbusAdapter
+from src.adapters.factory import get_adapter
 from src.models.PLCs import PLC
 from concurrent.futures import ThreadPoolExecutor
 from src.services.Alarms_service import AlarmService
@@ -36,7 +36,16 @@ class ActivePLCPoller:
         """
         self.plc_orm = plc_orm
         self.registers_provider = registers_provider
-        self.adapter = ModbusAdapter(plc_orm)
+        protocol = getattr(plc_orm, 'protocol', 'modbus')
+        try:
+            self.adapter = get_adapter(protocol, plc_orm)
+        except ValueError:
+            logger.warning(
+                "Protocolo %s não suportado para o PLC %s; usando Modbus como fallback",
+                protocol,
+                getattr(plc_orm, 'id', '<desconhecido>'),
+            )
+            self.adapter = get_adapter('modbus', plc_orm)
         self._task: Optional[asyncio.Task] = None
         self._stop = False
         self._backoff = 1.0

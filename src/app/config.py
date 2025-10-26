@@ -1,6 +1,13 @@
 import os
 from datetime import timedelta
 
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on", "t"}
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
@@ -34,6 +41,16 @@ class Config:
     # Logs
     LOG_LEVEL = 'INFO'
     LOG_DIR = os.path.join(basedir, '..', 'logs')
+
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'localhost')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 1025))
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_USE_TLS = _env_bool('MAIL_USE_TLS', True)
+    MAIL_USE_SSL = _env_bool('MAIL_USE_SSL', False)
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'alarms@example.com')
+    MAIL_SUPPRESS_SEND = _env_bool('MAIL_SUPPRESS_SEND', False)
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -75,6 +92,7 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     WTF_CSRF_ENABLED = False
+    MAIL_SUPPRESS_SEND = True
 
 config = {
     'development': DevelopmentConfig,
