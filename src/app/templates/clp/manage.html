@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Gerenciar CLPs{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Gestão de CLPs</h1>
+    <p>Cadastre novos controladores e mantenha actualizada a informação dos dispositivos existentes.</p>
+</section>
+
+<section class="card">
+    <h2>Adicionar novo CLP</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <label><span>Nome</span>{{ form.name(class_='input') }}</label>
+            <label><span>IP</span>{{ form.ip_address(class_='input') }}</label>
+            <label><span>Protocolo</span>{{ form.protocol(class_='input') }}</label>
+            <label><span>Porta</span>{{ form.port(class_='input') }}</label>
+            <label><span>Unit ID</span>{{ form.unit_id(class_='input') }}</label>
+            <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
+            <label><span>Modelo</span>{{ form.model(class_='input') }}</label>
+            <label><span>Firmware</span>{{ form.firmware_version(class_='input') }}</label>
+            <label class="checkbox">{{ form.is_active() }} Activo</label>
+        </div>
+        <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
+        <div class="actions">
+            {{ form.submit(class_='btn primary') }}
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <h2>CLPs registados</h2>
+    {% if plcs %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>IP</th>
+                    <th>Protocolo</th>
+                    <th>Porta</th>
+                    <th>Estado</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for plc in plcs %}
+                <tr>
+                    <td>{{ plc.name }}</td>
+                    <td>{{ plc.ip_address }}</td>
+                    <td>{{ plc.protocol|upper }}</td>
+                    <td>{{ plc.port }}</td>
+                    <td>
+                        {% if plc.is_active %}
+                        <span class="badge">Activo</span>
+                        {% else %}
+                        <span class="badge" style="background:#cf3b44;">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a class="btn secondary" href="{{ url_for('admin.edit_clp', plc_id=plc.id) }}">Editar</a>
+                        <a class="btn" href="{{ url_for('clp_bp.clp', ip=plc.ip_address) }}">Ver detalhes</a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>Nenhum CLP registado.</p>
+    {% endif %}
+</section>
+{% endblock %}

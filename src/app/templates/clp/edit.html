@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Editar CLP{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Editar CLP: {{ plc.name }}</h1>
+    <p>Actualize as informações básicas deste controlador lógico programável.</p>
+</section>
+
+<section class="card">
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <label><span>Nome</span>{{ form.name(class_='input') }}</label>
+            <label><span>IP</span>{{ form.ip_address(class_='input') }}</label>
+            <label><span>Protocolo</span>{{ form.protocol(class_='input') }}</label>
+            <label><span>Porta</span>{{ form.port(class_='input') }}</label>
+            <label><span>Unit ID</span>{{ form.unit_id(class_='input') }}</label>
+            <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
+            <label><span>Modelo</span>{{ form.model(class_='input') }}</label>
+            <label><span>Firmware</span>{{ form.firmware_version(class_='input') }}</label>
+            <label class="checkbox">{{ form.is_active() }} Activo</label>
+        </div>
+        <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
+        <div class="actions">
+            {{ form.submit(class_='btn primary') }}
+            <a href="{{ url_for('admin.manage_clps') }}" class="btn secondary">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

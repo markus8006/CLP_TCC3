@@ -1,0 +1,115 @@
+:root {
+    --bg-card: rgba(0, 0, 0, 0.2);
+    --border-radius: 12px;
+    --spacing: 1rem;
+}
+
+.page-header {
+    margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+    font-size: 2rem;
+    margin: 0;
+}
+
+.page-header p {
+    margin: 0.5rem 0 0;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card h2 {
+    margin-top: 0;
+}
+
+.form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    margin-bottom: 1rem;
+}
+
+.input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+}
+
+.input.small {
+    max-width: 160px;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.btn.danger {
+    background: #cf3b44;
+    color: #fff;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    vertical-align: middle;
+}
+
+.inline-form {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0;
+}
+
+.checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    padding: 0.2rem 0.8rem;
+    font-size: 0.75rem;
+}
