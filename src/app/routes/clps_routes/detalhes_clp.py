@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, abort, render_template
 from flask_login import current_user, login_required
 from src.repository.PLC_repository import Plcrepo
 from src.utils import role_required
+from src.services.security.industrial_security import assess_plc_security
 
 
 clp_bp = Blueprint("clp_bp", __name__)
@@ -10,5 +11,14 @@ clp_bp = Blueprint("clp_bp", __name__)
 @clp_bp.route("/clp/<ip>", methods=["GET"])
 @login_required
 def clp(ip):
-    CLP = Plcrepo.first_by(ip_address = ip).__dict__
-    return render_template("clp/detalhes.html", clp=CLP)
+    plc = Plcrepo.first_by(ip_address=ip)
+    if plc is None:
+        abort(404)
+
+    security_report = assess_plc_security(plc)
+    return render_template(
+        "clp/detalhes.html",
+        clp=plc,
+        security_report=security_report,
+        tags=plc.tags_as_list(),
+    )

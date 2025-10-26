@@ -1,65 +1,292 @@
-/* --- Cards de CLP --- */
-
 @import url("layouts/base.css");
+
+.page-intro {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+    align-items: flex-start;
+    margin-bottom: 2.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 18px;
+    padding: 2rem;
+    box-shadow: 0 18px 35px rgba(9, 0, 30, 0.35);
+}
+
+.page-intro h1 {
+    margin: 0 0 0.5rem;
+}
+
+.page-intro p {
+    max-width: 520px;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.5;
+}
+
+.filter-form {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    width: min(540px, 100%);
+}
+
+.form-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.form-field input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border-radius: 10px;
+    border: 1px solid rgba(132, 0, 255, 0.4);
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+}
+
+.form-field small {
+    display: block;
+    margin-top: 0.35rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.form-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn.primary {
+    background: linear-gradient(135deg, #8400ff, #cc00ff);
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(132, 0, 255, 0.3);
+}
+
+.btn.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.btn.tertiary {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(132, 0, 255, 0.25);
+}
+
+.tag-suggestions {
+    margin-bottom: 2rem;
+}
+
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(132, 0, 255, 0.35);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem;
+    background: rgba(132, 0, 255, 0.08);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.tag-pill:hover {
+    background: rgba(132, 0, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.tag-pill.active {
+    background: rgba(0, 195, 137, 0.22);
+    border-color: rgba(0, 195, 137, 0.6);
+    color: #6bf0c3;
+}
+
+.clp-list {
+    margin-bottom: 2rem;
+}
+
 .clp-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
 }
 
 .clp-card {
-    background-color: var(--primary-color);
-    border-radius: 18px;
-    box-shadow: 0 6px 24px rgba(68, 0, 107, 0.7);
-    transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.clp-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 36px rgba(29, 2, 51, 0.9);
-}
-
-.clp-card a {
     display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    background: linear-gradient(160deg, rgba(9, 0, 40, 0.85), rgba(132, 0, 255, 0.35));
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 18px 35px rgba(8, 0, 20, 0.55);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(132, 0, 255, 0.2);
+}
+
+.clp-card[data-security="critico"] {
+    border-color: rgba(255, 59, 59, 0.45);
+}
+
+.clp-card[data-security="moderado"] {
+    border-color: rgba(255, 193, 7, 0.45);
+}
+
+.clp-card[data-security="baixo"] {
+    border-color: rgba(0, 195, 137, 0.45);
+}
+
+.clp-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.clp-card__header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.clp-card__ip {
+    margin: 0.15rem 0 0;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.95rem;
+}
+
+.security-chip {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.clp-card__body {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 20px;
-    gap: 20px;
-    color: var(--text-color);
 }
 
-.clp-card__image {
-    width: 70px;
-    height: 70px;
-    flex-shrink: 0;
+.clp-card__status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
 }
 
-.clp-card__nome, .clp-card__ip {
-    font-weight: bold;
+.clp-card__status.online {
+    background: rgba(0, 195, 137, 0.22);
+    color: #6bf0c3;
 }
 
-/* --- Paginação --- */
-.pagination {
+.clp-card__status.offline {
+    background: rgba(255, 59, 59, 0.22);
+    color: #ff8a8a;
+}
+
+.protocol {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.clp-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.tag-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+}
+
+.tag-list li {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.no-tags {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.empty-state {
     text-align: center;
-    padding: 20px 0;
+    padding: 3rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(132, 0, 255, 0.15);
 }
 
-.pagination a {
-    margin: 0 15px;
+.empty-state h3 {
+    margin-top: 1.5rem;
 }
 
-/* --- Responsividade --- */
+.pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.pagination .page-link {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+.pagination .page-info {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
 @media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
-    }
-
-    .clp-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .filter-form {
-        display: flex;
+    .page-intro {
         flex-direction: column;
-        gap: 10px;
+    }
+
+    .form-actions {
+        justify-content: flex-start;
+    }
+
+    .clp-card__footer {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

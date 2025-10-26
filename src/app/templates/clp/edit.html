@@ -24,6 +24,7 @@
             <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
             <label><span>Modelo</span>{{ form.model(class_='input') }}</label>
             <label><span>Firmware</span>{{ form.firmware_version(class_='input') }}</label>
+            <label><span>Tags</span>{{ form.tags(class_='input', placeholder='crítico, linha-1, modbus') }}</label>
             <label class="checkbox">{{ form.is_active() }} Activo</label>
         </div>
         <label><span>Descrição</span>{{ form.description(class_='input') }}</label>

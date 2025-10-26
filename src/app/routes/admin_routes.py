@@ -9,6 +9,7 @@ from src.models.Registers import Register
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
 from src.utils import role_required
+from src.utils.tags import parse_tags
 
 from .admin_forms import (
     UserCreationForm,
@@ -110,6 +111,9 @@ def delete_user(user_id: int):
 def manage_clps():
     form = PLCForm()
 
+    if request.method == "GET":
+        form.tags.data = ""
+
     if form.validate_on_submit():
         plc = PLC(
             name=form.name.data,
@@ -123,6 +127,7 @@ def manage_clps():
             firmware_version=form.firmware_version.data,
             is_active=form.is_active.data,
         )
+        plc.set_tags(parse_tags(form.tags.data))
         try:
             Plcrepo.add(plc, commit=False)
             db.session.commit()
@@ -146,10 +151,13 @@ def manage_clps():
 def edit_clp(plc_id: int):
     plc = PLC.query.get_or_404(plc_id)
     form = PLCForm(obj=plc)
+    if request.method == "GET":
+        form.tags.data = ", ".join(plc.tags_as_list())
 
     if form.validate_on_submit():
         try:
             form.populate_obj(plc)
+            plc.set_tags(parse_tags(form.tags.data))
             db.session.commit()
             flash("CLP actualizado com sucesso!", "success")
         except IntegrityError:

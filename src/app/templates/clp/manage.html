@@ -25,6 +25,7 @@
             <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
             <label><span>Modelo</span>{{ form.model(class_='input') }}</label>
             <label><span>Firmware</span>{{ form.firmware_version(class_='input') }}</label>
+            <label><span>Tags</span>{{ form.tags(class_='input', placeholder='crítico, linha-1, modbus') }}</label>
             <label class="checkbox">{{ form.is_active() }} Activo</label>
         </div>
         <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
@@ -46,6 +47,7 @@
                     <th>Protocolo</th>
                     <th>Porta</th>
                     <th>Estado</th>
+                    <th>Tags</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -61,6 +63,18 @@
                         <span class="badge">Activo</span>
                         {% else %}
                         <span class="badge" style="background:#cf3b44;">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set tags = plc.tags_as_list() %}
+                        {% if tags %}
+                            <ul class="tag-list-inline">
+                                {% for tag in tags %}
+                                <li>{{ tag }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <span class="text-muted">Sem tags</span>
                         {% endif %}
                     </td>
                     <td class="actions">

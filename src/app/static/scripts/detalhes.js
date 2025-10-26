@@ -3,6 +3,7 @@
 // CONFIG
 const POLL_INTERVAL = 4000; // ms, ajuste se quiser
 const API_PATH = ip => `/api/get/data/clp/${encodeURIComponent(ip)}`;
+const TAGS_PATH = ip => `/api/clps/${encodeURIComponent(ip)}/tags`;
 
 // Paleta de cores para tema escuro
 const themeColors = [
@@ -334,10 +335,128 @@ function startPolling() {
     setInterval(pollOnce, POLL_INTERVAL);
 }
 
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+function ensureNoTagsMessage() {
+    const list = document.getElementById('tag-list-container');
+    if (!list) return;
+    const hasTags = list.querySelectorAll('.tag-item').length > 0;
+    let placeholder = document.getElementById('no-tags-msg');
+    if (!hasTags) {
+        if (!placeholder) {
+            placeholder = document.createElement('li');
+            placeholder.id = 'no-tags-msg';
+            placeholder.textContent = 'Nenhuma tag associada.';
+            list.appendChild(placeholder);
+        }
+    } else if (placeholder) {
+        placeholder.remove();
+    }
+}
+
+function appendTagToList(tag) {
+    const list = document.getElementById('tag-list-container');
+    if (!list) return;
+
+    const item = document.createElement('li');
+    item.className = 'tag-item';
+    item.innerHTML = `<span>${tag}</span><span class="remove-tag" data-tag="${tag}" title="Remover Tag">&times;</span>`;
+    list.appendChild(item);
+    ensureNoTagsMessage();
+}
+
+function removeTagFromList(tag) {
+    const list = document.getElementById('tag-list-container');
+    if (!list) return;
+    const escaped = window.CSS && typeof window.CSS.escape === 'function'
+        ? CSS.escape(tag)
+        : tag.replace(/"/g, '\\"');
+    const el = list.querySelector(`.remove-tag[data-tag="${escaped}"]`);
+    if (el) {
+        const parent = el.closest('.tag-item');
+        if (parent) parent.remove();
+    }
+    ensureNoTagsMessage();
+}
+
+function showTagMessage(message, type = 'info') {
+    const container = document.getElementById('tagMessage');
+    if (!container) return;
+    container.textContent = message;
+    container.className = `tag-message tag-${type}`;
+}
+
+async function sendTagRequest(ip, method, body) {
+    const hasBody = method !== 'DELETE' && body;
+    const headers = { 'X-CSRFToken': getCsrfToken() };
+    if (hasBody) {
+        headers['Content-Type'] = 'application/json';
+    }
+    const url = TAGS_PATH(ip) + (method === 'DELETE' && body?.tag ? `/${encodeURIComponent(body.tag)}` : '');
+    const response = await fetch(url, {
+        method,
+        headers,
+        body: hasBody ? JSON.stringify(body) : undefined,
+    });
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || 'Operação de tags falhou.');
+    }
+    return response.json().catch(() => ({}));
+}
+
+function initTagManagement() {
+    const form = document.getElementById('formAddTag');
+    const input = document.getElementById('inputTag');
+    const list = document.getElementById('tag-list-container');
+    const ip = getClpIpFromDom();
+
+    if (!form || !input || !list || !ip) {
+        return;
+    }
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const raw = input.value.trim();
+        if (!raw) return;
+        try {
+            const payload = await sendTagRequest(ip, 'POST', { tag: raw });
+            const added = payload.tag || raw.toLowerCase();
+            appendTagToList(added);
+            input.value = '';
+            showTagMessage('Tag adicionada com sucesso!', 'success');
+        } catch (error) {
+            console.error(error);
+            showTagMessage(error.message || 'Não foi possível adicionar a tag.', 'error');
+        }
+    });
+
+    list.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!target.classList.contains('remove-tag')) return;
+        const tag = target.dataset.tag;
+        if (!tag) return;
+        try {
+            await sendTagRequest(ip, 'DELETE', { tag });
+            removeTagFromList(tag);
+            showTagMessage(`Tag "${tag}" removida.`, 'success');
+        } catch (error) {
+            console.error(error);
+            showTagMessage(error.message || 'Não foi possível remover a tag.', 'error');
+        }
+    });
+
+    ensureNoTagsMessage();
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     if (typeof Chart === 'undefined') {
         console.error('Chart.js não encontrado.');
         return;
     }
     startPolling();
+    initTagManagement();
 });

@@ -1,35 +1,96 @@
 {% extends "layouts/base.html" %}
 
+{% block title %}CLPs Monitorados{% endblock %}
 
-<!--Titulo-->
-{% block title %}CLPs Detectados{% endblock %}
-
-
-<!--Sttyle-->
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/index/index.css') }}">
 {% endblock %}
 
-
-<!--Conteudo principal-->
 {% block content %}
-<h1>CLPs Detectados</h1>
+<section class="page-intro">
+    <div class="intro-text">
+        <h1>Inventário de CLPs</h1>
+        <p>Visualize rapidamente o estado dos controladores lógicos programáveis da planta, filtre por tags ou busque por nome/IP e acompanhe o nível de risco industrial.</p>
+    </div>
+    <form class="filter-form" method="get">
+        <div class="form-field">
+            <label for="search">Buscar</label>
+            <input id="search" type="text" name="q" value="{{ search_term }}" placeholder="Nome ou endereço IP">
+        </div>
+        <div class="form-field">
+            <label for="tags">Tags</label>
+            <input id="tags" type="text" name="tags" value="{{ raw_tag_query }}" placeholder="ex: crítico, linha-1">
+            <small>Separe múltiplas tags por vírgula.</small>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn primary">Aplicar</button>
+            <a href="{{ url_for('main.index') }}" class="btn secondary">Limpar</a>
+        </div>
+    </form>
+</section>
 
-<div class="clp-grid">
+{% if available_tags %}
+<section class="tag-suggestions">
+    <h2>Tags Frequentes</h2>
+    <div class="tag-cloud">
+        {% for tag in available_tags %}
+        <a class="tag-pill {% if tag in selected_tags %}active{% endif %}" href="{{ url_for('main.index', q=search_term or None, tags=tag, per_page=pagination.per_page) }}">{{ tag }}</a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="clp-list">
     {% if clps %}
-        {% for key, clp in clps.items() %}
-        <article class="clp-card">
-            <a href="/clp/{{ clp.ip_address }}">
-                <img class="clp-card__image" src="{{ url_for('static', filename='imgs/clp_imagem.png') }}" alt="Ícone de CLP">
-                <div class="clp-card__details">
-                    <p class="clp-card__nome">{{ clp.nome }}</p>
+    <div class="clp-grid">
+        {% for clp in clps %}
+        <article class="clp-card" data-security="{{ clp.security.level_slug }}">
+            <header class="clp-card__header">
+                <div>
+                    <h3>{{ clp.name }}</h3>
                     <p class="clp-card__ip">{{ clp.ip_address }}</p>
                 </div>
-            </a>
+                <div class="security-chip">Risco {{ clp.security.level }} · {{ clp.security.score }}</div>
+            </header>
+            <div class="clp-card__body">
+                <div class="clp-card__status {{ 'online' if clp.is_online else 'offline' }}">
+                    {{ 'Online' if clp.is_online else 'Offline' }}
+                </div>
+                <span class="protocol">{{ clp.protocol|upper }}</span>
+            </div>
+            <footer class="clp-card__footer">
+                {% if clp.tags %}
+                <ul class="tag-list">
+                    {% for tag in clp.tags %}
+                    <li>{{ tag }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <span class="no-tags">Sem tags associadas</span>
+                {% endif %}
+                <a class="btn tertiary" href="{{ url_for('clp_bp.clp', ip=clp.ip_address) }}">Ver detalhes</a>
+            </footer>
         </article>
         {% endfor %}
+    </div>
     {% else %}
-        <p>Nenhum CLP encontrado.</p>
+    <div class="empty-state">
+        <img src="{{ url_for('static', filename='imgs/empty_state.svg') }}" alt="Sem resultados" onerror="this.style.display='none'">
+        <h3>Nenhum CLP encontrado</h3>
+        <p>Tente ajustar os filtros ou iniciar uma nova varredura de dispositivos.</p>
+    </div>
     {% endif %}
-</div>
+</section>
+
+{% if pagination.total_pages > 1 %}
+<nav class="pagination">
+    {% if pagination.has_prev %}
+    <a class="page-link" href="{{ url_for('main.index', q=search_term or None, tags=raw_tag_query or None, page=pagination.prev_page, per_page=pagination.per_page) }}">&larr; Anterior</a>
+    {% endif %}
+    <span class="page-info">Página {{ pagination.page }} de {{ pagination.total_pages }}</span>
+    {% if pagination.has_next %}
+    <a class="page-link" href="{{ url_for('main.index', q=search_term or None, tags=raw_tag_query or None, page=pagination.next_page, per_page=pagination.per_page) }}">Próxima &rarr;</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% endblock %}
