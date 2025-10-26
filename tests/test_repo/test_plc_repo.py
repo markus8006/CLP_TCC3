@@ -2,6 +2,7 @@
 import pytest
 from src.models.PLCs import PLC
 from src.models.Registers import Register
+from src.repository.Data_repository import DataLogRepo
 from datetime import datetime, timezone
 
 def test_plc_add_get_delete(plc_repo):
@@ -23,7 +24,9 @@ def test_plc_add_get_delete(plc_repo):
     notfound = plc_repo.get_by_ip("10.0.0.10", vlan_id=1)
     assert notfound is None
 
-def test_register_and_datalog(register_repo, plc_repo, datalog_repo):
+def test_register_and_datalog(register_repo, plc_repo, datalog_repo, monkeypatch):
+    # evitar SQL específico não suportado no SQLite dos testes
+    monkeypatch.setattr(DataLogRepo, "_cleanup_old_records_optimized", lambda self, records: None)
     # criar plc
     plc = PLC(name="PLC-Test2", ip_address="10.0.0.11", protocol="modbus", port=502, vlan_id=1)
     plc_repo.add(plc)
