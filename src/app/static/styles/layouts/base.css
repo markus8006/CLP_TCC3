@@ -43,6 +43,13 @@ h2 {
     letter-spacing: 1px;
 }
 
+h3 {
+    color: var(--secondary-color)
+} 
+p {
+    color: var(--text-color);
+}
+
 .main-content {
     padding: 20px;
     margin-left: 60px;
