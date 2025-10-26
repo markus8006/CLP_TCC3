@@ -45,8 +45,9 @@
         <nav>
             <a href="/">Home</a>
             <a href="/coleta/">Coleta IPs</a>
-            <a href="/admin/db">Usuarios</a>
-            <a href="/register">Registrar</a>
+            <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
+            <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>
+            <a href="{{ url_for('admin.manage_registers') }}">Registradores</a>
             <a href="/logout">Logout</a>
         </nav>
 

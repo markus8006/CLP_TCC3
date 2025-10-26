@@ -72,6 +72,7 @@ def register_blueprints(app):
     """Registra todos os blueprints"""
     from src.app.routes.main_route import main as main_bp
     from src.app.routes.clps_routes.detalhes_clp import clp_bp
+    from src.app.routes.admin_routes import admin_bp
     from src.app.routes.login_routes.auth_routes import auth_bp
     from src.app.routes.api.api_routes import api_bp
 #   from app.web.alarm_views import alarm_bp
@@ -80,6 +81,7 @@ def register_blueprints(app):
     
     app.register_blueprint(main_bp)
     app.register_blueprint(clp_bp)
+    app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(auth_bp)
     logger.info("INICIANDO API")
     app.register_blueprint(api_bp, url_prefix='/api')
