@@ -17,7 +17,7 @@ import logging
 # --- Configurações ---
 HOST = "127.0.0.1"
 MODBUS_PORT = 5020
-NUM_CLPS = 500
+NUM_CLPS = 30
 MAX_THREADS = 16  # controla paralelismo
 # --- Fim Configurações ---
 

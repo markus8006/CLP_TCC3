@@ -56,7 +56,6 @@
                 <div class="clp-card__status {{ 'online' if clp.is_online else 'offline' }}">
                     {{ 'Online' if clp.is_online else 'Offline' }}
                 </div>
-                <span class="protocol">{{ clp.protocol|upper }}</span>
             </div>
             <footer class="clp-card__footer">
                 {% if clp.tags %}

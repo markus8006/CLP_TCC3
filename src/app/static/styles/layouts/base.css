@@ -22,11 +22,22 @@ a {
     transition: color 0.3s;
 }
 
+span {
+        color: var(--text-color);
+        text-decoration: none;
+}
+
 a:hover {
     color: var(--text-color);
 }
 
-h1, h2 {
+th, td {
+    color: var(--text-color);
+}
+
+
+h1,
+h2 {
     color: var(--secondary-color);
     text-shadow: 0 2px 8px rgba(8, 0, 20, 0.2);
     letter-spacing: 1px;
@@ -34,7 +45,8 @@ h1, h2 {
 
 .main-content {
     padding: 20px;
-    margin-left: 60px; /* Espaço para o menu fechado */
+    margin-left: 60px;
+    /* Espaço para o menu fechado */
     transition: margin-left 0.3s;
 }
 
@@ -46,7 +58,8 @@ h1, h2 {
     top: 15px;
     left: 15px;
     color: #6e0096;
-    z-index: 1001; /* Maior que o sidenav */
+    z-index: 1001;
+    /* Maior que o sidenav */
     background: rgba(255, 255, 255, 0.1);
     border: none;
     border-radius: 50%;
@@ -66,7 +79,8 @@ h1, h2 {
 
 .sidenav {
     height: 100%;
-    width: 0; /* Começa fechado */
+    width: 0;
+    /* Começa fechado */
     position: fixed;
     z-index: 1000;
     top: 0;
@@ -74,7 +88,8 @@ h1, h2 {
     background: linear-gradient(160deg, #111 40%, #6e0096 100%);
     overflow-x: hidden;
     transition: 0.3s;
-    padding-top: 80px; /* Espaço para o botão não sobrepor */
+    padding-top: 80px;
+    /* Espaço para o botão não sobrepor */
 }
 
 .sidenav nav a {
@@ -87,63 +102,160 @@ h1, h2 {
 .sidenav-open {
     width: 250px;
 }
+
 .main-content-shifted {
     margin-left: 250px;
 }
 
 
+/* --- Formulários (Inputs Escuros) --- */
+/* Esta nova seção aplica fundos escuros a todos os inputs, exceto os de alerta */
+
+/* Inputs de texto, número, email, etc., textareas e selects */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select,
+.form-control {
+    background-color: var(--light-dark-bg);
+    color: var(--text-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 6px 12px;
+    box-sizing: border-box;
+    /* Garante que padding não afete a largura */
+}
+
+/* Botões, exceto o .close (de alertas) e #menuBtn */
+button:not(.close):not(#menuBtn),
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+.btn {
+    background-color: var(--light-dark-bg);
+    /* Fundo escuro como pedido */
+    color: var(--text-color);
+    border: 1px solid var(--primary-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Cor do placeholder */
+::placeholder {
+    color: var(--text-muted);
+    opacity: 1;
+}
+
+/* Estado de Foco para inputs */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[typeD="search"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+textarea:focus,
+select:focus,
+.form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(204, 0, 255, 0.2);
+    outline: none;
+}
+
+/* Estado de Hover para botões (para interatividade) */
+button:not(.close):not(#menuBtn):hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+input[type="reset"]:hover,
+.btn:hover {
+    background-color: var(--primary-color);
+    /* Muda para cor primária no hover */
+    border-color: var(--secondary-color);
+}
+
 
 /* BOOTSTRAP */
 .navbar.bg-dark {
-            background: linear-gradient(160deg, #111 40%, #1b0030 100%) !important;
-            border-bottom: 1px solid var(--primary-color);
-        }
+    background: linear-gradient(160deg, #111 40%, #1b0030 100%) !important;
+    border-bottom: 1px solid var(--primary-color);
+}
 
-        .navbar-brand {
-            color: var(--secondary-color) !important;
-            font-weight: bold;
-        }
+.navbar-brand {
+    color: var(--secondary-color) !important;
+    font-weight: bold;
+}
 
-        .navbar-brand:hover {
-            color: var(--text-color) !important;
-        }
+.navbar-brand:hover {
+    color: var(--text-color) !important;
+}
 
-        .nav-link {
-            color: var(--text-muted) !important;
-            transition: all 0.3s ease;
-        }
+.nav-link {
+    /* MUDANÇA: Texto principal agora é claro */
+    color: var(--text-color) !important;
+    opacity: 0.8;
+    /* ADIÇÃO: Para diferenciar do hover */
+    transition: all 0.3s ease;
+}
 
-        .nav-link:hover {
-            color: var(--text-color) !important;
-            transform: translateY(-2px);
-        }
-        
-        .navbar-text {
-            color: var(--text-muted);
-        }
-        
-        /* Cor do ícone do menu hamburger */
-        .navbar-dark .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(204, 0, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-        }
+.nav-link:hover {
+    color: var(--text-color) !important;
+    opacity: 1;
+    /* MUDANÇA: Garante opacidade total */
+    transform: translateY(-2px);
+}
 
-        .navbar-toggler {
-            border-color: rgba(132, 0, 255, 0.5);
-        }
+.navbar-text {
+    /* MUDANÇA: Texto principal agora é claro */
+    color: var(--text-color);
+    opacity: 0.8;
+    /* ADIÇÃO: Para consistência */
+}
 
-        /* --- Estilização dos Alertas --- */
-        .alert {
-            background-color: var(--light-dark-bg);
-            border: 1px solid var(--secondary-color);
-            color: var(--text-color);
-        }
-        .alert .close {
-            color: var(--text-color);
-        }
-        .alert a {
-            font-weight: bold;
-        }
-        .alert-success { border-color: #28a745; }
-        .alert-danger { border-color: #dc3545; }
-        .alert-warning { border-color: #ffc107; }
-        .alert-info { border-color: #17a2b8; }
+/* Cor do ícone do menu hamburger */
+.navbar-dark .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(204, 0, 255, 0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.navbar-toggler {
+    border-color: rgba(132, 0, 255, 0.5);
+}
+
+/* --- Estilização dos Alertas --- */
+/* Nenhuma mudança aqui, os inputs escuros não afetam os alertas */
+.alert {
+    background-color: var(--light-dark-bg);
+    border: 1px solid var(--secondary-color);
+    color: var(--text-color);
+}
+
+.alert .close {
+    color: var(--text-color);
+    /* Estes botões intencionalmente NÃO recebem o fundo escuro */
+}
+
+.alert a {
+    font-weight: bold;
+}
+
+.alert-success {
+    border-color: #28a745;
+}
+
+.alert-danger {
+    border-color: #dc3545;
+}
+
+.alert-warning {
+    border-color: #ffc107;
+}
+
+.alert-info {
+    border-color: #17a2b8;
+}
