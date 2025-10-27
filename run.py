@@ -1,138 +1,389 @@
+import logging
 import threading
 import time
-import queue
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 from src.app import create_app
-from src.models import PLC
+from src.manager.client_polling_manager import SimpleManager
+from src.models import PLC, Register
 from src.models.Alarms import AlarmDefinition
+from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
-from src.repository.Alarms_repository import AlarmDefinitionRepo
-from src.manager.client_polling_manager import SimpleManager, wait_for_port
-from src.simulations.modbus_simulation import add_register_test_modbus, start_modbus_simulator
 from src.services.client_polling_service import run_async_polling
+from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
-import logging
 
-# --- Configurações ---
-HOST = "127.0.0.1"
-MODBUS_PORT = 5020
-NUM_CLPS = 30
-MAX_THREADS = 16  # controla paralelismo
-# --- Fim Configurações ---
 
-# logger.setLevel(logging.INFO)
+CLPS_POR_PROTOCOLO = 5
+MAX_THREADS = 4  # reservado para futura paralelização
+
+
+@dataclass(frozen=True)
+class RegisterTemplate:
+    name: str
+    address: str
+    register_type: str
+    data_type: str
+    unit: Optional[str] = None
+    description: Optional[str] = None
+    tag: Optional[str] = None
+    poll_rate: int = 1000
+    length: int = 1
+    alarm: Optional[Dict[str, object]] = None
+
+
+@dataclass(frozen=True)
+class ProtocolConfig:
+    protocol: str
+    prefix: str
+    port: int
+    first_octet: int
+    description_template: str
+    simulation_key: str
+    register_templates: List[RegisterTemplate]
+    ip_offset: int = 0
+    manufacturer: Optional[str] = None
+    model: Optional[str] = None
+    rack_slot: Optional[str] = None
+    unit_id: Optional[int] = None
+    tags: List[str] = field(default_factory=list)
+    polling_interval: int = 1000
+    timeout: int = 5000
+
+
+PROTOCOL_CONFIGS: Dict[str, ProtocolConfig] = {
+    "s7": ProtocolConfig(
+        protocol="s7-sim",
+        prefix="CLP_S7_",
+        port=102,
+        first_octet=127,
+        description_template="Controlador Siemens S7 simulado #{index}",
+        simulation_key="s7",
+        manufacturer="Siemens",
+        model="S7-1500 (sim)",
+        rack_slot="0,2",
+        tags=["s7", "simulador"],
+        timeout=3000,
+        register_templates=[
+            RegisterTemplate(
+                name="Temperatura de Processo S7",
+                address="DB1.DBW0",
+                register_type="db",
+                data_type="int16",
+                unit="°C",
+                description="Temperatura simulada armazenada no DB1 para {plc_name}",
+                tag="TEMP_S7",
+                alarm={
+                    "name": "ALM_{plc_name}_TEMP",
+                    "condition_type": "above",
+                    "setpoint": 70.0,
+                    "deadband": 5.0,
+                    "severity": 3,
+                    "description": "Alarme de sobretemperatura no CLP S7",
+                },
+            ),
+            RegisterTemplate(
+                name="Pressão de Linha S7",
+                address="DB1.DBW2",
+                register_type="db",
+                data_type="int16",
+                unit="bar",
+                description="Pressão simulada armazenada no DB1 para {plc_name}",
+                tag="PRESSAO_S7",
+                alarm={
+                    "name": "ALM_{plc_name}_PRESSAO",
+                    "condition_type": "above",
+                    "setpoint": 8.0,
+                    "deadband": 1.0,
+                    "severity": 2,
+                    "description": "Alarme de sobrepressão no CLP S7",
+                },
+            ),
+        ],
+    ),
+    "opcua": ProtocolConfig(
+        protocol="opcua-sim",
+        prefix="CLP_OPC_",
+        port=4840,
+        first_octet=126,
+        description_template="Servidor OPC UA simulado #{index}",
+        simulation_key="opcua",
+        manufacturer="OPC Foundation",
+        model="Servidor OPC UA (sim)",
+        tags=["opcua", "simulador"],
+        timeout=4000,
+        register_templates=[
+            RegisterTemplate(
+                name="Temperatura OPC UA",
+                address="ns=2;s=Simulador/{plc_name}/Temperature",
+                register_type="node",
+                data_type="float",
+                unit="°C",
+                description="Temperatura publicada via servidor OPC UA simulado",
+                tag="TEMP_OPCUA",
+                alarm={
+                    "name": "ALM_{plc_name}_TEMP_OPCUA",
+                    "condition_type": "above",
+                    "setpoint": 90.0,
+                    "deadband": 10.0,
+                    "severity": 4,
+                    "description": "Alarme de temperatura alta no nó OPC UA",
+                },
+            ),
+            RegisterTemplate(
+                name="Estado da Bomba OPC UA",
+                address="ns=2;s=Simulador/{plc_name}/PumpState",
+                register_type="node",
+                data_type="bool",
+                description="Estado lógico da bomba exposto via OPC UA",
+                tag="BOMBA_OPCUA",
+                alarm={
+                    "name": "ALM_{plc_name}_BOMBA",
+                    "condition_type": "above",
+                    "setpoint": 0.5,
+                    "deadband": 0.0,
+                    "severity": 1,
+                    "description": "Sinaliza quando a bomba está ligada",
+                },
+            ),
+        ],
+    ),
+}
+
 
 app = create_app()
 AlarmRepo = AlarmDefinitionRepo()
 
-def ip_from_index(index: int, first_octet: int = 127) -> str:
+
+def ip_from_index(index: int, *, first_octet: int = 127) -> str:
     if index < 1:
         raise ValueError("index deve ser >= 1")
     n = index - 1
-    second = (n // (256*256)) % 256
+    second = (n // (256 * 256)) % 256
     third = (n // 256) % 256
     fourth = n % 256 + 1
     return f"{first_octet}.{second}.{third}.{fourth}"
 
-# -----------------------
-# Função que cria 1 CLP
-# -----------------------
-def setup_single_clp(index: int, app):
+
+def _format_field(value: Optional[object], context: Dict[str, object]) -> Optional[object]:
+    if isinstance(value, str):
+        return value.format(**context)
+    return value
+
+
+def ensure_register(plc: PLC, template: RegisterTemplate, context: Dict[str, object]) -> Optional[Register]:
+    address = str(_format_field(template.address, context))
+    register = RegRepo.first_by(plc_id=plc.id, address=address)
+
+    payload = {
+        "name": _format_field(template.name, context),
+        "description": _format_field(template.description, context),
+        "tag": _format_field(template.tag, context),
+        "register_type": template.register_type,
+        "data_type": template.data_type,
+        "unit": template.unit,
+        "length": template.length,
+        "poll_rate": template.poll_rate,
+    }
+
+    if register:
+        updated = False
+        for key, value in payload.items():
+            if value is not None and getattr(register, key) != value:
+                setattr(register, key, value)
+                updated = True
+        if updated:
+            RegRepo.update(register, commit=True)
+        return register
+
+    new_register = Register(
+        plc_id=plc.id,
+        name=payload["name"],
+        description=payload.get("description"),
+        tag=payload.get("tag"),
+        address=address,
+        register_type=template.register_type,
+        data_type=template.data_type,
+        unit=template.unit,
+        length=template.length,
+        poll_rate=template.poll_rate,
+        is_active=True,
+    )
+    return RegRepo.add(new_register, commit=True)
+
+
+def ensure_alarm(
+    plc: PLC,
+    register: Register,
+    alarm_template: Dict[str, object],
+    context: Dict[str, object],
+) -> Optional[AlarmDefinition]:
+    formatted = {
+        key: _format_field(value, context)
+        for key, value in alarm_template.items()
+    }
+
+    name = formatted.pop("name", f"Alarm {register.name}")
+    existing = AlarmRepo.first_by(plc_id=plc.id, register_id=register.id, name=name)
+
+    allowed_fields = {
+        "condition_type",
+        "setpoint",
+        "threshold_low",
+        "threshold_high",
+        "deadband",
+        "priority",
+        "severity",
+        "description",
+        "auto_acknowledge",
+        "email_enabled",
+        "email_min_role",
+    }
+    payload = {k: v for k, v in formatted.items() if k in allowed_fields}
+
+    if existing:
+        updated = False
+        for attr, value in payload.items():
+            if value is not None and getattr(existing, attr) != value:
+                setattr(existing, attr, value)
+                updated = True
+        if updated:
+            AlarmRepo.update(existing, commit=True)
+        return existing
+
+    if "condition_type" not in payload:
+        payload["condition_type"] = "above"
+
+    alarm = AlarmDefinition(
+        plc_id=plc.id,
+        register_id=register.id,
+        name=name,
+        **payload,
+    )
+    return AlarmRepo.add(alarm, commit=True)
+
+
+def setup_single_plc(protocol_key: str, index: int) -> bool:
+    config = PROTOCOL_CONFIGS[protocol_key]
+    plc_name = f"{config.prefix}{index}"
+    plc_ip = ip_from_index(config.ip_offset + index, first_octet=config.first_octet)
+    context = {"plc_name": plc_name, "index": index}
+
     with app.app_context():
-        plc_name = f"PLCMod{index}"
-        plc_ip = ip_from_index(index)
-        logger.debug(f"[{plc_name}] Iniciando criação...")
-
-        try:
-            # Start simulador em thread separada
-            t = threading.Thread(
-                target=start_modbus_simulator,
-                args=(plc_ip, MODBUS_PORT),
-                daemon=True
-            )
-            t.start()
-        except Exception as e:
-            logger.error(f"[{plc_name}] Erro ao iniciar simulador: {e}")
-            return False
-
-        # Espera porta abrir (curto timeout)
-        try:
-            if not wait_for_port(plc_ip, MODBUS_PORT, timeout=2.0):
-                logger.warning(f"[{plc_name}] Modbus não respondeu no timeout.")
-        except Exception as e:
-            logger.warning(f"[{plc_name}] wait_for_port falhou: {e}")
-
-        # Criação no banco
+        logger.debug("[%s] Iniciando configuração (%s)", plc_name, protocol_key)
         try:
             existing_plc = Plcrepo.first_by(ip_address=plc_ip) or Plcrepo.first_by(name=plc_name)
             if not existing_plc:
-                plc_to_add = PLC(
+                plc = PLC(
                     name=plc_name,
+                    description=config.description_template.format(**context),
                     ip_address=plc_ip,
-                    protocol="modbus",
-                    port=MODBUS_PORT,
-                    unit_id=1,
-                    is_active=True
+                    protocol=config.protocol,
+                    port=config.port,
+                    unit_id=config.unit_id,
+                    rack_slot=config.rack_slot,
+                    is_active=True,
+                    polling_interval=config.polling_interval,
+                    timeout=config.timeout,
+                    manufacturer=config.manufacturer,
+                    model=config.model,
                 )
-                Plcrepo.add(plc_to_add, commit=True)
-                existing_plc = Plcrepo.first_by(ip_address=plc_ip)
-            logger.info(f"[{plc_name}] Criado com sucesso (id={existing_plc.id})")
-        except Exception as e:
-            logger.error(f"[{plc_name}] Erro ao criar PLC: {e}")
+                if config.tags:
+                    plc.set_tags(config.tags)
+                Plcrepo.add(plc, commit=True)
+                existing_plc = plc
+            else:
+                updates = {
+                    "description": config.description_template.format(**context),
+                    "protocol": config.protocol,
+                    "port": config.port,
+                    "unit_id": config.unit_id,
+                    "rack_slot": config.rack_slot,
+                    "polling_interval": config.polling_interval,
+                    "timeout": config.timeout,
+                    "manufacturer": config.manufacturer,
+                    "model": config.model,
+                    "is_active": True,
+                }
+                updated = False
+                for attr, value in updates.items():
+                    if value is not None and getattr(existing_plc, attr) != value:
+                        setattr(existing_plc, attr, value)
+                        updated = True
+                if config.tags:
+                    existing_plc.set_tags(config.tags)
+                    updated = True
+                if updated:
+                    Plcrepo.update(existing_plc, commit=True)
+
+            registers_configurados = []
+            for template in config.register_templates:
+                register = ensure_register(existing_plc, template, context)
+                if register:
+                    registers_configurados.append((register, template))
+                    if config.simulation_key:
+                        try:
+                            simulation_registry.next_value(config.simulation_key, register)
+                        except Exception as exc:  # pragma: no cover - defensivo
+                            logger.debug(
+                                "Não foi possível inicializar simulação %s para %s: %s",
+                                config.simulation_key,
+                                plc_name,
+                                exc,
+                            )
+
+            for register, template in registers_configurados:
+                if template.alarm:
+                    ensure_alarm(existing_plc, register, template.alarm, context)
+
+            logger.info(
+                "[%s] CLP configurado (%s) com %d registradores.",
+                plc_name,
+                protocol_key,
+                len(registers_configurados),
+            )
+            return True
+        except Exception as exc:  # pragma: no cover - logging defensivo
+            logger.exception("[%s] Falha na configuração do CLP: %s", plc_name, exc)
             return False
 
-        # Registers
-        try:
-            reg0 = add_register_test_modbus(plc_name=plc_name, host=plc_ip, port=MODBUS_PORT, address=0, register_name="Temperatura Teste")
-            reg1 = add_register_test_modbus(plc_name=plc_name, host=plc_ip, port=MODBUS_PORT, address=1, register_name="CALOR")
-        except Exception as e:
-            logger.error(f"[{plc_name}] Erro ao criar registradores: {e}")
-            reg0 = reg1 = None
 
-        # Busca se não retornou
-        reg0 = reg0 or RegRepo.first_by(plc_id=existing_plc.id, address=0)
-        reg1 = reg1 or RegRepo.first_by(plc_id=existing_plc.id, address=1)
+def setup_all_plcs() -> Dict[str, int]:
+    simulation_registry.clear()
+    resultados = {key: 0 for key in PROTOCOL_CONFIGS}
+    for protocol_key in PROTOCOL_CONFIGS:
+        for idx in range(1, CLPS_POR_PROTOCOLO + 1):
+            if setup_single_plc(protocol_key, idx):
+                resultados[protocol_key] += 1
+    return resultados
 
-        # Alarme defs
-        try:
-            if reg0 and not AlarmRepo.first_by(plc_id=existing_plc.id, register_id=reg0.id):
-                AlarmRepo.add(AlarmDefinition(plc_id=existing_plc.id, register_id=reg0.id,
-                                              name="alarmTeste_10", setpoint=10), commit=True)
-            if reg1 and not AlarmRepo.first_by(plc_id=existing_plc.id, register_id=reg1.id):
-                AlarmRepo.add(AlarmDefinition(plc_id=existing_plc.id, register_id=reg1.id,
-                                              name="alarmTeste_12", setpoint=12), commit=True)
-        except Exception as e:
-            logger.error(f"[{plc_name}] Erro ao criar AlarmDefinition: {e}")
 
-        logger.info(f"[{plc_name}] Configuração concluída.")
-        return True
-
-# ------------------------
-# Loop paralelizado
-# ------------------------
 if __name__ == "__main__":
-    with app.app_context():
-        logger.process(f"Iniciando configuração paralela de {NUM_CLPS} CLPs...")
+    total_esperado = CLPS_POR_PROTOCOLO * len(PROTOCOL_CONFIGS)
+    logger.process(
+        f"Iniciando configuração de {CLPS_POR_PROTOCOLO} CLPs para cada protocolo: {', '.join(PROTOCOL_CONFIGS)}"
+    )
 
-        start_time = time.time()
-        created = 0
+    inicio = time.time()
+    resultados = setup_all_plcs()
+    elapsed = time.time() - inicio
 
-        with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-            futures = [executor.submit(setup_single_clp, i, app) for i in range(1, NUM_CLPS + 1)]
-            for future in as_completed(futures):
-                if future.result():
-                    created += 1
+    total_criado = sum(resultados.values())
+    logger.process(
+        f"{total_criado}/{total_esperado} CLPs configurados em {elapsed:.2f}s."
+    )
+    for protocolo, quantidade in resultados.items():
+        logger.info("Protocolo %s: %d CLPs ativos.", protocolo, quantidade)
 
-        elapsed = time.time() - start_time
-        logger.process(f"{created}/{NUM_CLPS} CLPs criados em {elapsed:.2f}s com {MAX_THREADS} threads.")
-
-        # Serviço de polling em background
-        polling_manager = SimpleManager(app)
-        threading.Thread(
-            target=run_async_polling, args=(app, polling_manager), daemon=True
-        ).start()
-        logger.info("Serviço de polling rodando em background.")
+    polling_manager = SimpleManager(app)
+    threading.Thread(
+        target=run_async_polling,
+        args=(app, polling_manager),
+        daemon=True,
+    ).start()
+    logger.info("Serviço de polling iniciado em background.")
 
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
     logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)

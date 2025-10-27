@@ -10,6 +10,7 @@ Esta documentação está organizada nos seguintes arquivos:
 2. **[DEVELOPMENT.md](DEVELOPMENT.md)** - Guia completo de desenvolvimento, arquitetura e padrões de código
 3. **[DEPLOYMENT.md](DEPLOYMENT.md)** - Manual de deploy em produção, configuração de servidor e manutenção
 4. **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solução de problemas comuns e debug
+5. **[MANUAL_TECNICO_COMPLETO.md](MANUAL_TECNICO_COMPLETO.md)** - Manual técnico detalhado com instruções de operação, simuladores e manutenção
 
 ---
 
@@ -88,7 +89,7 @@ python run.py
 ### Tecnologias Principais
 - **Backend**: Flask, SQLAlchemy, Flask-SocketIO
 - **Frontend**: Bootstrap 5, Chart.js, WebSockets
-- **Protocolos**: Modbus TCP/RTU, Siemens S7
+- **Protocolos**: Modbus TCP/RTU, Siemens S7, OPC UA
 - **Banco**: SQLite (dev), PostgreSQL (prod)
 - **Cache**: Redis
 - **Deploy**: Nginx, Supervisor, Docker
@@ -175,7 +176,7 @@ Use o [template de issue](TROUBLESHOOTING.md#template-para-reportar-problemas) p
 
 ### 🔄 Em Desenvolvimento
 - [ ] Suporte a EtherNet/IP
-- [ ] Suporte a OPC UA
+- [x] Suporte a OPC UA
 - [ ] Dashboard customizável
 - [ ] Integração com MES/ERP
 - [ ] App mobile
