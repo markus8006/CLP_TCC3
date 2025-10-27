@@ -15,10 +15,15 @@ AdaptersMap = Dict[str, Type[BaseAdapter]]
 def _default_adapters() -> AdaptersMap:
     return {
         "modbus": ModbusAdapter,
+        "modbus-sim": ModbusAdapter,
         "opcua": OpcUaAdapter,
         "opc-ua": OpcUaAdapter,
+        "opcua-sim": OpcUaAdapter,
+        "opc-ua-sim": OpcUaAdapter,
         "s7": S7Adapter,
         "siemens": S7Adapter,
+        "s7-sim": S7Adapter,
+        "siemens-sim": S7Adapter,
     }
 
 

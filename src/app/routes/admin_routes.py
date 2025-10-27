@@ -14,6 +14,7 @@ from src.utils import role_required
 from src.utils.tags import parse_tags
 
 from .admin_forms import (
+    ROLE_LABELS,
     UserCreationForm,
     UserUpdateForm,
     PLCForm,
@@ -265,6 +266,7 @@ def manage_alarm_definitions():
             is_active=form.is_active.data,
             auto_acknowledge=form.auto_acknowledge.data,
             email_enabled=form.email_enabled.data,
+            email_min_role=UserRole(form.email_min_role.data),
         )
 
         try:
@@ -289,4 +291,5 @@ def manage_alarm_definitions():
         form=form,
         definitions=definitions,
         registers_by_plc=registers_by_plc,
+        role_labels=ROLE_LABELS,
     )

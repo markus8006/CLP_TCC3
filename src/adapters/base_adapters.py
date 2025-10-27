@@ -34,6 +34,10 @@ class BaseAdapter(ABC):
         self._connected: bool = False
         self._lock = asyncio.Lock()
 
+        raw_protocol = str(getattr(orm, "protocol", "")).lower()
+        self.protocol_name = raw_protocol.split("-", 1)[0] if raw_protocol else ""
+        self._simulation_mode = bool(getattr(orm, "use_simulation", False) or raw_protocol.endswith("-sim"))
+
     # ------------------------------------------------------------------
     # Abstract API
     # ------------------------------------------------------------------
@@ -72,6 +76,9 @@ class BaseAdapter(ABC):
 
     def _set_connected(self, state: bool) -> None:
         self._connected = state
+
+    def in_simulation(self) -> bool:
+        return self._simulation_mode
 
     # The alarm repository is lazily instanced above; this helper keeps the
     # actual lookup isolated.

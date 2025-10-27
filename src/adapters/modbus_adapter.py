@@ -12,6 +12,7 @@ except Exception:  # pragma: no cover - safeguard if library missing
     AsyncModbusTcpClient = None  # type: ignore
 
 from src.adapters.base_adapters import BaseAdapter
+from src.simulations.runtime import simulation_registry
 from src.repository.PLC_repository import Plcrepo
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,10 @@ class ModbusAdapter(BaseAdapter):
         self.client: Optional[AsyncModbusTcpClient] = None
 
     async def connect(self) -> bool:
+        if self.in_simulation():
+            self._set_connected(True)
+            return True
+
         if AsyncModbusTcpClient is None:
             logger.error("pymodbus não está instalado; não é possível abrir conexão Modbus")
             self._set_connected(False)
@@ -63,6 +68,10 @@ class ModbusAdapter(BaseAdapter):
             return self.is_connected()
 
     async def disconnect(self) -> None:
+        if self.in_simulation():
+            self._set_connected(False)
+            return
+
         async with self._lock:
             try:
                 if self.client is not None:
@@ -83,6 +92,16 @@ class ModbusAdapter(BaseAdapter):
                     logger.debug("Não foi possível atualizar status offline do PLC")
 
     async def read_register(self, register_config: Any) -> Optional[Dict[str, Any]]:
+        if self.in_simulation():
+            simulated = simulation_registry.next_value(self.protocol_name or "modbus", register_config)
+            return self._build_result(
+                register_id=simulated["register_id"],
+                raw_value=simulated["raw_value"],
+                value_float=simulated["value_float"],
+                value_int=simulated["value_int"],
+                quality=simulated["quality"],
+            )
+
         if not self.is_connected() or self.client is None:
             logger.debug("Tentativa de leitura Modbus sem conexão ativa")
             return None

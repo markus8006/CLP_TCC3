@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 try:  # pragma: no cover - opcional
     from asyncua import Client as OpcUaClient
@@ -11,6 +11,7 @@ except Exception:  # pragma: no cover - fallback sem dependência
     OpcUaClient = None  # type: ignore
 
 from src.adapters.base_adapters import BaseAdapter
+from src.simulations.runtime import simulation_registry
 
 logger = logging.getLogger(__name__)
 
@@ -26,15 +27,17 @@ class OpcUaAdapter(BaseAdapter):
             f"opc.tcp://{getattr(orm, 'ip_address', 'localhost')}:{getattr(orm, 'port', 4840)}",
         )
         self._client: Optional[OpcUaClient] = None
-        self._mock_mode = False
-        self._mock_values: Dict[str, float] = {}
 
     async def connect(self) -> bool:
         if OpcUaClient is None:
             logger.warning(
                 "Biblioteca asyncua indisponível; ativando modo simulado para OPC UA"
             )
-            self._mock_mode = True
+            self._simulation_mode = True
+            self._set_connected(True)
+            return True
+
+        if self.in_simulation():
             self._set_connected(True)
             return True
 
@@ -60,6 +63,11 @@ class OpcUaAdapter(BaseAdapter):
             return True
 
     async def disconnect(self) -> None:
+        if self.in_simulation():
+            self._client = None
+            self._set_connected(False)
+            return
+
         async with self._lock:
             try:
                 if self._client:
@@ -69,8 +77,6 @@ class OpcUaAdapter(BaseAdapter):
             finally:
                 self._client = None
                 self._set_connected(False)
-                self._mock_mode = False
-                self._mock_values.clear()
 
     async def read_register(self, register_config: Any) -> Optional[Dict[str, Any]]:
         node_id = getattr(register_config, "address", None)
@@ -80,18 +86,14 @@ class OpcUaAdapter(BaseAdapter):
 
         register_id = getattr(register_config, "id", None)
 
-        if self._mock_mode:
-            raw_value = self._mock_values.get(node_id)
-            if raw_value is None:
-                raw_value = float(len(self._mock_values) + 1)
-                self._mock_values[node_id] = raw_value
-            value_float = float(raw_value)
-            value_int = int(value_float)
+        if self.in_simulation():
+            simulated = simulation_registry.next_value(self.protocol_name or "opcua", register_config)
             return self._build_result(
-                register_id=register_id,
-                raw_value=raw_value,
-                value_float=value_float,
-                value_int=value_int,
+                register_id=simulated["register_id"],
+                raw_value=simulated["raw_value"],
+                value_float=simulated["value_float"],
+                value_int=simulated["value_int"],
+                quality=simulated["quality"],
             )
 
         if not self._client or not self.is_connected():

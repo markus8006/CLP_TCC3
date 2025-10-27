@@ -17,6 +17,7 @@ except Exception:  # pragma: no cover - fallback quando snap7 não está dispon�
     get_bool = get_dint = get_int = get_real = None  # type: ignore
 
 from src.adapters.base_adapters import BaseAdapter
+from src.simulations.runtime import simulation_registry
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +40,15 @@ class S7Adapter(BaseAdapter):
         self.port = getattr(orm, "port", 102)
         self.rack_slot = getattr(orm, "rack_slot", "0,2")
         self._client: Optional["snap7.client.Client"] = None
-        self._mock_mode = False
-        self._mock_values: Dict[str, float] = {}
 
     async def connect(self) -> bool:
+        if self.in_simulation():
+            self._set_connected(True)
+            return True
+
         if snap7 is None:
             logger.warning("Biblioteca snap7 indisponível; ativando modo simulado para S7")
-            self._mock_mode = True
+            self._simulation_mode = True
             self._set_connected(True)
             return True
 
@@ -81,6 +84,11 @@ class S7Adapter(BaseAdapter):
             return self.is_connected()
 
     async def disconnect(self) -> None:
+        if self.in_simulation():
+            self._client = None
+            self._set_connected(False)
+            return
+
         async with self._lock:
             try:
                 if self._client:
@@ -90,8 +98,6 @@ class S7Adapter(BaseAdapter):
             finally:
                 self._client = None
                 self._set_connected(False)
-                self._mock_mode = False
-                self._mock_values.clear()
 
     async def read_register(self, register_config: Any) -> Optional[Dict[str, Any]]:
         address = getattr(register_config, "address", "")
@@ -102,16 +108,14 @@ class S7Adapter(BaseAdapter):
         register_id = getattr(register_config, "id", None)
         data_type = str(getattr(register_config, "data_type", "")) or "int"
 
-        if self._mock_mode:
-            raw_value = self._mock_values.get(address)
-            if raw_value is None:
-                raw_value = float(len(self._mock_values) + 1)
-                self._mock_values[address] = raw_value
+        if self.in_simulation():
+            simulated = simulation_registry.next_value(self.protocol_name or "s7", register_config)
             return self._build_result(
-                register_id=register_id,
-                raw_value=raw_value,
-                value_float=float(raw_value),
-                value_int=int(raw_value),
+                register_id=simulated["register_id"],
+                raw_value=simulated["raw_value"],
+                value_float=simulated["value_float"],
+                value_int=simulated["value_int"],
+                quality=simulated["quality"],
             )
 
         if not self._client or not self.is_connected():
