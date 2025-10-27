@@ -1,51 +1,93 @@
-/* --- Layout Geral e Reset Básico --- */
+/* --- Layout Geral e Variáveis de Tema --- */
 :root {
+    --primary-color: #0056b3;
+    --secondary-color: #0069d9;
+    --body-bg: linear-gradient(135deg, #f5f7fa 0%, #e4ecff 100%);
+    --surface-bg: #ffffff;
+    --sidebar-bg: linear-gradient(160deg, #ffffff 40%, #dce6ff 100%);
+    --text-color: #1f2933;
+    --text-muted: #52606d;
+    --border-color: rgba(15, 23, 42, 0.12);
+    --menu-btn-bg: rgba(0, 86, 179, 0.1);
+    --menu-btn-color: #0056b3;
+    --menu-btn-hover-bg: #0056b3;
+    --menu-btn-hover-color: #ffffff;
+    --nav-hover-bg: rgba(0, 86, 179, 0.08);
+    --nav-hover-text: #0056b3;
+    --button-bg: #0056b3;
+    --button-hover-bg: #004a99;
+    --button-text-color: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: rgba(15, 23, 42, 0.2);
+    --focus-ring: rgba(0, 105, 217, 0.35);
+    --shadow-color: rgba(15, 23, 42, 0.1);
+    --light-dark-bg: #ffffff;
+}
+
+html[data-theme="dark"] {
     --primary-color: #8400ff;
     --secondary-color: #cc00ff;
-    --dark-bg: #0a0018;
-    --light-dark-bg: #1b0030;
-    --text-color: whitesmoke;
+    --body-bg: radial-gradient(circle at top left, #0a0018 0%, #090016 90%, #1b0030 100%);
+    --surface-bg: #1b0030;
+    --sidebar-bg: linear-gradient(160deg, #111 40%, #6e0096 100%);
+    --text-color: #f5f5f7;
     --text-muted: #adb5bd;
+    --border-color: rgba(132, 0, 255, 0.45);
+    --menu-btn-bg: rgba(255, 255, 255, 0.1);
+    --menu-btn-color: #f5f5f7;
+    --menu-btn-hover-bg: #6e0096;
+    --menu-btn-hover-color: #ffffff;
+    --nav-hover-bg: rgba(255, 255, 255, 0.1);
+    --nav-hover-text: #ffffff;
+    --button-bg: #1b0030;
+    --button-hover-bg: #6e0096;
+    --button-text-color: #f5f5f7;
+    --input-bg: #1b0030;
+    --input-border: rgba(204, 0, 255, 0.45);
+    --focus-ring: rgba(204, 0, 255, 0.35);
+    --shadow-color: rgba(4, 0, 12, 0.45);
+    --light-dark-bg: #1b0030;
 }
 
 body {
     margin: 0;
     font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
     color: var(--text-color);
-    background: radial-gradient(circle at top left, var(--dark-bg) 0%, #090016 90%, #1b0030 100%);
+    background: var(--body-bg);
     min-height: 100vh;
+    transition: background 0.4s ease, color 0.4s ease;
 }
 
 a {
     color: var(--secondary-color);
     text-decoration: none;
-    transition: color 0.3s;
+    transition: color 0.3s ease;
 }
 
 span {
-        color: var(--text-color);
-        text-decoration: none;
+    color: var(--text-color);
 }
 
 a:hover {
-    color: var(--text-color);
+    color: var(--primary-color);
 }
 
-th, td {
+th,
+td {
     color: var(--text-color);
 }
-
 
 h1,
 h2 {
     color: var(--secondary-color);
-    text-shadow: 0 2px 8px rgba(8, 0, 20, 0.2);
+    text-shadow: 0 2px 8px var(--shadow-color);
     letter-spacing: 1px;
 }
 
 h3 {
-    color: var(--secondary-color)
-} 
+    color: var(--secondary-color);
+}
+
 p {
     color: var(--text-color);
 }
@@ -53,72 +95,105 @@ p {
 .main-content {
     padding: 20px;
     margin-left: 60px;
-    /* Espaço para o menu fechado */
-    transition: margin-left 0.3s;
+    transition: margin-left 0.3s ease, background-color 0.4s ease, color 0.4s ease;
 }
 
 /* --- Navegação / Sidebar --- */
-#menuBtn {
-    font-size: 24px;
+#menuBtn,
+#themeToggle {
+    font-size: 20px;
     cursor: pointer;
     position: fixed;
     top: 15px;
-    left: 15px;
-    color: #6e0096;
     z-index: 1001;
-    /* Maior que o sidenav */
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--menu-btn-bg);
+    color: var(--menu-btn-color);
     border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    border-radius: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: all 0.2s;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 6px 14px var(--shadow-color);
 }
 
-#menuBtn:hover {
-    color: white;
-    background: #6e0096;
-    transform: scale(1.1);
+#menuBtn {
+    left: 15px;
+}
+
+#themeToggle {
+    right: 15px;
+    font-size: 18px;
+}
+
+#menuBtn:hover,
+#themeToggle:hover {
+    background: var(--menu-btn-hover-bg);
+    color: var(--menu-btn-hover-color);
+    transform: translateY(-2px);
+}
+
+#themeToggle .theme-icon {
+    pointer-events: none;
+    font-size: 20px;
 }
 
 .sidenav {
     height: 100%;
     width: 0;
-    /* Começa fechado */
     position: fixed;
     z-index: 1000;
     top: 0;
     left: 0;
-    background: linear-gradient(160deg, #111 40%, #6e0096 100%);
+    background: var(--sidebar-bg);
     overflow-x: hidden;
-    transition: 0.3s;
+    transition: width 0.3s ease;
     padding-top: 80px;
-    /* Espaço para o botão não sobrepor */
+    box-shadow: 4px 0 18px var(--shadow-color);
 }
 
 .sidenav nav a {
-    padding: 10px 24px;
-    font-size: 20px;
+    padding: 12px 24px;
+    font-size: 18px;
     display: block;
+    color: var(--text-color);
+    transition: color 0.2s ease, background 0.2s ease;
 }
 
-/* Classe para ser controlada via JS */
+.sidenav nav a:hover {
+    color: var(--nav-hover-text);
+    background: var(--nav-hover-bg);
+}
+
 .sidenav-open {
-    width: 250px;
+    width: 260px;
 }
 
 .main-content-shifted {
-    margin-left: 250px;
+    margin-left: 260px;
 }
 
+.user-info {
+    padding: 0 24px 16px 24px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
 
-/* --- Formulários (Inputs Escuros) --- */
-/* Esta nova seção aplica fundos escuros a todos os inputs, exceto os de alerta */
+.user-info .user-name {
+    font-weight: 600;
+    display: block;
+}
 
-/* Inputs de texto, número, email, etc., textareas e selects */
+.user-info .user-role {
+    font-size: 0.85rem;
+    text-transform: capitalize;
+    color: var(--text-muted);
+}
+
+/* --- Formulários --- */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -129,69 +204,64 @@ input[type="url"],
 textarea,
 select,
 .form-control {
-    background-color: var(--light-dark-bg);
+    background-color: var(--input-bg);
     color: var(--text-color);
-    border: 1px solid var(--primary-color);
-    border-radius: 4px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
     padding: 6px 12px;
     box-sizing: border-box;
-    /* Garante que padding não afete a largura */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-/* Botões, exceto o .close (de alertas) e #menuBtn */
-button:not(.close):not(#menuBtn),
+button:not(.close):not(#menuBtn):not(#themeToggle),
 input[type="submit"],
 input[type="button"],
 input[type="reset"],
 .btn {
-    background-color: var(--light-dark-bg);
-    /* Fundo escuro como pedido */
-    color: var(--text-color);
+    background-color: var(--button-bg);
+    color: var(--button-text-color);
     border: 1px solid var(--primary-color);
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 6px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s, border-color 0.3s;
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px var(--shadow-color);
 }
 
-/* Cor do placeholder */
 ::placeholder {
     color: var(--text-muted);
     opacity: 1;
 }
 
-/* Estado de Foco para inputs */
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="number"]:focus,
-input[typeD="search"]:focus,
+input[type="search"]:focus,
 input[type="tel"]:focus,
 input[type="url"]:focus,
 textarea:focus,
 select:focus,
 .form-control:focus {
     border-color: var(--secondary-color);
-    box-shadow: 0 0 0 3px rgba(204, 0, 255, 0.2);
+    box-shadow: 0 0 0 3px var(--focus-ring);
     outline: none;
 }
 
-/* Estado de Hover para botões (para interatividade) */
-button:not(.close):not(#menuBtn):hover,
+button:not(.close):not(#menuBtn):not(#themeToggle):hover,
 input[type="submit"]:hover,
 input[type="button"]:hover,
 input[type="reset"]:hover,
 .btn:hover {
-    background-color: var(--primary-color);
-    /* Muda para cor primária no hover */
+    background-color: var(--button-hover-bg);
     border-color: var(--secondary-color);
+    transform: translateY(-1px);
 }
-
 
 /* BOOTSTRAP */
 .navbar.bg-dark {
-    background: linear-gradient(160deg, #111 40%, #1b0030 100%) !important;
-    border-bottom: 1px solid var(--primary-color);
+    background: var(--sidebar-bg) !important;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .navbar-brand {
