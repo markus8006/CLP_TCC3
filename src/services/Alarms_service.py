@@ -10,6 +10,7 @@ from src.models.Alarms import Alarm, AlarmDefinition
 from src.models.Users import User, UserRole
 from src.repository.Alarms_repository import AlarmDefinitionRepo, AlarmRepo
 from src.services.email_service import send_email
+from src.services.mqtt_service import get_mqtt_publisher
 from src.utils.logs import logger
 
 
@@ -84,6 +85,7 @@ class AlarmService:
     def __init__(self, session=None):
         self.def_repo = AlarmDefinitionRepo(session=session)
         self.alarm_repo = AlarmRepo(session=session)
+        self.mqtt_publisher = get_mqtt_publisher()
 
     def _find_active_alarm_for_definition(self, defn: AlarmDefinition) -> Optional[Alarm]:
         return self.alarm_repo.first_by(alarm_definition_id=defn.id, state="ACTIVE")
@@ -112,6 +114,10 @@ class AlarmService:
         self.alarm_repo.add(alarm)
         logger.info("Alarm triggered: %s (def=%s plc=%s reg=%s)", message, defn.id, plc_id, register_id)
         self._notify_trigger(defn, alarm)
+        try:
+            self.mqtt_publisher.publish_alarm_event(defn, alarm, state="ACTIVE")
+        except Exception:
+            logger.exception("Erro ao publicar alarme %s no MQTT", getattr(defn, "id", None))
         return alarm
 
     def _clear_alarm(self, defn: AlarmDefinition, alarm: Alarm, current_value: float) -> None:
@@ -122,6 +128,10 @@ class AlarmService:
         self.alarm_repo.update(alarm)
         logger.info("Alarm cleared: id=%s def=%s", alarm.id, alarm.alarm_definition_id)
         self._notify_clear(defn, alarm)
+        try:
+            self.mqtt_publisher.publish_alarm_event(defn, alarm, state="CLEARED")
+        except Exception:
+            logger.exception("Erro ao publicar normalização do alarme %s no MQTT", getattr(defn, "id", None))
 
     def check_and_handle(self, plc_id: int, register_id: int, value: Optional[float]) -> bool:
         if value is None:
@@ -144,6 +154,13 @@ class AlarmService:
                     else:
                         existing_alarm.current_value = value
                         self.alarm_repo.update(existing_alarm)
+                        try:
+                            self.mqtt_publisher.publish_alarm_event(defn, existing_alarm, state="ACTIVE")
+                        except Exception:
+                            logger.exception(
+                                "Erro ao publicar atualização do alarme ativo %s no MQTT",
+                                getattr(defn, "id", None),
+                            )
 
                 elif action == "clear":
                     if existing_alarm is not None and existing_alarm.state == "ACTIVE":

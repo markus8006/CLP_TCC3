@@ -16,6 +16,7 @@ from src.services.polling_runtime import PollingRuntime, register_runtime
 from src.services.settings_service import get_polling_enabled
 from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
+from src.services.mqtt_service import get_mqtt_publisher
 
 # ===========================================================
 # CONFIGURAÇÕES
@@ -374,6 +375,20 @@ if __name__ == "__main__":
     with app.app_context():
         runtime.set_enabled(get_polling_enabled())
     register_runtime(app, runtime)
+
+    mqtt_publisher = get_mqtt_publisher()
+    if mqtt_publisher.is_enabled:
+        logger.process(
+            "Publicação MQTT ativada em %s:%s (base topic: %s)",
+            mqtt_publisher.settings.host,
+            mqtt_publisher.settings.port,
+            mqtt_publisher.settings.base_topic,
+        )
+    else:
+        logger.info(
+            "Publicação MQTT desativada. Defina MQTT_ENABLED=true para habilitar a ponte IT/OT."
+        )
+
     threading.Thread(target=run_async_polling, args=(app, runtime), daemon=True).start()
     logger.info("Serviço de polling iniciado em background.")
 

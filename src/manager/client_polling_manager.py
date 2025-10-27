@@ -12,6 +12,7 @@ from src.repository.PLC_repository import Plcrepo
 import os
 import inspect
 from datetime import datetime, timezone
+from src.services.mqtt_service import get_mqtt_publisher
 
 # número máximo de threads
 max_workers = min(32, (os.cpu_count() or 4) * 4)
@@ -56,11 +57,21 @@ class ActivePLCPoller:
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._mqtt = get_mqtt_publisher()
 
         # detecta se adapter.read_register é coroutinefunction
         self._read_is_coroutine = inspect.iscoroutinefunction(getattr(self.adapter, "read_register", None))
         self._reported_online = False
         self._last_seen_update: Optional[datetime] = None
+
+        try:
+            if hasattr(self.plc_orm, "tags_as_list"):
+                self._plc_tags = self.plc_orm.tags_as_list()
+            else:
+                self._plc_tags = getattr(self.plc_orm, "tags", None)
+        except Exception:
+            logger.exception("Falha ao obter tags do PLC %s", self._key())
+            self._plc_tags = None
 
     def _update_plc_state(self, *, online: bool, update_last_seen: bool = False) -> None:
         try:
@@ -95,15 +106,25 @@ class ActivePLCPoller:
             logger.exception("Falha ao actualizar estado online/offline do PLC %s", self._key())
 
     def _mark_online(self, *, update_last_seen: bool = False) -> None:
+        was_offline = not self._reported_online
         self._update_plc_state(online=True, update_last_seen=update_last_seen)
         self._reported_online = True
         if update_last_seen:
             self._last_seen_update = datetime.now(timezone.utc)
+        if was_offline:
+            try:
+                self._mqtt.publish_connectivity_event(self.plc_orm, "ONLINE")
+            except Exception:
+                logger.exception("Erro ao publicar evento de conectividade ONLINE para %s", self._key())
 
     def _mark_offline(self) -> None:
         if self._reported_online:
             self._update_plc_state(online=False)
             self._reported_online = False
+            try:
+                self._mqtt.publish_connectivity_event(self.plc_orm, "OFFLINE")
+            except Exception:
+                logger.exception("Erro ao publicar evento de conectividade OFFLINE para %s", self._key())
         self._last_seen_update = None
 
     def _touch_last_seen(self) -> None:
@@ -120,8 +141,10 @@ class ActivePLCPoller:
         Depois faz bulk_insert no DataLogRepo.
         """
         with self.context.app_context():
+            publish_payloads: List[Dict[str, Any]] = []
             try:
                 for rec in batch:
+                    meta = rec.pop('_publish_meta', None)
                     plc_id = rec.get('plc_id')
                     register_id = rec.get('register_id')
                     value = rec.get('value_float')
@@ -129,13 +152,23 @@ class ActivePLCPoller:
                         triggered = self.alarm_service.check_and_handle(plc_id, register_id, value)
                         if triggered:
                             rec['is_alarm'] = True
+                            if meta is not None:
+                                meta['is_alarm'] = True
                     except Exception:
                         logger.exception("Erro em AlarmService para plc=%s reg=%s", plc_id, register_id)
+                    if meta is not None:
+                        publish_payloads.append(meta)
 
                 try:
                     self.datalog_repo.bulk_insert(batch)
                 except Exception:
                     logger.exception("Erro ao inserir batch de DataLog")
+
+                if publish_payloads:
+                    try:
+                        self._mqtt.publish_measurements(publish_payloads)
+                    except Exception:
+                        logger.exception("Erro ao publicar medições no MQTT")
             except Exception:
                 logger.exception("Erro geral em _process_batch_sync")
 
@@ -237,17 +270,39 @@ class ActivePLCPoller:
 
                     # agora esperamos um dict-like
                     try:
+                        plc_id = read_result.get('plc_id') or getattr(self.plc_orm, 'id', None)
+                        register_id = read_result.get('register_id')
+                        timestamp = read_result.get('timestamp')
+                        unit = getattr(reg_for_task, 'unit', None)
                         rec = {
-                            'plc_id': read_result.get('plc_id') or getattr(self.plc_orm, 'id', None),
-                            'register_id': read_result.get('register_id'),
-                            'timestamp': read_result.get('timestamp'),
+                            'plc_id': plc_id,
+                            'register_id': register_id,
+                            'timestamp': timestamp,
                             'raw_value': str(read_result.get('raw_value')),
                             'value_float': read_result.get('value_float'),
                             'value_int': read_result.get('value_int', None),
                             'quality': read_result.get('quality'),
-                            'unit': getattr(reg_for_task, 'unit', None),
+                            'unit': unit,
                             'tags': getattr(reg_for_task, 'tags', None),
                             'is_alarm': False,
+                            '_publish_meta': {
+                                'plc_id': plc_id,
+                                'plc_name': getattr(self.plc_orm, 'name', None),
+                                'protocol': getattr(self.plc_orm, 'protocol', None),
+                                'plc_tags': self._plc_tags,
+                                'register_id': register_id,
+                                'register_name': getattr(reg_for_task, 'name', None),
+                                'register_tag': getattr(reg_for_task, 'tag', None),
+                                'register_address': getattr(reg_for_task, 'address', None),
+                                'poll_rate': getattr(reg_for_task, 'poll_rate', None),
+                                'timestamp': timestamp,
+                                'raw_value': str(read_result.get('raw_value')),
+                                'value_float': read_result.get('value_float'),
+                                'value_int': read_result.get('value_int', None),
+                                'unit': unit,
+                                'quality': read_result.get('quality'),
+                                'is_alarm': False,
+                            },
                         }
                         results_batch.append(rec)
                     except Exception as e:
