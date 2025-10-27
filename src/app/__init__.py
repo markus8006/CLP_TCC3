@@ -75,6 +75,7 @@ def register_blueprints(app):
     from src.app.routes.admin_routes import admin_bp
     from src.app.routes.login_routes.auth_routes import auth_bp
     from src.app.routes.api.api_routes import api_bp
+    from src.app.routes.coleta_routes import coleta_bp
 #   from app.web.alarm_views import alarm_bp
 #     from app.web.polling_control import polling_bp
 #     from app.api import api_bp
@@ -83,6 +84,7 @@ def register_blueprints(app):
     app.register_blueprint(clp_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(auth_bp)
+    app.register_blueprint(coleta_bp, url_prefix='/coleta')
     logger.info("INICIANDO API")
     app.register_blueprint(api_bp, url_prefix='/api')
     logger.info("FIM API")

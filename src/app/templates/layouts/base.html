@@ -44,7 +44,9 @@
     <div id="mySidenav" class="sidenav">
         <nav>
             <a href="/">Home</a>
-            <a href="/coleta/">Coleta IPs</a>
+            {% if current_user.is_authenticated and current_user.has_permission('engineer') %}
+            <a href="{{ url_for('coleta.control') }}">Coleta IPs</a>
+            {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('admin') %}
             <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
             {% endif %}
