@@ -7,7 +7,7 @@ import snap7
 from snap7.types import WordLen
 from snap7 import types as s7types
 
-from src.utils.log.log import setup_logger
+from src.utils.logs import setup_logger
 import logging
 
 logger = setup_logger()

@@ -58,15 +58,7 @@
                 </div>
             </div>
             <footer class="clp-card__footer">
-                {% if clp.tags %}
-                <ul class="tag-list">
-                    {% for tag in clp.tags %}
-                    <li>{{ tag }}</li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <span class="no-tags">Sem tags associadas</span>
-                {% endif %}
+                    <img class="clp-card__image" src="{{ url_for('static', filename='imgs/clp_imagem.png') }}" alt="Ícone de CLP">
                 <a class="btn tertiary" href="{{ url_for('clp_bp.clp', ip=clp.ip_address) }}">Ver detalhes</a>
             </footer>
         </article>

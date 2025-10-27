@@ -122,7 +122,7 @@ class PLC(db.Model):
         else:
             normalized = parse_tags(tags)
 
-        # remove duplicados mantendo ordem
+    # Remove duplicados mantendo a ordem
         seen = set()
         unique = []
         for tag in normalized:
@@ -130,7 +130,11 @@ class PLC(db.Model):
                 unique.append(tag)
                 seen.add(tag)
 
-        if isinstance(self.__table__.c.tags.type, MutableList):
+    # --- Ajuste principal ---
+    # Se a coluna for JSON (como em Postgres), ou se já for lista no ORM, manter lista.
+        if isinstance(self.tags, list) or isinstance(self.__table__.c.tags.type, db.JSON):
             self.tags = unique
         else:
+        # Fallback para bancos que usam Text (ex: SQLite sem JSON nativo)
             self.tags = json.dumps(unique, ensure_ascii=False)
+

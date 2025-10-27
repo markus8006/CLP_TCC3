@@ -272,6 +272,13 @@
     font-weight: 600;
 }
 
+.clp-card__image {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+
 .pagination .page-info {
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.65);

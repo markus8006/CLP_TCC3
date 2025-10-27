@@ -36,12 +36,6 @@
     <div id="mensagemCLP" role="status" style="margin-top:12px;color:var(--accent)"></div>
 </div>
 
-<div class="informacao_clp">
-    <h2>Valores dos Registradores (Live)</h2>
-    <div id="registers-container" class="registers-grid">
-        <p>Aguardando dados do poll...</p>
-    </div>
-</div>
 
 <div class="informacao_clp">
     <h2>Informações do CLP</h2>
@@ -50,7 +44,6 @@
             <strong>Nome:</strong>
             <div id="viewMode">
                 <span id="clpName">{{ clp.name }}</span>
-                <button id="editNameBtn" class="btn-edit" title="Editar Nome">✏️</button>
             </div>
             <div id="editMode" style="display: none;">
                 <input type="text" id="inputClpName" class="form-input" value="{{ clp.name }}">
