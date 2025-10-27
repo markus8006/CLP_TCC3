@@ -2,8 +2,24 @@
 
 // CONFIG
 const POLL_INTERVAL = 4000; // ms, ajuste se quiser
-const API_PATH = ip => `/api/get/data/clp/${encodeURIComponent(ip)}`;
-const TAGS_PATH = ip => `/api/clps/${encodeURIComponent(ip)}/tags`;
+const API_PATH = (ip, vlan) => {
+    const base = `/api/get/data/clp/${encodeURIComponent(ip)}`;
+    if (vlan !== null && vlan !== undefined && vlan !== '') {
+        return `${base}?vlan=${encodeURIComponent(vlan)}`;
+    }
+    return base;
+};
+
+const TAGS_PATH = (ip, vlan, tag) => {
+    let base = `/api/clps/${encodeURIComponent(ip)}/tags`;
+    if (tag) {
+        base += `/${encodeURIComponent(tag)}`;
+    }
+    if (vlan !== null && vlan !== undefined && vlan !== '') {
+        base += tag ? `?vlan=${encodeURIComponent(vlan)}` : `?vlan=${encodeURIComponent(vlan)}`;
+    }
+    return base;
+};
 
 // Paleta de cores para tema escuro
 const themeColors = [
@@ -24,6 +40,17 @@ function getClpIpFromDom() {
     const btnConnect = document.getElementById('btnConnect');
     const btnDisconnect = document.getElementById('btnDisconnect');
     return (btnConnect && btnConnect.dataset.ip) || (btnDisconnect && btnDisconnect.dataset.ip) || null;
+}
+
+function getClpVlanFromDom() {
+    const btnConnect = document.getElementById('btnConnect');
+    const btnDisconnect = document.getElementById('btnDisconnect');
+    const raw = (btnConnect && btnConnect.dataset.vlan) || (btnDisconnect && btnDisconnect.dataset.vlan) || null;
+    if (raw === null || raw === undefined || raw === '') {
+        return null;
+    }
+    const parsed = Number(raw);
+    return Number.isNaN(parsed) ? raw : parsed;
 }
 
 // util: format timestamp pra algo legível
@@ -321,8 +348,9 @@ function processApiPayload(payload) {
 async function pollOnce() {
     const ip = getClpIpFromDom();
     if (!ip) return;
+    const vlan = getClpVlanFromDom();
     try {
-        const res = await fetch(API_PATH(ip), { cache: 'no-store' });
+        const res = await fetch(API_PATH(ip, vlan), { cache: 'no-store' });
         if (res.ok) processApiPayload(await res.json());
         else console.error('Erro ao buscar dados do CLP:', res.status);
     } catch (err) {
@@ -389,13 +417,13 @@ function showTagMessage(message, type = 'info') {
     container.className = `tag-message tag-${type}`;
 }
 
-async function sendTagRequest(ip, method, body) {
+async function sendTagRequest(ip, vlan, method, body) {
     const hasBody = method !== 'DELETE' && body;
     const headers = { 'X-CSRFToken': getCsrfToken() };
     if (hasBody) {
         headers['Content-Type'] = 'application/json';
     }
-    const url = TAGS_PATH(ip) + (method === 'DELETE' && body?.tag ? `/${encodeURIComponent(body.tag)}` : '');
+    const url = TAGS_PATH(ip, vlan, method === 'DELETE' ? body?.tag : null);
     const response = await fetch(url, {
         method,
         headers,
@@ -413,6 +441,7 @@ function initTagManagement() {
     const input = document.getElementById('inputTag');
     const list = document.getElementById('tag-list-container');
     const ip = getClpIpFromDom();
+    const vlan = getClpVlanFromDom();
 
     if (!form || !input || !list || !ip) {
         return;
@@ -423,7 +452,7 @@ function initTagManagement() {
         const raw = input.value.trim();
         if (!raw) return;
         try {
-            const payload = await sendTagRequest(ip, 'POST', { tag: raw });
+            const payload = await sendTagRequest(ip, vlan, 'POST', { tag: raw });
             const added = payload.tag || raw.toLowerCase();
             appendTagToList(added);
             input.value = '';
@@ -440,7 +469,7 @@ function initTagManagement() {
         const tag = target.dataset.tag;
         if (!tag) return;
         try {
-            await sendTagRequest(ip, 'DELETE', { tag });
+            await sendTagRequest(ip, vlan, 'DELETE', { tag });
             removeTagFromList(tag);
             showTagMessage(`Tag "${tag}" removida.`, 'success');
         } catch (error) {

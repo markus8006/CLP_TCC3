@@ -20,8 +20,10 @@ def _build_clp_view(plc) -> dict:
         "id": plc.id,
         "name": plc.name,
         "ip_address": plc.ip_address,
+        "vlan_id": plc.vlan_id,
         "protocol": plc.protocol,
         "is_online": plc.is_online,
+        "last_seen": plc.last_seen,
         "tags": tags,
         "security": {
             "score": security.score,

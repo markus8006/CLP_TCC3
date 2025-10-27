@@ -1,5 +1,13 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required, current_user
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from src.app import db
@@ -10,16 +18,20 @@ from src.models.Alarms import AlarmDefinition
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
 from src.repository.Alarms_repository import AlarmDefinitionRepo
+from src.services.polling_runtime import trigger_polling_refresh
+from src.services.settings_service import get_polling_enabled, set_polling_enabled
 from src.utils import role_required
+from src.utils.constants.constants import ROLES_HIERARCHY
 from src.utils.tags import parse_tags
 
 from .admin_forms import (
     ROLE_LABELS,
+    AlarmDefinitionForm,
+    PLCForm,
+    PollingControlForm,
+    RegisterCreationForm,
     UserCreationForm,
     UserUpdateForm,
-    PLCForm,
-    RegisterCreationForm,
-    AlarmDefinitionForm,
 )
 
 AlarmDefRepo = AlarmDefinitionRepo()
@@ -61,11 +73,28 @@ def manage_users():
         for user in users
     }
 
+    ordering = {role.value: idx for idx, role in enumerate(UserRole.ordered_roles())}
+    role_definitions = []
+    for role_key, data in ROLES_HIERARCHY.items():
+        enum_member = getattr(UserRole, role_key, None)
+        if not enum_member:
+            continue
+        role_definitions.append(
+            {
+                "name": enum_member.value,
+                "label": ROLE_LABELS.get(enum_member, role_key.title()),
+                "description": data.get("description", ""),
+                "permissions": data.get("permissions", []),
+            }
+        )
+    role_definitions.sort(key=lambda item: ordering.get(item["name"], 0))
+
     return render_template(
         "admin/manage_users.html",
         users=users,
         create_form=create_form,
         update_forms=update_forms,
+        role_definitions=role_definitions,
     )
 
 
@@ -121,12 +150,16 @@ def manage_clps():
         form.tags.data = ""
 
     if form.validate_on_submit():
+        actor = current_user.username if current_user.is_authenticated else None
         plc = PLC(
             name=form.name.data,
             description=form.description.data,
             ip_address=form.ip_address.data,
             protocol=form.protocol.data,
             port=form.port.data,
+            vlan_id=form.vlan_id.data,
+            subnet_mask=form.subnet_mask.data,
+            gateway=form.gateway.data,
             unit_id=form.unit_id.data,
             manufacturer=form.manufacturer.data,
             model=form.model.data,
@@ -134,10 +167,15 @@ def manage_clps():
             is_active=form.is_active.data,
         )
         plc.set_tags(parse_tags(form.tags.data))
+        if plc.is_active:
+            plc.mark_active(actor=actor, source="admin_ui")
+        else:
+            plc.mark_inactive(actor=actor, source="admin_ui")
         try:
             Plcrepo.add(plc, commit=False)
             db.session.commit()
             flash("CLP criado com sucesso!", "success")
+            trigger_polling_refresh(current_app)
         except IntegrityError:
             db.session.rollback()
             flash("Já existe um CLP com este IP ou nome.", "warning")
@@ -148,7 +186,12 @@ def manage_clps():
 
     plcs = Plcrepo.list_all()
 
-    return render_template("clp/manage.html", form=form, plcs=plcs)
+    return render_template(
+        "clp/manage.html",
+        form=form,
+        plcs=plcs,
+        polling_enabled=get_polling_enabled(),
+    )
 
 
 @admin_bp.route("/clps/<int:plc_id>", methods=["GET", "POST"])
@@ -161,11 +204,18 @@ def edit_clp(plc_id: int):
         form.tags.data = ", ".join(plc.tags_as_list())
 
     if form.validate_on_submit():
+        previous_state = plc.is_active
+        actor = current_user.username if current_user.is_authenticated else None
         try:
             form.populate_obj(plc)
             plc.set_tags(parse_tags(form.tags.data))
+            if plc.is_active and not previous_state:
+                plc.mark_active(actor=actor, source="admin_ui")
+            elif previous_state and not plc.is_active:
+                plc.mark_inactive(actor=actor, source="admin_ui")
             db.session.commit()
             flash("CLP actualizado com sucesso!", "success")
+            trigger_polling_refresh(current_app)
         except IntegrityError:
             db.session.rollback()
             flash("Conflito de IP ou nome ao actualizar o CLP.", "warning")
@@ -183,7 +233,12 @@ def edit_clp(plc_id: int):
 def manage_registers():
     form = RegisterCreationForm()
     plcs = PLC.query.order_by(PLC.name.asc()).all()
-    form.plc_id.choices = [(plc.id, f"{plc.name} ({plc.ip_address})") for plc in plcs]
+
+    def _label(plc: PLC) -> str:
+        vlan_info = f" VLAN {plc.vlan_id}" if plc.vlan_id else ""
+        return f"{plc.name} ({plc.ip_address}{vlan_info})"
+
+    form.plc_id.choices = [(plc.id, _label(plc)) for plc in plcs]
 
     if form.validate_on_submit():
         register = Register(
@@ -220,6 +275,34 @@ def manage_registers():
     )
 
 
+@admin_bp.route("/polling/control", methods=["GET", "POST"])
+@login_required
+@role_required(UserRole.GERENTE)
+def manage_polling_control():
+    form = PollingControlForm()
+    persisted_enabled = get_polling_enabled()
+    runtime = current_app.extensions.get("polling_runtime")
+    runtime_enabled = runtime.is_enabled() if runtime else persisted_enabled
+
+    if request.method == "GET":
+        form.enabled.data = persisted_enabled
+
+    if form.validate_on_submit():
+        set_polling_enabled(
+            form.enabled.data,
+            actor=current_user.username if current_user.is_authenticated else None,
+        )
+        flash("Estado do polling actualizado.", "success")
+        return redirect(url_for("admin.manage_polling_control"))
+
+    return render_template(
+        "admin/polling_control.html",
+        form=form,
+        db_enabled=persisted_enabled,
+        runtime_enabled=runtime_enabled,
+    )
+
+
 @admin_bp.route("/alarms/definitions", methods=["GET", "POST"])
 @login_required
 @role_required(UserRole.ALARM_DEFINITION)
@@ -228,7 +311,7 @@ def manage_alarm_definitions():
 
     plcs = PLC.query.order_by(PLC.name.asc()).all()
     form.plc_id.choices = [
-        (plc.id, f"{plc.name} ({plc.ip_address})") for plc in plcs
+        (plc.id, _label(plc)) for plc in plcs
     ]
 
     registers_by_plc = {}
@@ -244,7 +327,7 @@ def manage_alarm_definitions():
             for register in registers
         ]
         default_register_choices.extend(
-            [(register.id, f"{register.name} — {plc.name}") for register in registers]
+            [(register.id, f"{register.name} — {_label(plc)}") for register in registers]
         )
 
     form.register_id.choices = default_register_choices or [(0, "Sem registradores disponíveis")]

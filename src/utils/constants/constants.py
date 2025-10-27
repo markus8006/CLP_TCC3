@@ -2,26 +2,46 @@
 ROLES_HIERARCHY = {
     'VIEWER': {
         'permissions': ['read_plc', 'read_data', 'read_alarms'],
-        'description': 'Apenas visualização'
+        'description': 'Acesso somente leitura aos painéis e indicadores.'
+    },
+    'USER': {
+        'inherits': 'VIEWER',
+        'permissions': ['acknowledge_basic_alerts'],
+        'description': 'Utilizador padrão com capacidade de reconhecer notificações básicas.'
     },
     'OPERATOR': {
-        'inherits': 'VIEWER',
-        'permissions': ['acknowledge_alarms', 'control_polling'],
-        'description': 'Operação básica'
+        'inherits': 'USER',
+        'permissions': ['acknowledge_alarms', 'control_runtime'],
+        'description': 'Responsável por operar a planta e reagir aos alarmes.'
+    },
+    'ALARM_DEFINITION': {
+        'inherits': 'OPERATOR',
+        'permissions': ['manage_alarm_definitions'],
+        'description': 'Pode criar e ajustar regras de alarmes.'
     },
     'TECHNICIAN': {
-        'inherits': 'OPERATOR', 
+        'inherits': 'ALARM_DEFINITION',
         'permissions': ['update_plc', 'update_registers', 'maintenance_mode'],
-        'description': 'Manutenção técnica'
+        'description': 'Equipa técnica responsável pela manutenção de dispositivos.'
+    },
+    'MODERATOR': {
+        'inherits': 'TECHNICIAN',
+        'permissions': ['manage_registers', 'manage_plcs'],
+        'description': 'Supervisiona o cadastro de CLPs e registradores.'
+    },
+    'GERENTE': {
+        'inherits': 'MODERATOR',
+        'permissions': ['control_polling', 'approve_changes'],
+        'description': 'Controla o serviço de polling e aprova alterações operacionais.'
     },
     'ENGINEER': {
-        'inherits': 'TECHNICIAN',
+        'inherits': 'GERENTE',
         'permissions': ['create_plc', 'delete_registers', 'system_config'],
-        'description': 'Engenharia de processo'
+        'description': 'Configura a arquitetura e integra novos equipamentos.'
     },
     'ADMIN': {
         'inherits': 'ENGINEER',
         'permissions': ['manage_users', 'system_admin', 'delete_plc'],
-        'description': 'Administração completa'
+        'description': 'Administração completa do ambiente.'
     }
 }

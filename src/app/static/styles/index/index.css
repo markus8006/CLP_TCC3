@@ -187,7 +187,20 @@
 .clp-card__body {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.clp-card__meta {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.clp-card__meta li + li {
+    margin-top: 0.25rem;
 }
 
 .clp-card__status {

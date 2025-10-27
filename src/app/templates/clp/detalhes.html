@@ -26,11 +26,11 @@
         <select id="portSelect" class="input-form">
             <option value="{{ clp.port }}">{{ clp.port }}</option>
         </select>
-        <button id="btnConnect" data-ip="{{ clp.ip_address }}" class="btn-acao">Conectar</button>
+        <button id="btnConnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}" class="btn-acao">Conectar</button>
     </div>
 
     <div id="disconnect-container" style="display: {{ 'inline-block' if clp.is_online else 'none' }};">
-        <button id="btnDisconnect" data-ip="{{ clp.ip_address }}" class="btn-acao">Desconectar</button>
+        <button id="btnDisconnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}" class="btn-acao">Desconectar</button>
     </div>
 
     <div id="mensagemCLP" role="status" style="margin-top:12px;color:var(--accent)"></div>
@@ -54,6 +54,10 @@
         <li><strong>Modelo:</strong> {{ clp.model or 'Desconhecido' }}</li>
         <li><strong>Fabricante:</strong> {{ clp.manufacturer or 'Desconhecido' }}</li>
         <li><strong>IP:</strong> <span id="clpIp">{{ clp.ip_address }}</span></li>
+        <li><strong>VLAN:</strong> {{ clp.vlan_id or 'Não definido' }}</li>
+        <li><strong>Máscara:</strong> {{ clp.subnet_mask or 'Não informado' }}</li>
+        <li><strong>Gateway:</strong> {{ clp.gateway or 'Não informado' }}</li>
+        <li><strong>Última leitura:</strong> {{ clp.last_seen.strftime('%d/%m/%Y %H:%M:%S') if clp.last_seen else 'Nunca registada' }}</li>
         <li><strong>Tags Associadas:</strong>
             <ul class="tag-list" id="tag-list-container">
                 {% if tags %}

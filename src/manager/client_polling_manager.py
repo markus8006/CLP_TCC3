@@ -8,8 +8,10 @@ from src.models.PLCs import PLC
 from concurrent.futures import ThreadPoolExecutor
 from src.services.Alarms_service import AlarmService
 from src.repository.Data_repository import DataRepo
+from src.repository.PLC_repository import Plcrepo
 import os
 import inspect
+from datetime import datetime, timezone
 
 # número máximo de threads
 max_workers = min(32, (os.cpu_count() or 4) * 4)
@@ -57,6 +59,55 @@ class ActivePLCPoller:
 
         # detecta se adapter.read_register é coroutinefunction
         self._read_is_coroutine = inspect.iscoroutinefunction(getattr(self.adapter, "read_register", None))
+        self._reported_online = False
+        self._last_seen_update: Optional[datetime] = None
+
+    def _update_plc_state(self, *, online: bool, update_last_seen: bool = False) -> None:
+        try:
+            with self.context.app_context():
+                plc = Plcrepo.get(self.plc_orm.id)
+                if not plc:
+                    return
+
+                now = datetime.now(timezone.utc)
+                changed = False
+
+                if plc.is_online != online:
+                    plc.is_online = online
+                    plc.status_changed_at = now
+                    if not online:
+                        plc.last_seen = None
+                    changed = True
+
+                if online and update_last_seen:
+                    if not plc.last_seen or now > plc.last_seen:
+                        plc.last_seen = now
+                        changed = True
+
+                if changed:
+                    Plcrepo.update(plc)
+                    self.plc_orm.is_online = plc.is_online
+                    self.plc_orm.last_seen = plc.last_seen
+        except Exception:
+            logger.exception("Falha ao actualizar estado online/offline do PLC %s", self._key())
+
+    def _mark_online(self, *, update_last_seen: bool = False) -> None:
+        self._update_plc_state(online=True, update_last_seen=update_last_seen)
+        self._reported_online = True
+        if update_last_seen:
+            self._last_seen_update = datetime.now(timezone.utc)
+
+    def _mark_offline(self) -> None:
+        if self._reported_online:
+            self._update_plc_state(online=False)
+            self._reported_online = False
+        self._last_seen_update = None
+
+    def _touch_last_seen(self) -> None:
+        now = datetime.now(timezone.utc)
+        if self._last_seen_update and (now - self._last_seen_update).total_seconds() < 5:
+            return
+        self._mark_online(update_last_seen=True)
 
     def _process_batch_sync(self, batch: List[Dict[str, Any]]):
         """
@@ -98,6 +149,7 @@ class ActivePLCPoller:
             self._task.cancel()
             await asyncio.sleep(0)
             self._task = None
+        self._mark_offline()
 
     async def _run_loop(self):
         logger.info(f"PLCPoller starting for {self._key()}")
@@ -109,10 +161,12 @@ class ActivePLCPoller:
                     connected = await self.adapter.connect()
                     if not connected:
                         logger.warning(f"Unable to connect to {self._key()} -- retrying in {self._backoff:.1f}s")
+                        self._mark_offline()
                         await asyncio.sleep(self._backoff)
                         self._backoff = min(self._backoff * 2, 30.0)
                         continue
                     self._backoff = 1.0
+                    self._mark_online(update_last_seen=True)
 
                 # ----- obtém registradores -----
                 if asyncio.iscoroutinefunction(self.registers_provider):
@@ -200,6 +254,7 @@ class ActivePLCPoller:
                 # processa lote completo (inserção + alarm checks) no executor
                 if results_batch:
                     await loop.run_in_executor(self._executor, self._process_batch_sync, results_batch)
+                    self._touch_last_seen()
 
                 # intervalo de polling
                 await asyncio.sleep(1)
@@ -213,6 +268,7 @@ class ActivePLCPoller:
                     await self.adapter.disconnect()
                 except Exception:
                     logger.exception("Falha ao desconectar adapter após erro.")
+                self._mark_offline()
                 await asyncio.sleep(self._backoff)
                 self._backoff = min(self._backoff * 2, 30.0)
 
@@ -220,6 +276,7 @@ class ActivePLCPoller:
             await self.adapter.disconnect()
         except Exception:
             logger.exception("Falha ao desconectar adapter no final do loop.")
+        self._mark_offline()
         logger.info(f"PLCPoller stopped for {self._key()}")
 
 

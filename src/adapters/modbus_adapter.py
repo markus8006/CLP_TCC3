@@ -13,7 +13,6 @@ except Exception:  # pragma: no cover - safeguard if library missing
 
 from src.adapters.base_adapters import BaseAdapter
 from src.simulations.runtime import simulation_registry
-from src.repository.PLC_repository import Plcrepo
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +59,6 @@ class ModbusAdapter(BaseAdapter):
 
             if self.is_connected():
                 logger.info("Conectado ao PLC Modbus %s:%s", self.ip_address, self.port)
-                try:
-                    self.orm.is_online = True
-                    Plcrepo.update(self.orm)
-                except Exception:
-                    logger.debug("Não foi possível atualizar status do PLC no repositório")
             return self.is_connected()
 
     async def disconnect(self) -> None:
@@ -85,11 +79,6 @@ class ModbusAdapter(BaseAdapter):
             finally:
                 self._set_connected(False)
                 self.client = None
-                try:
-                    self.orm.is_online = False
-                    Plcrepo.update(self.orm)
-                except Exception:
-                    logger.debug("Não foi possível atualizar status offline do PLC")
 
     async def read_register(self, register_config: Any) -> Optional[Dict[str, Any]]:
         if self.in_simulation():

@@ -20,6 +20,9 @@
             <label><span>IP</span>{{ form.ip_address(class_='input') }}</label>
             <label><span>Protocolo</span>{{ form.protocol(class_='input') }}</label>
             <label><span>Porta</span>{{ form.port(class_='input') }}</label>
+            <label><span>VLAN</span>{{ form.vlan_id(class_='input', placeholder='ex: 20') }}</label>
+            <label><span>Máscara</span>{{ form.subnet_mask(class_='input') }}</label>
+            <label><span>Gateway</span>{{ form.gateway(class_='input') }}</label>
             <label><span>Unit ID</span>{{ form.unit_id(class_='input') }}</label>
             <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
             <label><span>Modelo</span>{{ form.model(class_='input') }}</label>

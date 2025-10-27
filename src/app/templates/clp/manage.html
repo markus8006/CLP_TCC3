@@ -13,6 +13,12 @@
         <p>Cadastre novos controladores e mantenha actualizada a informação dos dispositivos existentes.</p>
     </section>
 
+    {% if polling_enabled is not none and not polling_enabled %}
+    <div class="alert alert-warning" role="alert">
+        O serviço de polling está desativado. Os CLPs permanecerão como offline até ser reativado em <a href="{{ url_for('admin.manage_polling_control') }}">Controlo de Polling</a>.
+    </div>
+    {% endif %}
+
     <section class="card">
         <div>
             <h2>Adicionar novo CLP</h2>
@@ -26,6 +32,9 @@
                     <label><span>IP</span>{{ form.ip_address(class_='input') }}</label>
                     <label><span>Protocolo</span>{{ form.protocol(class_='input') }}</label>
                     <label><span>Porta</span>{{ form.port(class_='input') }}</label>
+                    <label><span>VLAN</span>{{ form.vlan_id(class_='input', placeholder='ex: 10') }}</label>
+                    <label><span>Máscara</span>{{ form.subnet_mask(class_='input', placeholder='255.255.255.0') }}</label>
+                    <label><span>Gateway</span>{{ form.gateway(class_='input') }}</label>
                     <label><span>Unit ID</span>{{ form.unit_id(class_='input') }}</label>
                     <label><span>Fabricante</span>{{ form.manufacturer(class_='input') }}</label>
                     <label><span>Modelo</span>{{ form.model(class_='input') }}</label>
@@ -53,6 +62,7 @@
                     <tr>
                         <th>Nome</th>
                         <th>IP</th>
+                        <th>VLAN</th>
                         <th>Protocolo</th>
                         <th>Porta</th>
                         <th>Estado</th>
@@ -65,6 +75,7 @@
                     <tr>
                         <td>{{ plc.name }}</td>
                         <td>{{ plc.ip_address }}</td>
+                        <td>{{ plc.vlan_id or '-' }}</td>
                         <td>{{ plc.protocol|upper }}</td>
                         <td>{{ plc.port }}</td>
                         <td>
@@ -88,7 +99,7 @@
                         </td>
                         <td class="actions">
                             <a class="btn secondary" href="{{ url_for('admin.edit_clp', plc_id=plc.id) }}">Editar</a>
-                            <a class="btn" href="{{ url_for('clp_bp.clp', ip=plc.ip_address) }}">Ver detalhes</a>
+                            <a class="btn" href="{{ url_for('clp_bp.clp', ip=plc.ip_address, vlan=plc.vlan_id) }}">Ver detalhes</a>
                         </td>
                     </tr>
                 {% endfor %}
