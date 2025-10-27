@@ -46,6 +46,45 @@
         </div>
     </section>
 
+    {% if role_definitions %}
+    <section class="card">
+        <div>
+            <h2>Funções disponíveis</h2>
+            <p class="card__description">Conheça as responsabilidades principais de cada função e as permissões associadas.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Função</th>
+                        <th>Descrição</th>
+                        <th>Permissões chave</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for role in role_definitions %}
+                    <tr>
+                        <td><strong>{{ role.label }}</strong></td>
+                        <td>{{ role.description or '—' }}</td>
+                        <td>
+                            {% if role.permissions %}
+                                <ul class="tag-list-inline">
+                                {% for permission in role.permissions %}
+                                    <li>{{ permission }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">Permissões herdadas</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+
     <section class="card">
         <div>
             <h2>Utilizadores registados</h2>

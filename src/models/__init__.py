@@ -6,6 +6,7 @@ from src.models.Registers import Register
 from src.models.PLCs import Organization, PLC
 from src.models.Security_event import SecurityEvent
 from src.models.Users import User, UserRole
+from src.models.Settings import SystemSetting
 
 __all__ = [
     "AlarmDefinition",
@@ -17,5 +18,6 @@ __all__ = [
     "PLC",
     "SecurityEvent",
     "User",
-    "UserRole"
+    "UserRole",
+    "SystemSetting",
 ]

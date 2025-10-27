@@ -52,6 +52,9 @@
             <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>
             <a href="{{ url_for('admin.manage_registers') }}">Registradores</a>
             {% endif %}
+            {% if current_user.is_authenticated and current_user.has_permission('gerente') %}
+            <a href="{{ url_for('admin.manage_polling_control') }}">Controlo de Polling</a>
+            {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('alarmdefinition') %}
             <a href="{{ url_for('admin.manage_alarm_definitions') }}">Alarmes</a>
             {% endif %}

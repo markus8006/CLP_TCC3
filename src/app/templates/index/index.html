@@ -56,10 +56,14 @@
                 <div class="clp-card__status {{ 'online' if clp.is_online else 'offline' }}">
                     {{ 'Online' if clp.is_online else 'Offline' }}
                 </div>
+                <ul class="clp-card__meta">
+                    <li><strong>VLAN:</strong> {{ clp.vlan_id if clp.vlan_id is not none else '-' }}</li>
+                    <li><strong>Última leitura:</strong> {{ clp.last_seen.strftime('%d/%m/%Y %H:%M') if clp.last_seen else 'Nunca' }}</li>
+                </ul>
             </div>
             <footer class="clp-card__footer">
                     <img class="clp-card__image" src="{{ url_for('static', filename='imgs/clp_imagem.png') }}" alt="Ícone de CLP">
-                <a class="btn tertiary" href="{{ url_for('clp_bp.clp', ip=clp.ip_address) }}">Ver detalhes</a>
+                <a class="btn tertiary" href="{{ url_for('clp_bp.clp', ip=clp.ip_address, vlan=clp.vlan_id) }}">Ver detalhes</a>
             </footer>
         </article>
         {% endfor %}

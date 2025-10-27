@@ -15,31 +15,32 @@ from src.models.Users import UserRole
 
 
 ROLE_LABELS = {
+    UserRole.VIEWER: "Observador",
     UserRole.USER: "Utilizador",
+    UserRole.OPERATOR: "Operador",
     UserRole.ALARM_DEFINITION: "Gestor de Alarmes",
-    UserRole.MODERATOR: "Moderador",
+    UserRole.TECHNICIAN: "Técnico",
+    UserRole.MODERATOR: "Supervisor",
+    UserRole.GERENTE: "Gerente",
+    UserRole.ENGINEER: "Engenheiro",
     UserRole.ADMIN: "Administrador",
 }
+
+
+def iter_role_choices():
+    return [(role.value, ROLE_LABELS[role]) for role in UserRole]
 
 
 class UserCreationForm(FlaskForm):
     username = StringField("Utilizador", validators=[DataRequired(), Length(min=3, max=80)])
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Senha", validators=[DataRequired(), Length(min=6)])
-    role = SelectField(
-        "Função",
-        choices=[(role.value, ROLE_LABELS[role]) for role in UserRole],
-        validators=[DataRequired()],
-    )
+    role = SelectField("Função", choices=iter_role_choices(), validators=[DataRequired()])
     submit = SubmitField("Criar Utilizador")
 
 
 class UserUpdateForm(FlaskForm):
-    role = SelectField(
-        "Função",
-        choices=[(role.value, ROLE_LABELS[role]) for role in UserRole],
-        validators=[DataRequired()],
-    )
+    role = SelectField("Função", choices=iter_role_choices(), validators=[DataRequired()])
     is_active = BooleanField("Activo")
     submit = SubmitField("Actualizar")
 
@@ -54,6 +55,9 @@ class PLCForm(FlaskForm):
         validators=[DataRequired()],
     )
     port = IntegerField("Porta", validators=[DataRequired(), NumberRange(min=1, max=65535)])
+    vlan_id = IntegerField("VLAN", validators=[Optional(), NumberRange(min=1, max=4094)])
+    subnet_mask = StringField("Máscara", validators=[Optional(), Length(max=45)])
+    gateway = StringField("Gateway", validators=[Optional(), Length(max=45)])
     unit_id = IntegerField("Unit ID", validators=[Optional()])
     manufacturer = StringField("Fabricante", validators=[Optional(), Length(max=50)])
     model = StringField("Modelo", validators=[Optional(), Length(max=50)])
@@ -65,6 +69,11 @@ class PLCForm(FlaskForm):
     )
     is_active = BooleanField("Activo", default=True)
     submit = SubmitField("Guardar")
+
+
+class PollingControlForm(FlaskForm):
+    enabled = BooleanField("Ativar serviço de polling")
+    submit = SubmitField("Atualizar")
 
 
 class RegisterCreationForm(FlaskForm):
@@ -149,7 +158,7 @@ class AlarmDefinitionForm(FlaskForm):
     email_enabled = BooleanField("Enviar email")
     email_min_role = SelectField(
         "Enviar para função mínima",
-        choices=[(role.value, ROLE_LABELS[role]) for role in UserRole],
+        choices=iter_role_choices(),
         validators=[DataRequired()],
         default=UserRole.ALARM_DEFINITION.value,
     )

@@ -1,14 +1,41 @@
 from src.app import db
 from datetime import datetime, timezone
+from typing import List
 import enum
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
 class UserRole(enum.Enum):
+    """Funções disponíveis para os utilizadores do sistema."""
+
+    VIEWER = 'viewer'
     USER = 'user'
+    OPERATOR = 'operator'
     ALARM_DEFINITION = 'alarmdefinition'
+    TECHNICIAN = 'technician'
     MODERATOR = 'moderator'
+    GERENTE = 'gerente'
+    ENGINEER = 'engineer'
     ADMIN = 'admin'
+
+    @classmethod
+    def ordered_roles(cls) -> List["UserRole"]:
+        """Retorna as funções ordenadas da menor para a maior permissão."""
+
+        return [
+            cls.VIEWER,
+            cls.USER,
+            cls.OPERATOR,
+            cls.ALARM_DEFINITION,
+            cls.TECHNICIAN,
+            cls.MODERATOR,
+            cls.GERENTE,
+            cls.ENGINEER,
+            cls.ADMIN,
+        ]
+
+
+ROLE_LEVEL = {role: idx for idx, role in enumerate(UserRole.ordered_roles(), start=1)}
 
 
 class User(db.Model, UserMixin):
@@ -28,26 +55,24 @@ class User(db.Model, UserMixin):
     
     def is_moderator(self):
         return self.role == UserRole.MODERATOR
-    
+
+    def is_manager(self):
+        return self.role == UserRole.GERENTE
+
     def is_user(self):
         return self.role == UserRole.USER
     
     def has_permission(self, min_role):
+        """Avalia se o utilizador possui a função mínima requerida."""
 
-        hierarchy = {
-            UserRole.USER: 1,
-            UserRole.ALARM_DEFINITION: 2,
-            UserRole.MODERATOR: 3,
-            UserRole.ADMIN: 4,
-        }
-    
         if isinstance(min_role, str):
-            try: 
+            try:
                 min_role = UserRole(min_role)
-            except:
-                raise ValueError(f"Role: {min_role} invalida")
-        user_level = hierarchy.get(self.role, 0)
-        required_level = hierarchy.get(min_role, 0)
+            except ValueError as exc:  # pragma: no cover - validação defensiva
+                raise ValueError(f"Role: {min_role} invalida") from exc
+
+        user_level = ROLE_LEVEL.get(self.role, 0)
+        required_level = ROLE_LEVEL.get(min_role, 0)
         return user_level >= required_level
     
     def set_password(self, password):

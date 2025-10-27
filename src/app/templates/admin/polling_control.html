@@ -1,0 +1,45 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Controlo de Polling{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <section class="page-header">
+        <h1>Controlo do serviço de polling</h1>
+        <p>Ative ou desative o serviço de coleta em tempo real. Apenas utilizadores com função de gerente podem alterar este estado.</p>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Estado actual</h2>
+            <p class="card__description">O serviço consulta periodicamente todos os CLPs activos para actualizar os dados históricos e alarmes.</p>
+        </div>
+        <div class="status-panel">
+            <p><strong>Persistido:</strong> {{ 'Ativo' if db_enabled else 'Desativado' }}</p>
+            <p><strong>Em execução:</strong> {{ 'Ativo' if runtime_enabled else 'Desativado' }}</p>
+        </div>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Actualizar estado</h2>
+            <p class="card__description">Quando desativado, todos os pollers são encerrados e os CLPs aparecem como offline.</p>
+        </div>
+        <div class="card__content">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <label class="checkbox">
+                    {{ form.enabled() }} {{ form.enabled.label.text or 'Ativar serviço de polling' }}
+                </label>
+                <div class="actions">
+                    {{ form.submit(class_='btn primary') }}
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+{% endblock %}

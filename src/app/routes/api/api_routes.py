@@ -14,8 +14,9 @@ api_bp = Blueprint("apii", __name__)
 @api_bp.route("/get/data/clp/<ip>", methods=["GET"])
 @login_required
 def get_data_optimized(ip):
+    vlan_id = request.args.get("vlan", type=int)
     # Carrega o CLP e todas as relações com eficiência (selectinload evita N+1 queries)
-    clp = (
+    query = (
         db.session.query(PLC)
         .options(
             selectinload(PLC.registers)
@@ -26,8 +27,11 @@ def get_data_optimized(ip):
             .selectinload(Register.alarm_definitions)
         )
         .filter(PLC.ip_address == ip, PLC.is_active == True)
-        .first()
     )
+    if vlan_id is not None:
+        query = query.filter(PLC.vlan_id == vlan_id)
+
+    clp = query.first()
 
     if not clp:
         return jsonify({"error": "CLP not found"}), 404
@@ -89,7 +93,8 @@ def get_data_optimized(ip):
 @api_bp.route("/clps/<ip>/tags", methods=["POST"])
 @login_required
 def add_tag(ip):
-    plc = Plcrepo.first_by(ip_address=ip)
+    vlan_id = request.args.get("vlan", type=int)
+    plc = Plcrepo.get_by_ip(ip, vlan_id)
     if plc is None:
         return jsonify({"message": "CLP não encontrado."}), 404
 
@@ -114,7 +119,8 @@ def add_tag(ip):
 @api_bp.route("/clps/<ip>/tags/<tag>", methods=["DELETE"])
 @login_required
 def remove_tag(ip, tag):
-    plc = Plcrepo.first_by(ip_address=ip)
+    vlan_id = request.args.get("vlan", type=int)
+    plc = Plcrepo.get_by_ip(ip, vlan_id)
     if plc is None:
         return jsonify({"message": "CLP não encontrado."}), 404
 

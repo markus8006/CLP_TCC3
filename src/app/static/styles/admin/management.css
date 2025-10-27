@@ -73,6 +73,19 @@
     gap: 1rem;
 }
 
+.status-panel {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.status-panel p {
+    margin: 0;
+}
+
 .form-grid {
     display: grid;
     gap: 1rem;

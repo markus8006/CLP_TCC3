@@ -12,6 +12,8 @@ from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
 from src.services.client_polling_service import run_async_polling
+from src.services.polling_runtime import PollingRuntime, register_runtime
+from src.services.settings_service import get_polling_enabled
 from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
 
@@ -368,7 +370,11 @@ if __name__ == "__main__":
         logger.info("Protocolo %s: %d CLPs ativos.", protocolo, quantidade)
 
     polling_manager = SimpleManager(app)
-    threading.Thread(target=run_async_polling, args=(app, polling_manager), daemon=True).start()
+    runtime = PollingRuntime(manager=polling_manager)
+    with app.app_context():
+        runtime.set_enabled(get_polling_enabled())
+    register_runtime(app, runtime)
+    threading.Thread(target=run_async_polling, args=(app, runtime), daemon=True).start()
     logger.info("Serviço de polling iniciado em background.")
 
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
