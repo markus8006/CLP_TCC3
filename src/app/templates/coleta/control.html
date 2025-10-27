@@ -1,0 +1,108 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Coleta de IPs{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <section class="page-header">
+        <h1>Coleta de dispositivos na rede</h1>
+        <p>Gerencie a descoberta de dispositivos industriais e acompanhe o último resultado da varredura.</p>
+    </section>
+
+    {% if not has_privileges %}
+    <div class="alert alert-warning" role="alert">
+        O sistema não possui privilégios suficientes para executar a descoberta de rede. Execute o serviço como administrador ou root.
+    </div>
+    {% endif %}
+
+    <section class="card">
+        <div>
+            <h2>Estado actual</h2>
+            <p class="card__description">A coleta identifica activos na rede e cruza portas industriais para classificar possíveis PLCs.</p>
+        </div>
+        <div class="status-panel">
+            <p><strong>Persistido:</strong> {{ 'Ativado' if persisted_enabled else 'Desativado' }}</p>
+            <p><strong>Última execução:</strong>
+                {% if last_run_display %}
+                    {{ last_run_display }}
+                {% else %}
+                    Nunca executada
+                {% endif %}
+            </p>
+            <p><strong>Dispositivos detectados:</strong> {{ total_devices }}</p>
+            <p><strong>Classificados como industriais:</strong> {{ industrial_count }}</p>
+        </div>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Controlar descoberta</h2>
+            <p class="card__description">Ative a coleta contínua e, quando necessário, execute uma varredura manual para atualizar o inventário.</p>
+        </div>
+        <div class="card__content">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                <label class="checkbox">
+                    {{ form.enabled() }} {{ form.enabled.label.text }}
+                </label>
+                <div class="actions">
+                    {{ form.submit(class_='btn primary') }}
+                    {{ form.run_scan(class_='btn secondary') }}
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Resumo recente</h2>
+            <p class="card__description">Vista resumida dos últimos dispositivos encontrados. Os dados completos são guardados para consulta posterior.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>IP</th>
+                        <th>MAC</th>
+                        <th>Portas</th>
+                        <th>Industrial</th>
+                        <th>Tipo</th>
+                        <th>Fabricante</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if summary_preview %}
+                        {% for item in summary_preview %}
+                        <tr>
+                            <td>{{ item.ip or '—' }}</td>
+                            <td>{{ item.mac or '—' }}</td>
+                            <td>
+                                {% if item.open_ports %}
+                                    <span class="badge">{{ item.open_ports|join(', ') }}</span>
+                                {% else %}
+                                    <span class="text-muted">Nenhuma</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ 'Sim' if item.is_industrial else 'Não' }}</td>
+                            <td>{{ item.device_type or '—' }}</td>
+                            <td>{{ item.manufacturer or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-muted">Nenhum dispositivo registado ainda.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        {% if summary_preview and summary_preview|length < total_devices %}
+        <p class="text-muted">Apenas os 20 primeiros resultados são exibidos aqui.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
