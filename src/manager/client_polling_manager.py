@@ -80,7 +80,10 @@ class ActivePLCPoller:
                     changed = True
 
                 if online and update_last_seen:
-                    if not plc.last_seen or now > plc.last_seen:
+                    last_seen = plc.last_seen
+                    if last_seen and last_seen.tzinfo is None:
+                        last_seen = last_seen.replace(tzinfo=timezone.utc)
+                    if not last_seen or now > last_seen:
                         plc.last_seen = now
                         changed = True
 
