@@ -52,3 +52,26 @@ def test_register_and_datalog(register_repo, plc_repo, datalog_repo, monkeypatch
 
     recent = datalog_repo.list_recent(plc.id, reg.id, limit=10)
     assert len(recent) == 5
+
+
+def test_set_active_state_tracks_metadata(plc_repo):
+    plc = PLC(name="PLC-LifeCycle", ip_address="10.0.0.12", protocol="modbus", port=502)
+    plc_repo.add(plc)
+
+    plc_repo.set_active_state(plc, False, actor="tester", reason="maintenance", source="manual")
+
+    assert plc.is_active is False
+    assert plc.deactivation_reason == "maintenance"
+    assert plc.last_state_change_by == "tester"
+    assert plc.activation_source == "manual"
+    assert plc.deactivated_at is not None
+    assert plc.status_changed_at is not None
+
+    last_change = plc.status_changed_at
+
+    plc_repo.set_active_state(plc, True, actor="tester", source="manual")
+
+    assert plc.is_active is True
+    assert plc.deactivation_reason is None
+    assert plc.activated_at is not None
+    assert plc.status_changed_at >= last_change
