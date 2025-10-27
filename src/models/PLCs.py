@@ -23,10 +23,10 @@ class Organization(db.Model):
 
 # models/plc.py
 import json
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from src.app import db
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Index, UniqueConstraint
 from sqlalchemy.ext.mutable import MutableList
 from src.utils.tags import parse_tags
@@ -71,6 +71,12 @@ class PLC(db.Model):
 
     is_active = db.Column(db.Boolean, default=True)
     is_online = db.Column(db.Boolean, default=False)
+    status_changed_at = db.Column(db.DateTime)
+    activated_at = db.Column(db.DateTime)
+    deactivated_at = db.Column(db.DateTime)
+    deactivation_reason = db.Column(db.String(255))
+    last_state_change_by = db.Column(db.String(80))
+    activation_source = db.Column(db.String(80))
     last_seen = db.Column(db.DateTime)
     polling_interval = db.Column(db.Integer, default=1000)  # ms
     timeout = db.Column(db.Integer, default=5000)  # ms
@@ -137,4 +143,51 @@ class PLC(db.Model):
         else:
         # Fallback para bancos que usam Text (ex: SQLite sem JSON nativo)
             self.tags = json.dumps(unique, ensure_ascii=False)
+
+    # --- Estado operacional -------------------------------------------------
+    def _touch_status_timestamp(self) -> datetime:
+        """Atualiza e devolve o instante padrão para mudanças de estado."""
+        moment = datetime.now(timezone.utc)
+        self.status_changed_at = moment
+        return moment
+
+    def mark_active(
+        self,
+        *,
+        actor: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> None:
+        """Coloca o CLP em estado activo e regista metadados da operação."""
+
+        moment = self._touch_status_timestamp()
+        self.is_active = True
+        self.activated_at = moment
+        self.deactivated_at = None
+        self.deactivation_reason = None
+        if actor:
+            self.last_state_change_by = actor
+        if source:
+            self.activation_source = source
+
+    def mark_inactive(
+        self,
+        *,
+        actor: Optional[str] = None,
+        reason: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> None:
+        """Coloca o CLP em estado inativo e limpa dados voláteis."""
+
+        moment = self._touch_status_timestamp()
+        self.is_active = False
+        self.deactivated_at = moment
+        if reason:
+            self.deactivation_reason = reason[:255]
+        if actor:
+            self.last_state_change_by = actor
+        if source:
+            self.activation_source = source
+        # Um CLP inativo não deve ser considerado online
+        self.is_online = False
+        self.last_seen = None
 

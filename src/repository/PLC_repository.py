@@ -1,10 +1,11 @@
+from typing import Iterable, Optional, Any
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from src.models.PLCs import PLC
 from src.repository.Base_repository import BaseRepo
 from src.utils.logs import logger
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
-from src.app import db
-from typing import Iterable, Optional, Any
 
 
 
@@ -72,7 +73,46 @@ class PLCRepo(BaseRepo):
             self.session.rollback()
             logger.exception("Erro ao actualizar tags do PLC %s", plc.id if plc else "desconhecido")
             raise
-    
-    
+
+    def set_active_state(
+        self,
+        plc: PLC,
+        active: bool,
+        *,
+        actor: Optional[str] = None,
+        reason: Optional[str] = None,
+        source: Optional[str] = None,
+        commit: bool = True,
+    ) -> PLC:
+        """Actualiza o estado operativo do CLP com metadados de auditoria."""
+
+        try:
+            previous_state = plc.is_active
+            if active:
+                plc.mark_active(actor=actor, source=source)
+            else:
+                plc.mark_inactive(actor=actor, reason=reason, source=source)
+
+            if previous_state != active:
+                logger.info(
+                    "Estado do CLP %s alterado de %s para %s por %s",
+                    plc.id,
+                    previous_state,
+                    active,
+                    actor or "sistema",
+                )
+
+            if commit:
+                self.session.commit()
+            else:
+                self.session.flush()
+            return plc
+        except SQLAlchemyError:
+            self.session.rollback()
+            logger.exception(
+                "Erro ao actualizar estado do PLC %s", plc.id if plc else "desconhecido"
+            )
+            raise
+
 
 Plcrepo = PLCRepo()
