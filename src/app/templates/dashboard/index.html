@@ -1,0 +1,96 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Dashboard Industrial{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="dashboard-header">
+  <div>
+    <h1>Visão Geral da Fábrica</h1>
+    <p>Acompanhe a saúde dos CLPs, registradores e VLANs em tempo real.</p>
+  </div>
+  <div class="header-actions">
+    {% if is_admin %}
+    <button id="toggle-edit" class="btn btn-secondary" type="button">Alternar modo de edição</button>
+    <button id="save-layout" class="btn btn-primary" type="button">Salvar layout</button>
+    {% endif %}
+  </div>
+</section>
+
+<section class="summary-cards" aria-label="Indicadores principais">
+  <article class="summary-card" data-summary="total-clps">
+    <h2>Total de CLPs</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="online-clps">
+    <h2>CLPs Online</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="offline-clps">
+    <h2>CLPs Offline</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="active-alarms">
+    <h2>Alarmes ativos</h2>
+    <p class="metric">--</p>
+  </article>
+</section>
+
+<section class="charts-grid">
+  <div class="chart-card">
+    <header>
+      <h2>Tendência de leituras</h2>
+    </header>
+    <canvas id="logVolumeChart" aria-label="Volume de leituras por dia" role="img"></canvas>
+  </div>
+  <div class="chart-card">
+    <header>
+      <h2>Distribuição de alarmes</h2>
+    </header>
+    <canvas id="alarmDistributionChart" aria-label="Alarmes por prioridade" role="img"></canvas>
+  </div>
+  <div class="chart-card">
+    <header>
+      <h2>CLPs com incidentes</h2>
+    </header>
+    <ul id="incident-list" class="incident-list" aria-live="polite"></ul>
+  </div>
+</section>
+
+<section class="layout-section">
+  <header class="layout-header">
+    <div>
+      <h2>Mapa da Fábrica</h2>
+      <p>Visualize a topologia por VLAN, CLP e registradores.</p>
+    </div>
+    <div id="layout-status" role="status" aria-live="polite"></div>
+  </header>
+  <div class="layout-container">
+    <div id="factory-layout" class="layout-canvas" data-editable="{{ 'true' if is_admin else 'false' }}" tabindex="0"></div>
+    <aside id="plc-inspector" class="inspector hidden" aria-live="polite" tabindex="-1">
+      <button id="close-inspector" class="btn btn-link" type="button">Fechar</button>
+      <div class="inspector-content">
+        <h3 id="inspector-title">Detalhes do CLP</h3>
+        <dl id="inspector-details" class="inspector-details"></dl>
+        <section>
+          <h4>Registradores monitorados</h4>
+          <ul id="inspector-registers" class="inspector-registers"></ul>
+        </section>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha256-6mTx6CKSi87RvLkqDyRbjqZQyhF5IrNwFddZSRwyuWk=" crossorigin="anonymous"></script>
+<script>
+  window.DASHBOARD_CONTEXT = {
+    isAdmin: {{ 'true' if is_admin else 'false' }},
+    csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+  };
+</script>
+<script src="{{ url_for('static', filename='scripts/dashboard.js') }}" defer></script>
+{% endblock %}
