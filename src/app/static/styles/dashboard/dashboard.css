@@ -90,6 +90,18 @@
   flex-direction: column;
 }
 
+.chart-card .chart-container {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+
+.chart-card .chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100%;
+}
+
 .chart-card header {
   display: flex;
   align-items: center;
