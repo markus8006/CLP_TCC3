@@ -161,6 +161,19 @@ def dashboard_summary():
         "inactive_clps": int(totals_row[3] or 0),
         "total_registers": db.session.query(func.count(Register.id)).scalar() or 0,
         "active_alarms": db.session.query(func.count(Alarm.id)).filter(Alarm.state == "ACTIVE").scalar() or 0,
+        "active_vlans": (
+            db.session.query(func.count(func.distinct(PLC.vlan_id)))
+            .filter(PLC.vlan_id.isnot(None))
+            .scalar()
+            or 0
+        ),
+        "logs_last_24h": (
+            db.session.query(func.count(DataLog.id))
+            .filter(DataLog.timestamp.isnot(None))
+            .filter(DataLog.timestamp >= datetime.utcnow() - timedelta(hours=24))
+            .scalar()
+            or 0
+        ),
     }
 
     horizon = datetime.utcnow() - timedelta(days=13)
@@ -190,6 +203,7 @@ def dashboard_summary():
 
     offline_clps = (
         db.session.query(PLC)
+        .options(selectinload(PLC.organization))
         .filter(PLC.is_active.is_(True), PLC.is_online.is_(False))
         .order_by(PLC.last_seen.asc())
         .limit(6)
@@ -203,6 +217,7 @@ def dashboard_summary():
             "vlan_id": plc.vlan_id,
             "last_seen": plc.last_seen.isoformat() if plc.last_seen else None,
             "reason": "Sem comunicação" if plc.last_seen else "Nunca conectado",
+            "location": plc.organization.name if plc.organization else None,
         }
         for plc in offline_clps
     ]
@@ -256,7 +271,7 @@ def dashboard_layout():
 
     plcs = (
         db.session.query(PLC)
-        .options(selectinload(PLC.registers))
+        .options(selectinload(PLC.registers), selectinload(PLC.organization))
         .order_by(PLC.vlan_id.nullslast(), PLC.name)
         .all()
     )
@@ -309,16 +324,21 @@ def dashboard_layout():
 
         status = _plc_status(plc, alarm_by_plc)
 
+        location_label = plc.organization.name if plc.organization else None
+
         plc_node.update(
             {
                 "label": plc.name or f"PLC {plc.id}",
                 "meta_line": f"{plc.ip_address} · VLAN {plc.vlan_id or '-'}",
+                "location_label": location_label,
                 "status": status,
                 "status_label": _status_label(status),
                 "metadata": {
                     "plc_id": plc.id,
                     "ip_address": plc.ip_address,
                     "vlan_id": plc.vlan_id,
+                    "location": location_label,
+                    "location_label": location_label,
                 },
             }
         )
@@ -483,6 +503,7 @@ def dashboard_plc_details(plc_id: int):
             selectinload(PLC.registers).selectinload(Register.alarms),
             selectinload(PLC.registers).selectinload(Register.alarm_definitions),
             selectinload(PLC.alarms),
+            selectinload(PLC.organization),
         )
         .get(plc_id)
     )
@@ -544,6 +565,8 @@ def dashboard_plc_details(plc_id: int):
         .first()
     )
 
+    location_label = plc.organization.name if plc.organization else None
+
     return jsonify(
         {
             "id": plc.id,
@@ -557,6 +580,8 @@ def dashboard_plc_details(plc_id: int):
             "last_log": last_log[0].isoformat() if last_log else None,
             "active_alarm_count": int(plc_alarm_total),
             "register_count": len(plc.registers),
+            "location": location_label,
+            "location_label": location_label,
             "registers": register_payload,
         }
     )

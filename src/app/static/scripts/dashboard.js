@@ -8,9 +8,13 @@
   const summaryCards = document.querySelectorAll(".summary-card");
   const incidentList = document.getElementById("incident-list");
   const layoutCanvas = document.getElementById("factory-layout");
+  const layoutViewport = document.getElementById("layout-viewport");
+  const layoutSection = document.getElementById("factory-layout-section");
   const layoutStatus = document.getElementById("layout-status");
   const toggleEditBtn = document.getElementById("toggle-edit");
   const saveLayoutBtn = document.getElementById("save-layout");
+  const fullscreenToggleBtn = document.getElementById("fullscreen-toggle");
+  const resetViewBtn = document.getElementById("reset-layout-view");
   const inspector = document.getElementById("plc-inspector");
   const closeInspectorBtn = document.getElementById("close-inspector");
   const inspectorTitle = document.getElementById("inspector-title");
@@ -22,6 +26,11 @@
   let layoutData = { nodes: [], connections: [] };
   let logChart;
   let alarmChart;
+  const panState = { x: 0, y: 0 };
+  let isPanning = false;
+  let panPointerId = null;
+  let panStart = { x: 0, y: 0 };
+  let pointerStart = { x: 0, y: 0 };
 
   function showStatusMessage(message, variant = "info") {
     if (!layoutStatus) return;
@@ -48,6 +57,19 @@
       });
   }
 
+  function formatMetric(value) {
+    if (value === null || value === undefined) {
+      return "--";
+    }
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value.toLocaleString("pt-BR");
+    }
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+    return String(value);
+  }
+
   function updateSummaryCards(summary) {
     summaryCards.forEach((card) => {
       const key = card.dataset.summary;
@@ -55,7 +77,7 @@
       const metric = card.querySelector(".metric");
       if (metric) {
         const value = summary[key.replace(/-/g, "_")] ?? "--";
-        metric.textContent = value;
+        metric.textContent = formatMetric(value);
       }
     });
   }
@@ -167,7 +189,9 @@
     incidents.forEach((incident) => {
       const li = document.createElement("li");
       li.className = "incident-item";
-      li.innerHTML = `<span>${incident.name} · ${incident.ip || ""}</span><span>${incident.reason}</span>`;
+      const locationLabel = incident.location ? ` · ${incident.location}` : "";
+      const ipLabel = incident.ip ? ` · ${incident.ip}` : "";
+      li.innerHTML = `<span>${incident.name}${ipLabel}${locationLabel}</span><span>${incident.reason}</span>`;
       incidentList.appendChild(li);
     });
   }
@@ -211,6 +235,15 @@
       element.appendChild(meta);
     }
 
+    const locationLabel =
+      node.location_label || node.metadata?.location_label || node.metadata?.location;
+    if (locationLabel) {
+      const location = document.createElement("p");
+      location.className = "node-location";
+      location.textContent = locationLabel;
+      element.appendChild(location);
+    }
+
     element.addEventListener("click", () => {
       if (node.type === "plc") {
         openInspector(node);
@@ -229,6 +262,11 @@
     layoutCanvas.innerHTML = "";
   }
 
+  function applyPan() {
+    if (!layoutCanvas) return;
+    layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px)`;
+  }
+
   function renderLayout(layout) {
     if (!layoutCanvas) return;
 
@@ -243,6 +281,7 @@
 
     layoutCanvas.appendChild(fragment);
     drawConnections(layout.connections);
+    applyPan();
   }
 
   function drawConnections(connections) {
@@ -324,6 +363,114 @@
   function updateConnectionOverlay() {
     layoutCanvas.querySelectorAll(".layout-connection").forEach((line) => line.remove());
     drawConnections(layoutData.connections || []);
+    applyPan();
+  }
+
+  function resetLayoutView({ silent = false } = {}) {
+    panState.x = 0;
+    panState.y = 0;
+    applyPan();
+    if (!silent) {
+      showStatusMessage("Visão recentralizada");
+    }
+  }
+
+  function isFullscreenActive() {
+    return Boolean(layoutSection) && document.fullscreenElement === layoutSection;
+  }
+
+  function updateFullscreenButton() {
+    if (!fullscreenToggleBtn) return;
+    fullscreenToggleBtn.textContent = isFullscreenActive()
+      ? "Sair da tela cheia"
+      : "Tela cheia";
+  }
+
+  function toggleFullscreen() {
+    if (!layoutSection) return;
+    if (isFullscreenActive()) {
+      if (document.exitFullscreen) {
+        try {
+          const result = document.exitFullscreen();
+          if (result && typeof result.catch === "function") {
+            result.catch(() => {
+              /* ignore */
+            });
+          }
+        } catch (error) {
+          /* ignore */
+        }
+      }
+      return;
+    }
+    if (layoutSection.requestFullscreen) {
+      try {
+        const result = layoutSection.requestFullscreen();
+        if (result && typeof result.catch === "function") {
+          result.catch(() => {
+            showStatusMessage("Não foi possível entrar em tela cheia", "warning");
+          });
+        }
+      } catch (error) {
+        showStatusMessage("Não foi possível entrar em tela cheia", "warning");
+      }
+    } else {
+      showStatusMessage("Tela cheia não suportada neste navegador", "warning");
+    }
+  }
+
+  function handleFullscreenChange() {
+    if (!layoutSection) return;
+    layoutSection.classList.toggle("is-fullscreen", isFullscreenActive());
+    updateFullscreenButton();
+  }
+
+  function initializePanning() {
+    if (!layoutViewport || !layoutCanvas) return;
+
+    const startPan = (event) => {
+      if (event.button !== 0) return;
+      if (event.target.closest(".layout-node")) {
+        return;
+      }
+      isPanning = true;
+      panPointerId = event.pointerId;
+      panStart = { x: panState.x, y: panState.y };
+      pointerStart = { x: event.clientX, y: event.clientY };
+      layoutViewport.setPointerCapture?.(event.pointerId);
+      layoutViewport.classList.add("is-panning");
+      event.preventDefault();
+    };
+
+    const movePan = (event) => {
+      if (!isPanning || event.pointerId !== panPointerId) return;
+      panState.x = panStart.x + (event.clientX - pointerStart.x);
+      panState.y = panStart.y + (event.clientY - pointerStart.y);
+      applyPan();
+    };
+
+    const endPan = (event) => {
+      if (!isPanning || (event && event.pointerId !== panPointerId)) return;
+      isPanning = false;
+      panPointerId = null;
+      layoutViewport.classList.remove("is-panning");
+      if (event && layoutViewport.releasePointerCapture) {
+        try {
+          layoutViewport.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          /* ignore */
+        }
+      }
+    };
+
+    layoutViewport.addEventListener("pointerdown", startPan);
+    layoutViewport.addEventListener("pointermove", movePan);
+    layoutViewport.addEventListener("pointerup", endPan);
+    layoutViewport.addEventListener("pointercancel", endPan);
+    layoutViewport.addEventListener("pointerleave", (event) => {
+      if (!isPanning) return;
+      endPan(event);
+    });
   }
 
   function collectLayoutState() {
@@ -385,9 +532,10 @@
         const entries = [
           ["IP", details.ip_address],
           ["VLAN", details.vlan_id ?? "-"],
+          ["Localização", details.location_label || details.location || "Não informada"],
           ["Status", details.status_label],
           ["Última comunicação", details.last_seen || "n/d"],
-          ["Protocol", details.protocol],
+          ["Protocolo", details.protocol],
         ];
         inspectorDetails.innerHTML = "";
         entries.forEach(([label, value]) => {
@@ -430,6 +578,9 @@
     layout.nodes.forEach((node) => {
       if (node.metadata?.plc_id) {
         node.plc_id = node.metadata.plc_id;
+        if (node.metadata.location_label || node.metadata.location) {
+          node.location_label = node.metadata.location_label || node.metadata.location;
+        }
       }
     });
   }
@@ -465,9 +616,24 @@
     closeInspectorBtn.addEventListener("click", closeInspector);
   }
 
+  if (fullscreenToggleBtn) {
+    fullscreenToggleBtn.addEventListener("click", toggleFullscreen);
+  }
+
+  if (resetViewBtn) {
+    resetViewBtn.addEventListener("click", () => resetLayoutView());
+  }
+
+  if (layoutSection) {
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    updateFullscreenButton();
+  }
+
   if (layoutCanvas && !editable) {
     layoutCanvas.classList.remove("editable");
   }
 
+  initializePanning();
+  resetLayoutView({ silent: true });
   loadDashboard();
 })();
