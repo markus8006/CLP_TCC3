@@ -32,8 +32,24 @@
     <h2>CLPs Offline</h2>
     <p class="metric">--</p>
   </article>
+  <article class="summary-card" data-summary="inactive-clps">
+    <h2>CLPs Inativos</h2>
+    <p class="metric">--</p>
+  </article>
   <article class="summary-card" data-summary="active-alarms">
     <h2>Alarmes ativos</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="total-registers">
+    <h2>Registradores monitorados</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="active-vlans">
+    <h2>Redes monitoradas</h2>
+    <p class="metric">--</p>
+  </article>
+  <article class="summary-card" data-summary="logs-last-24h">
+    <h2>Leituras (24h)</h2>
     <p class="metric">--</p>
   </article>
 </section>
@@ -63,16 +79,29 @@
   </div>
 </section>
 
-<section class="layout-section">
+<section id="factory-layout-section" class="layout-section">
   <header class="layout-header">
     <div>
       <h2>Mapa da Fábrica</h2>
       <p>Visualize a topologia por VLAN, CLP e registradores.</p>
     </div>
-    <div id="layout-status" role="status" aria-live="polite"></div>
+    <div class="layout-controls">
+      <div id="layout-status" role="status" aria-live="polite"></div>
+      <div class="layout-buttons">
+        <button id="fullscreen-toggle" class="btn btn-secondary" type="button">Tela cheia</button>
+        <button id="reset-layout-view" class="btn btn-link" type="button">Centralizar</button>
+      </div>
+    </div>
   </header>
   <div class="layout-container">
-    <div id="factory-layout" class="layout-canvas" data-editable="{{ 'true' if is_admin else 'false' }}" tabindex="0"></div>
+    <div id="layout-viewport" class="layout-viewport">
+      <div
+        id="factory-layout"
+        class="layout-canvas"
+        data-editable="{{ 'true' if is_admin else 'false' }}"
+        tabindex="0"
+      ></div>
+    </div>
     <aside id="plc-inspector" class="inspector hidden" aria-live="polite" tabindex="-1">
       <button id="close-inspector" class="btn btn-link" type="button">Fechar</button>
       <div class="inspector-content">
