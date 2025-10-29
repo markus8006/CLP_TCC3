@@ -8,9 +8,13 @@
   const summaryCards = document.querySelectorAll(".summary-card");
   const incidentList = document.getElementById("incident-list");
   const layoutCanvas = document.getElementById("factory-layout");
+  const layoutViewport = document.getElementById("layout-viewport");
+  const layoutSection = document.getElementById("factory-layout-section");
   const layoutStatus = document.getElementById("layout-status");
   const toggleEditBtn = document.getElementById("toggle-edit");
   const saveLayoutBtn = document.getElementById("save-layout");
+  const fullscreenToggleBtn = document.getElementById("fullscreen-toggle");
+  const resetViewBtn = document.getElementById("reset-layout-view");
   const inspector = document.getElementById("plc-inspector");
   const closeInspectorBtn = document.getElementById("close-inspector");
   const inspectorTitle = document.getElementById("inspector-title");
@@ -22,6 +26,13 @@
   let layoutData = { nodes: [], connections: [] };
   let logChart;
   let alarmChart;
+  const panState = { x: 0, y: 0 };
+  const zoomState = { level: 1, min: 0.5, max: 2.5, step: 0.1 };
+  let isPanning = false;
+  let panPointerId = null;
+  let panStart = { x: 0, y: 0 };
+  let pointerStart = { x: 0, y: 0 };
+  let selectedNodeId = null;
 
   function showStatusMessage(message, variant = "info") {
     if (!layoutStatus) return;
@@ -48,6 +59,19 @@
       });
   }
 
+  function formatMetric(value) {
+    if (value === null || value === undefined) {
+      return "--";
+    }
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value.toLocaleString("pt-BR");
+    }
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+    return String(value);
+  }
+
   function updateSummaryCards(summary) {
     summaryCards.forEach((card) => {
       const key = card.dataset.summary;
@@ -55,7 +79,7 @@
       const metric = card.querySelector(".metric");
       if (metric) {
         const value = summary[key.replace(/-/g, "_")] ?? "--";
-        metric.textContent = value;
+        metric.textContent = formatMetric(value);
       }
     });
   }
@@ -167,7 +191,9 @@
     incidents.forEach((incident) => {
       const li = document.createElement("li");
       li.className = "incident-item";
-      li.innerHTML = `<span>${incident.name} · ${incident.ip || ""}</span><span>${incident.reason}</span>`;
+      const locationLabel = incident.location ? ` · ${incident.location}` : "";
+      const ipLabel = incident.ip ? ` · ${incident.ip}` : "";
+      li.innerHTML = `<span>${incident.name}${ipLabel}${locationLabel}</span><span>${incident.reason}</span>`;
       incidentList.appendChild(li);
     });
   }
@@ -211,9 +237,20 @@
       element.appendChild(meta);
     }
 
-    element.addEventListener("click", () => {
-      if (node.type === "plc") {
-        openInspector(node);
+    const locationLabel =
+      node.location_label || node.metadata?.location_label || node.metadata?.location;
+    if (locationLabel) {
+      const location = document.createElement("p");
+      location.className = "node-location";
+      location.textContent = locationLabel;
+      element.appendChild(location);
+    }
+
+    element.addEventListener("click", () => handleNodeSelection(node));
+    element.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleNodeSelection(node);
       }
     });
 
@@ -227,6 +264,11 @@
   function clearLayout() {
     if (!layoutCanvas) return;
     layoutCanvas.innerHTML = "";
+  }
+
+  function updateCanvasTransform() {
+    if (!layoutCanvas) return;
+    layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${zoomState.level})`;
   }
 
   function renderLayout(layout) {
@@ -243,6 +285,11 @@
 
     layoutCanvas.appendChild(fragment);
     drawConnections(layout.connections);
+    updateCanvasTransform();
+
+    if (selectedNodeId) {
+      updateSelectedNode(selectedNodeId);
+    }
   }
 
   function drawConnections(connections) {
@@ -324,6 +371,187 @@
   function updateConnectionOverlay() {
     layoutCanvas.querySelectorAll(".layout-connection").forEach((line) => line.remove());
     drawConnections(layoutData.connections || []);
+    updateCanvasTransform();
+  }
+
+  function resetLayoutView({ silent = false } = {}) {
+    panState.x = 0;
+    panState.y = 0;
+    zoomState.level = 1;
+    updateCanvasTransform();
+    if (!silent) {
+      showStatusMessage("Visão recentralizada e zoom redefinido");
+    }
+  }
+
+  function isFullscreenActive() {
+    return Boolean(layoutSection) && document.fullscreenElement === layoutSection;
+  }
+
+  function updateFullscreenButton() {
+    if (!fullscreenToggleBtn) return;
+    fullscreenToggleBtn.textContent = isFullscreenActive()
+      ? "Sair da tela cheia"
+      : "Tela cheia";
+  }
+
+  function toggleFullscreen() {
+    if (!layoutSection) return;
+    if (isFullscreenActive()) {
+      if (document.exitFullscreen) {
+        try {
+          const result = document.exitFullscreen();
+          if (result && typeof result.catch === "function") {
+            result.catch(() => {
+              /* ignore */
+            });
+          }
+        } catch (error) {
+          /* ignore */
+        }
+      }
+      return;
+    }
+    if (layoutSection.requestFullscreen) {
+      try {
+        const result = layoutSection.requestFullscreen();
+        if (result && typeof result.catch === "function") {
+          result.catch(() => {
+            showStatusMessage("Não foi possível entrar em tela cheia", "warning");
+          });
+        }
+      } catch (error) {
+        showStatusMessage("Não foi possível entrar em tela cheia", "warning");
+      }
+    } else {
+      showStatusMessage("Tela cheia não suportada neste navegador", "warning");
+    }
+  }
+
+  function handleFullscreenChange() {
+    if (!layoutSection) return;
+    layoutSection.classList.toggle("is-fullscreen", isFullscreenActive());
+    updateFullscreenButton();
+  }
+
+  function initializePanning() {
+    if (!layoutViewport || !layoutCanvas) return;
+
+    const startPan = (event) => {
+      if (event.button !== 0) return;
+      if (event.target.closest(".layout-node")) {
+        return;
+      }
+      isPanning = true;
+      panPointerId = event.pointerId;
+      panStart = { x: panState.x, y: panState.y };
+      pointerStart = { x: event.clientX, y: event.clientY };
+      layoutViewport.setPointerCapture?.(event.pointerId);
+      layoutViewport.classList.add("is-panning");
+      event.preventDefault();
+    };
+
+    const movePan = (event) => {
+      if (!isPanning || event.pointerId !== panPointerId) return;
+      panState.x = panStart.x + (event.clientX - pointerStart.x);
+      panState.y = panStart.y + (event.clientY - pointerStart.y);
+      updateCanvasTransform();
+    };
+
+    const endPan = (event) => {
+      if (!isPanning || (event && event.pointerId !== panPointerId)) return;
+      isPanning = false;
+      panPointerId = null;
+      layoutViewport.classList.remove("is-panning");
+      if (event && layoutViewport.releasePointerCapture) {
+        try {
+          layoutViewport.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          /* ignore */
+        }
+      }
+    };
+
+    layoutViewport.addEventListener("pointerdown", startPan);
+    layoutViewport.addEventListener("pointermove", movePan);
+    layoutViewport.addEventListener("pointerup", endPan);
+    layoutViewport.addEventListener("pointercancel", endPan);
+    layoutViewport.addEventListener("pointerleave", (event) => {
+      if (!isPanning) return;
+      endPan(event);
+    });
+  }
+
+  function updateSelectedNode(nodeId) {
+    if (!layoutCanvas) return;
+
+    layoutCanvas
+      .querySelectorAll(".layout-node.is-selected")
+      .forEach((element) => element.classList.remove("is-selected"));
+
+    if (!nodeId) {
+      selectedNodeId = null;
+      return;
+    }
+
+    const selector = `.layout-node[data-node-id="${CSS.escape(nodeId)}"]`;
+    const element = layoutCanvas.querySelector(selector);
+    if (element) {
+      element.classList.add("is-selected");
+      selectedNodeId = nodeId;
+    } else {
+      selectedNodeId = null;
+    }
+  }
+
+  function handleNodeSelection(node) {
+    if (!node) return;
+    updateSelectedNode(node.id);
+
+    const registerId =
+      node.metadata?.register_id !== undefined && node.metadata?.register_id !== null
+        ? Number(node.metadata.register_id)
+        : null;
+    if (node.type === "plc" || node.metadata?.plc_id) {
+      openInspector(node, { focusRegisterId: registerId });
+    }
+  }
+
+  function initializeZoom() {
+    if (!layoutViewport || !layoutCanvas) return;
+
+    const handleWheel = (event) => {
+      if (!event.ctrlKey) {
+        return;
+      }
+
+      event.preventDefault();
+      const direction = event.deltaY > 0 ? -1 : 1;
+      const nextLevel = Math.min(
+        zoomState.max,
+        Math.max(zoomState.min, zoomState.level + direction * zoomState.step)
+      );
+
+      if (nextLevel === zoomState.level) {
+        return;
+      }
+
+      const viewportRect = layoutViewport.getBoundingClientRect();
+      const offsetX = event.clientX - viewportRect.left;
+      const offsetY = event.clientY - viewportRect.top;
+
+      const canvasX = (offsetX - panState.x) / zoomState.level;
+      const canvasY = (offsetY - panState.y) / zoomState.level;
+
+      zoomState.level = nextLevel;
+      panState.x = offsetX - canvasX * zoomState.level;
+      panState.y = offsetY - canvasY * zoomState.level;
+
+      updateCanvasTransform();
+      showStatusMessage(`Zoom ${Math.round(zoomState.level * 100)}%`);
+    };
+
+    layoutViewport.addEventListener("wheel", handleWheel, { passive: false });
   }
 
   function collectLayoutState() {
@@ -372,22 +600,33 @@
       });
   }
 
-  function openInspector(node) {
+  function openInspector(node, { focusRegisterId } = {}) {
     inspector?.classList.remove("hidden");
     inspector?.focus?.();
     inspectorTitle.textContent = "Carregando...";
     inspectorDetails.innerHTML = "";
     inspectorRegisters.innerHTML = "";
 
-    safeFetch(PLC_DETAILS_ENDPOINT(node.plc_id || node.metadata?.plc_id || node.id.replace("plc-", "")))
+    const plcIdentifier =
+      node.plc_id || node.metadata?.plc_id || node.id.replace("plc-", "");
+
+    if (!plcIdentifier) {
+      inspectorTitle.textContent = "CLP não identificado";
+      inspectorDetails.innerHTML = "";
+      inspectorRegisters.innerHTML = "";
+      return;
+    }
+
+    safeFetch(PLC_DETAILS_ENDPOINT(plcIdentifier))
       .then((details) => {
         inspectorTitle.textContent = details.name;
         const entries = [
           ["IP", details.ip_address],
           ["VLAN", details.vlan_id ?? "-"],
+          ["Localização", details.location_label || details.location || "Não informada"],
           ["Status", details.status_label],
           ["Última comunicação", details.last_seen || "n/d"],
-          ["Protocol", details.protocol],
+          ["Protocolo", details.protocol],
         ];
         inspectorDetails.innerHTML = "";
         entries.forEach(([label, value]) => {
@@ -408,6 +647,12 @@
           const badge = document.createElement("span");
           badge.className = `status-pill ${register.status}`;
           badge.textContent = register.status_label;
+
+          const registerIdentifier = Number(register.id);
+          if (focusRegisterId !== null && registerIdentifier === focusRegisterId) {
+            li.classList.add("is-selected");
+            li.setAttribute("aria-current", "true");
+          }
 
           li.appendChild(info);
           li.appendChild(badge);
@@ -430,6 +675,9 @@
     layout.nodes.forEach((node) => {
       if (node.metadata?.plc_id) {
         node.plc_id = node.metadata.plc_id;
+        if (node.metadata.location_label || node.metadata.location) {
+          node.location_label = node.metadata.location_label || node.metadata.location;
+        }
       }
     });
   }
@@ -465,9 +713,25 @@
     closeInspectorBtn.addEventListener("click", closeInspector);
   }
 
+  if (fullscreenToggleBtn) {
+    fullscreenToggleBtn.addEventListener("click", toggleFullscreen);
+  }
+
+  if (resetViewBtn) {
+    resetViewBtn.addEventListener("click", () => resetLayoutView());
+  }
+
+  if (layoutSection) {
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    updateFullscreenButton();
+  }
+
   if (layoutCanvas && !editable) {
     layoutCanvas.classList.remove("editable");
   }
 
+  initializeZoom();
+  initializePanning();
+  resetLayoutView({ silent: true });
   loadDashboard();
 })();
