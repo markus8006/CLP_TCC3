@@ -27,10 +27,12 @@
   let logChart;
   let alarmChart;
   const panState = { x: 0, y: 0 };
+  const zoomState = { level: 1, min: 0.5, max: 2.5, step: 0.1 };
   let isPanning = false;
   let panPointerId = null;
   let panStart = { x: 0, y: 0 };
   let pointerStart = { x: 0, y: 0 };
+  let selectedNodeId = null;
 
   function showStatusMessage(message, variant = "info") {
     if (!layoutStatus) return;
@@ -244,9 +246,11 @@
       element.appendChild(location);
     }
 
-    element.addEventListener("click", () => {
-      if (node.type === "plc") {
-        openInspector(node);
+    element.addEventListener("click", () => handleNodeSelection(node));
+    element.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleNodeSelection(node);
       }
     });
 
@@ -262,9 +266,9 @@
     layoutCanvas.innerHTML = "";
   }
 
-  function applyPan() {
+  function updateCanvasTransform() {
     if (!layoutCanvas) return;
-    layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px)`;
+    layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${zoomState.level})`;
   }
 
   function renderLayout(layout) {
@@ -281,7 +285,11 @@
 
     layoutCanvas.appendChild(fragment);
     drawConnections(layout.connections);
-    applyPan();
+    updateCanvasTransform();
+
+    if (selectedNodeId) {
+      updateSelectedNode(selectedNodeId);
+    }
   }
 
   function drawConnections(connections) {
@@ -363,15 +371,16 @@
   function updateConnectionOverlay() {
     layoutCanvas.querySelectorAll(".layout-connection").forEach((line) => line.remove());
     drawConnections(layoutData.connections || []);
-    applyPan();
+    updateCanvasTransform();
   }
 
   function resetLayoutView({ silent = false } = {}) {
     panState.x = 0;
     panState.y = 0;
-    applyPan();
+    zoomState.level = 1;
+    updateCanvasTransform();
     if (!silent) {
-      showStatusMessage("Visão recentralizada");
+      showStatusMessage("Visão recentralizada e zoom redefinido");
     }
   }
 
@@ -446,7 +455,7 @@
       if (!isPanning || event.pointerId !== panPointerId) return;
       panState.x = panStart.x + (event.clientX - pointerStart.x);
       panState.y = panStart.y + (event.clientY - pointerStart.y);
-      applyPan();
+      updateCanvasTransform();
     };
 
     const endPan = (event) => {
@@ -471,6 +480,78 @@
       if (!isPanning) return;
       endPan(event);
     });
+  }
+
+  function updateSelectedNode(nodeId) {
+    if (!layoutCanvas) return;
+
+    layoutCanvas
+      .querySelectorAll(".layout-node.is-selected")
+      .forEach((element) => element.classList.remove("is-selected"));
+
+    if (!nodeId) {
+      selectedNodeId = null;
+      return;
+    }
+
+    const selector = `.layout-node[data-node-id="${CSS.escape(nodeId)}"]`;
+    const element = layoutCanvas.querySelector(selector);
+    if (element) {
+      element.classList.add("is-selected");
+      selectedNodeId = nodeId;
+    } else {
+      selectedNodeId = null;
+    }
+  }
+
+  function handleNodeSelection(node) {
+    if (!node) return;
+    updateSelectedNode(node.id);
+
+    const registerId =
+      node.metadata?.register_id !== undefined && node.metadata?.register_id !== null
+        ? Number(node.metadata.register_id)
+        : null;
+    if (node.type === "plc" || node.metadata?.plc_id) {
+      openInspector(node, { focusRegisterId: registerId });
+    }
+  }
+
+  function initializeZoom() {
+    if (!layoutViewport || !layoutCanvas) return;
+
+    const handleWheel = (event) => {
+      if (!event.ctrlKey) {
+        return;
+      }
+
+      event.preventDefault();
+      const direction = event.deltaY > 0 ? -1 : 1;
+      const nextLevel = Math.min(
+        zoomState.max,
+        Math.max(zoomState.min, zoomState.level + direction * zoomState.step)
+      );
+
+      if (nextLevel === zoomState.level) {
+        return;
+      }
+
+      const viewportRect = layoutViewport.getBoundingClientRect();
+      const offsetX = event.clientX - viewportRect.left;
+      const offsetY = event.clientY - viewportRect.top;
+
+      const canvasX = (offsetX - panState.x) / zoomState.level;
+      const canvasY = (offsetY - panState.y) / zoomState.level;
+
+      zoomState.level = nextLevel;
+      panState.x = offsetX - canvasX * zoomState.level;
+      panState.y = offsetY - canvasY * zoomState.level;
+
+      updateCanvasTransform();
+      showStatusMessage(`Zoom ${Math.round(zoomState.level * 100)}%`);
+    };
+
+    layoutViewport.addEventListener("wheel", handleWheel, { passive: false });
   }
 
   function collectLayoutState() {
@@ -519,14 +600,24 @@
       });
   }
 
-  function openInspector(node) {
+  function openInspector(node, { focusRegisterId } = {}) {
     inspector?.classList.remove("hidden");
     inspector?.focus?.();
     inspectorTitle.textContent = "Carregando...";
     inspectorDetails.innerHTML = "";
     inspectorRegisters.innerHTML = "";
 
-    safeFetch(PLC_DETAILS_ENDPOINT(node.plc_id || node.metadata?.plc_id || node.id.replace("plc-", "")))
+    const plcIdentifier =
+      node.plc_id || node.metadata?.plc_id || node.id.replace("plc-", "");
+
+    if (!plcIdentifier) {
+      inspectorTitle.textContent = "CLP não identificado";
+      inspectorDetails.innerHTML = "";
+      inspectorRegisters.innerHTML = "";
+      return;
+    }
+
+    safeFetch(PLC_DETAILS_ENDPOINT(plcIdentifier))
       .then((details) => {
         inspectorTitle.textContent = details.name;
         const entries = [
@@ -556,6 +647,12 @@
           const badge = document.createElement("span");
           badge.className = `status-pill ${register.status}`;
           badge.textContent = register.status_label;
+
+          const registerIdentifier = Number(register.id);
+          if (focusRegisterId !== null && registerIdentifier === focusRegisterId) {
+            li.classList.add("is-selected");
+            li.setAttribute("aria-current", "true");
+          }
 
           li.appendChild(info);
           li.appendChild(badge);
@@ -633,6 +730,7 @@
     layoutCanvas.classList.remove("editable");
   }
 
+  initializeZoom();
   initializePanning();
   resetLayoutView({ silent: true });
   loadDashboard();
