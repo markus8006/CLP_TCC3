@@ -271,6 +271,18 @@
     layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${zoomState.level})`;
   }
 
+  function getCanvasCoordinates(event) {
+    if (!layoutCanvas) {
+      return { x: 0, y: 0 };
+    }
+
+    const rect = layoutCanvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / zoomState.level;
+    const y = (event.clientY - rect.top) / zoomState.level;
+
+    return { x, y };
+  }
+
   function renderLayout(layout) {
     if (!layoutCanvas) return;
 
@@ -334,36 +346,46 @@
     let offsetY = 0;
 
     element.addEventListener("pointerdown", (event) => {
-      if (!isEditMode) return;
+      if (!isEditMode || (event.button !== undefined && event.button !== 0)) return;
+
       pointerActive = true;
-      element.setPointerCapture(event.pointerId);
-      const rect = element.getBoundingClientRect();
-      const canvasRect = layoutCanvas.getBoundingClientRect();
-      offsetX = event.clientX - rect.left;
-      offsetY = event.clientY - rect.top;
+      element.setPointerCapture?.(event.pointerId);
+
+      const pointer = getCanvasCoordinates(event);
+      const currentLeft = parseFloat(element.style.left);
+      const currentTop = parseFloat(element.style.top);
+
+      offsetX = pointer.x - (Number.isFinite(currentLeft) ? currentLeft : 0);
+      offsetY = pointer.y - (Number.isFinite(currentTop) ? currentTop : 0);
+
       element.dataset.dragging = "true";
       event.preventDefault();
+      event.stopPropagation();
     });
 
     element.addEventListener("pointermove", (event) => {
       if (!pointerActive || !isEditMode) return;
-      const canvasRect = layoutCanvas.getBoundingClientRect();
-      const x = event.clientX - canvasRect.left - offsetX;
-      const y = event.clientY - canvasRect.top - offsetY;
+      const pointer = getCanvasCoordinates(event);
+      const x = pointer.x - offsetX;
+      const y = pointer.y - offsetY;
       element.style.left = `${Math.max(0, x)}px`;
       element.style.top = `${Math.max(0, y)}px`;
+      updateConnectionOverlay();
+      event.preventDefault();
     });
 
     element.addEventListener("pointerup", (event) => {
       if (!pointerActive) return;
       pointerActive = false;
-      element.releasePointerCapture(event.pointerId);
+      element.releasePointerCapture?.(event.pointerId);
       element.dataset.dragging = "false";
       updateConnectionOverlay();
+      event.preventDefault();
     });
 
     element.addEventListener("pointercancel", () => {
       pointerActive = false;
+      element.dataset.dragging = "false";
       updateConnectionOverlay();
     });
   }
@@ -574,7 +596,11 @@
     if (toggleEditBtn) {
       toggleEditBtn.textContent = isEditMode ? "Modo visualização" : "Alternar modo de edição";
     }
-    showStatusMessage(isEditMode ? "Modo edição ativado" : "Modo edição desativado");
+    showStatusMessage(
+      isEditMode
+        ? "Modo edição ativado. Arraste os CLPs para reposicionar."
+        : "Modo edição desativado"
+    );
   }
 
   function saveLayout() {
