@@ -18,6 +18,8 @@ from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
 from src.services.mqtt_service import get_mqtt_publisher
 
+#cop
+
 # ===========================================================
 # CONFIGURAÇÕES
 # ===========================================================
