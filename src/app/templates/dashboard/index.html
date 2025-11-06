@@ -54,6 +54,14 @@
   </article>
 </section>
 
+<section id="plc-card-section" class="plc-card-section" aria-label="CLPs monitorados">
+  <header class="plc-card-header">
+    <h2>CLPs monitorados</h2>
+    <p>Acompanhe status, alarmes e métricas sem sair do painel principal.</p>
+  </header>
+  <div id="plc-card-list" class="plc-card-list" data-empty-text="Nenhum CLP cadastrado"></div>
+</section>
+
 <section class="charts-grid">
   <div class="chart-card">
     <header>
@@ -119,6 +127,7 @@
 
 {% block scripts %}
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js" defer></script>
 <script>
   window.DASHBOARD_CONTEXT = {
     isAdmin: {{ 'true' if is_admin else 'false' }},

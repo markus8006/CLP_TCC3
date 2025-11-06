@@ -1,6 +1,7 @@
 (function () {
   const SUMMARY_ENDPOINT = "/api/dashboard/summary";
   const LAYOUT_ENDPOINT = "/api/dashboard/layout";
+  const PLC_COLLECTION_ENDPOINT = "/api/dashboard/plcs";
   const PLC_DETAILS_ENDPOINT = (plcId) => `/api/dashboard/clps/${plcId}`;
 
   const context = window.DASHBOARD_CONTEXT || { isAdmin: false, csrfToken: "" };
@@ -20,6 +21,7 @@
   const inspectorTitle = document.getElementById("inspector-title");
   const inspectorDetails = document.getElementById("inspector-details");
   const inspectorRegisters = document.getElementById("inspector-registers");
+  const plcCardList = document.getElementById("plc-card-list");
 
   let isEditMode = false;
   const editable = layoutCanvas?.dataset?.editable === "true";
@@ -33,6 +35,7 @@
   let panStart = { x: 0, y: 0 };
   let pointerStart = { x: 0, y: 0 };
   let selectedNodeId = null;
+  const plcCardState = new Map();
 
   function showStatusMessage(message, variant = "info") {
     if (!layoutStatus) return;
@@ -198,6 +201,227 @@
     });
   }
 
+  function formatTimestamp(timestamp) {
+    if (!timestamp) return "--";
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return timestamp;
+    }
+    return date.toLocaleString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  }
+
+  function formatTimeLabel(timestamp) {
+    if (!timestamp) return "";
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return timestamp;
+    }
+    return date.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function renderPlcCards(plcs) {
+    if (!plcCardList) return;
+    plcCardList.innerHTML = "";
+    plcCardState.clear();
+
+    if (!plcs.length) {
+      const emptyMessage = document.createElement("p");
+      emptyMessage.className = "plc-card-empty";
+      emptyMessage.textContent =
+        plcCardList.dataset.emptyText || "Nenhum CLP cadastrado.";
+      plcCardList.appendChild(emptyMessage);
+      return;
+    }
+
+    plcs.forEach((plc) => {
+      const wrapper = document.createElement("details");
+      wrapper.className = `plc-card status-${plc.status}`;
+      wrapper.dataset.plcId = plc.id;
+      if (plc.alarm_count) {
+        wrapper.classList.add("has-alarm");
+      }
+
+      const summary = document.createElement("summary");
+      summary.className = "plc-card-summary";
+      summary.innerHTML = `
+        <span class="plc-card-heading">
+          <span class="plc-card-name">${plc.name}</span>
+          <span class="plc-card-ip">${plc.ip || "-"}</span>
+        </span>
+        <span class="plc-card-flags">
+          <span class="plc-status-pill status-${plc.status}">${plc.status_label}</span>
+          <span class="plc-alarm-pill ${plc.alarm_count ? "is-active" : ""}">
+            ${plc.alarm_count ? `⚠️ ${plc.alarm_count}` : "🟢 OK"}
+          </span>
+          <span class="plc-last-read" title="Última leitura">${formatTimestamp(
+            plc.last_read
+          )}</span>
+        </span>
+      `;
+      wrapper.appendChild(summary);
+
+      const body = document.createElement("div");
+      body.className = "plc-card-content";
+      body.innerHTML = `<p class="plc-card-hint">Expanda para carregar métricas e logs.</p>`;
+      wrapper.appendChild(body);
+
+      wrapper.addEventListener("toggle", () => {
+        if (!wrapper.open) {
+          return;
+        }
+        const state = plcCardState.get(plc.id);
+        if (!state || !state.loaded) {
+          loadPlcCardContent(plc, body, wrapper);
+        }
+      });
+
+      plcCardList.appendChild(wrapper);
+    });
+  }
+
+  function loadPlcCardContent(plcMeta, container, wrapper) {
+    container.innerHTML = `<p class="plc-card-loading">Carregando dados do CLP...</p>`;
+
+    safeFetch(PLC_DETAILS_ENDPOINT(plcMeta.id))
+      .then((details) => {
+        plcCardState.set(plcMeta.id, { loaded: true });
+        wrapper.dataset.loaded = "true";
+        wrapper.classList.toggle("has-alarm", details.status === "alarm");
+
+        const registerMap = new Map(
+          (details.registers || []).map((register) => [String(register.id), register])
+        );
+
+        const header = document.createElement("div");
+        header.className = "plc-card-info";
+        header.innerHTML = `
+          <div><span>Protocolo:</span><strong>${details.protocol}</strong></div>
+          <div><span>Alarmes activos:</span><strong>${details.active_alarm_count}</strong></div>
+          <div><span>Registradores:</span><strong>${details.register_count}</strong></div>
+          <div><span>Última leitura:</span><strong>${formatTimestamp(
+            details.last_log || plcMeta.last_read
+          )}</strong></div>
+        `;
+
+        const chartContainer = document.createElement("div");
+        chartContainer.className = "plc-card-chart";
+        const chartCanvas = document.createElement("canvas");
+        chartCanvas.width = 600;
+        chartCanvas.height = 260;
+        chartContainer.appendChild(chartCanvas);
+
+        const telemetryEntries = Object.entries(details.telemetry || {});
+        const trendSource = telemetryEntries.find(([, samples]) => samples.length > 1);
+        if (trendSource) {
+          const [registerId, samples] = trendSource;
+          const register = registerMap.get(registerId);
+          const heading = document.createElement("h4");
+          heading.className = "plc-chart-title";
+          heading.textContent = register ? register.name : `Registrador ${registerId}`;
+          chartContainer.insertBefore(heading, chartCanvas);
+          buildPlcCardChart(chartCanvas, samples, register);
+        } else {
+          chartContainer.innerHTML = `<p class="plc-card-hint">Sem histórico suficiente para montar gráfico.</p>`;
+        }
+
+        const registerList = document.createElement("ul");
+        registerList.className = "plc-register-list";
+        (details.registers || []).slice(0, 6).forEach((register) => {
+          const item = document.createElement("li");
+          item.innerHTML = `
+            <span class="register-name">${register.name}</span>
+            <span class="register-status status-${register.status}">${register.status_label}</span>
+            <span class="register-value">${
+              register.last_value != null ? register.last_value : "--"
+            } ${register.unit || ""}</span>
+          `;
+          registerList.appendChild(item);
+        });
+
+        const logList = document.createElement("ul");
+        logList.className = "plc-log-list";
+        (details.logs || []).slice(0, 12).forEach((log) => {
+          const register = registerMap.get(String(log.register_id));
+          const label = register ? register.name : `Reg ${log.register_id || "-"}`;
+          const value =
+            log.value != null && Number.isFinite(log.value)
+              ? Number(log.value).toLocaleString("pt-BR")
+              : log.value ?? "--";
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <span class="log-title">${label}</span>
+            <span class="log-time">${formatTimeLabel(log.timestamp)}</span>
+            <span class="log-value">${value}</span>
+          `;
+          logList.appendChild(li);
+        });
+
+        container.innerHTML = "";
+        container.appendChild(header);
+        container.appendChild(chartContainer);
+        container.appendChild(registerList);
+        container.appendChild(logList);
+      })
+      .catch((error) => {
+        container.innerHTML = `<p class="plc-card-error">Erro ao carregar: ${error.message}</p>`;
+      });
+  }
+
+  function buildPlcCardChart(canvas, samples, register) {
+    if (!canvas || !samples || !samples.length || !window.Chart) {
+      return null;
+    }
+
+    const context = canvas.getContext("2d");
+    const labels = samples.map((sample) => formatTimeLabel(sample.timestamp));
+    const values = samples.map((sample) => sample.value ?? null);
+
+    return new Chart(context, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: register ? register.name : "Tendência",
+            data: values,
+            borderColor: "#38bdf8",
+            backgroundColor: "rgba(56, 189, 248, 0.2)",
+            fill: true,
+            tension: 0.35,
+            pointRadius: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: "#94a3b8" },
+          },
+          y: {
+            ticks: { color: "#e2e8f0" },
+          },
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    });
+  }
+
   function formatStatusClass(status) {
     switch (status) {
       case "alarm":
@@ -254,7 +478,7 @@
       }
     });
 
-    if (editable) {
+    if (editable && !window.interact) {
       enableDrag(element);
     }
 
@@ -269,6 +493,56 @@
   function updateCanvasTransform() {
     if (!layoutCanvas) return;
     layoutCanvas.style.transform = `translate(${panState.x}px, ${panState.y}px) scale(${zoomState.level})`;
+  }
+
+  function persistNodePosition(element) {
+    if (!element || !layoutData?.nodes) return;
+    const nodeId = element.dataset.nodeId;
+    if (!nodeId) return;
+    const x = parseFloat(element.dataset.x ?? element.style.left) || 0;
+    const y = parseFloat(element.dataset.y ?? element.style.top) || 0;
+    const target = (layoutData.nodes || []).find((node) => node.id === nodeId);
+    if (target) {
+      target.position = { x, y };
+    }
+  }
+
+  function initializeInteractForNodes() {
+    if (!editable || !window.interact || !layoutCanvas) return;
+
+    if (window.interact.isSet?.(".layout-node.editable")) {
+      window.interact(".layout-node.editable").unset();
+    }
+
+    window.interact(".layout-node.editable").draggable({
+      listeners: {
+        start(event) {
+          const target = event.target;
+          target.dataset.dragging = "true";
+          target.dataset.x = parseFloat(target.style.left) || 0;
+          target.dataset.y = parseFloat(target.style.top) || 0;
+        },
+        move(event) {
+          const target = event.target;
+          const currentX = parseFloat(target.dataset.x) || 0;
+          const currentY = parseFloat(target.dataset.y) || 0;
+          const deltaX = event.dx / zoomState.level;
+          const deltaY = event.dy / zoomState.level;
+          const nextX = Math.max(0, currentX + deltaX);
+          const nextY = Math.max(0, currentY + deltaY);
+          target.dataset.x = nextX;
+          target.dataset.y = nextY;
+          target.style.left = `${nextX}px`;
+          target.style.top = `${nextY}px`;
+          updateConnectionOverlay();
+        },
+        end(event) {
+          const target = event.target;
+          target.dataset.dragging = "false";
+          persistNodePosition(target);
+        },
+      },
+    });
   }
 
   function getCanvasCoordinates(event) {
@@ -298,6 +572,7 @@
     layoutCanvas.appendChild(fragment);
     drawConnections(layout.connections);
     updateCanvasTransform();
+    initializeInteractForNodes();
 
     if (selectedNodeId) {
       updateSelectedNode(selectedNodeId);
@@ -379,6 +654,7 @@
       pointerActive = false;
       element.releasePointerCapture?.(event.pointerId);
       element.dataset.dragging = "false";
+      persistNodePosition(element);
       updateConnectionOverlay();
       event.preventDefault();
     });
@@ -709,14 +985,19 @@
   }
 
   function loadDashboard() {
-    Promise.all([safeFetch(SUMMARY_ENDPOINT), safeFetch(LAYOUT_ENDPOINT)])
-      .then(([summary, layout]) => {
+    Promise.all([
+      safeFetch(SUMMARY_ENDPOINT),
+      safeFetch(LAYOUT_ENDPOINT),
+      safeFetch(PLC_COLLECTION_ENDPOINT),
+    ])
+      .then(([summary, layout, plcCollection]) => {
         updateSummaryCards(summary.totals || {});
         buildLogChart(summary.log_volume || []);
         buildAlarmChart(summary.alarms_by_priority || {});
         renderIncidents(summary.offline_clps || []);
         hydrateLayoutMetadata(layout.layout);
         renderLayout(layout.layout);
+        renderPlcCards(plcCollection.plcs || []);
         if (layout.vlan_summary) {
           showStatusMessage(`Última atualização ${layout.generated_at}`);
         }

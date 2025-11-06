@@ -12,6 +12,21 @@
         .register-card { background-color: rgba(0,0,0,0.15); padding: 10px; border-radius: 5px; }
         .register-addr { font-weight: bold; color: var(--accent); }
         .register-val { font-size: 1.2em; text-align: right; }
+        .script-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
+        .script-toolbar label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; }
+        .script-toolbar label span { font-weight: 600; }
+        .script-editor-container { height: 320px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(15,23,42,0.75); }
+        .script-status { margin-top: 0.75rem; min-height: 1.2rem; font-size: 0.9rem; color: var(--accent); }
+        .script-status[data-state="error"] { color: #f87171; }
+        .script-status[data-state="success"] { color: #34d399; }
+        .script-list-wrapper { margin-top: 1rem; }
+        .script-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+        .script-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.85rem; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid transparent; }
+        .script-list li.active { border-color: var(--accent); }
+        .script-empty { justify-content: center; color: var(--text-muted); font-style: italic; }
+        .script-select { flex: 1; background: transparent; border: none; color: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+        .script-language { font-size: 0.85rem; color: var(--text-muted); }
+        .script-delete { background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 0 0.25rem; }
     </style>
 {% endblock %}
 
@@ -127,6 +142,31 @@
 </div>
 
 <div class="informacao_clp">
+    <h2>Programação do CLP</h2>
+    <div class="script-toolbar">
+        <label>
+            <span>Nome do script</span>
+            <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
+        </label>
+        <label>
+            <span>Linguagem</span>
+            <select id="script-language" class="input-form">
+                <option value="python">Python</option>
+                <option value="st">Structured Text</option>
+                <option value="ladder">Ladder</option>
+            </select>
+        </label>
+        <button id="script-save" class="btn-acao" type="button">Salvar script</button>
+    </div>
+    <div id="script-editor" class="script-editor-container" data-plc-id="{{ clp.id }}"></div>
+    <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
+    <div class="script-list-wrapper">
+        <h3>Scripts guardados</h3>
+        <ul id="script-list" class="script-list" aria-live="polite"></ul>
+    </div>
+</div>
+
+<div class="informacao_clp">
     <h2>Leitor de Registrador Modbus</h2>
     <form id="formReadRegister" onsubmit="return false;" class="form-acao">
         <input type="number" id="inputAddress" placeholder="Endereço (ex: 0)" required class="input-form">
@@ -153,6 +193,7 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
 <!-- <script src="{{ url_for('static', filename='scripts/graficos.js') }}"></script> -->
 <script src="{{ url_for('static', filename='scripts/detalhes.js') }}"></script>
 {% endblock %}
