@@ -88,6 +88,7 @@ class PLC(db.Model):
     registers = db.relationship('Register', backref='plc', cascade='all, delete-orphan')
     data_logs = db.relationship('DataLog', backref='plc')
     alarms = db.relationship('Alarm', backref='plc')
+    scripts = db.relationship('Script', back_populates='plc', cascade='all, delete-orphan')
 
     __table_args__ = (
         # Se existir mesma IP em VLANs diferentes, precisa diferenciar:

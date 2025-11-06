@@ -1,6 +1,7 @@
+import asyncio
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, make_response, request
 from flask_login import current_user, login_required
 from sqlalchemy import case, func
 from sqlalchemy.orm import selectinload
@@ -12,6 +13,9 @@ from src.models.PLCs import PLC
 from src.models.Registers import Register
 from src.repository.FactoryLayout_repository import FactoryLayoutRepository
 from src.repository.PLC_repository import Plcrepo
+from src.runtime.script_engine import ScriptEngine
+from src.services.register_import_service import RegisterImportExportService
+from src.services.tag_discovery_service import discover_tags as discover_tags_async
 from src.utils.role.roles import role_required
 from src.utils.tags import normalize_tag
 
@@ -23,6 +27,15 @@ STATUS_LABELS = {
     "alarm": "Em alarme",
     "inactive": "Inativo",
 }
+
+register_service = RegisterImportExportService()
+script_engine = ScriptEngine()
+
+
+def _await(coro):
+    """Executa uma corrotina em contexto síncrono do Flask."""
+
+    return asyncio.run(coro)
 
 
 def _status_label(status: str) -> str:
@@ -62,6 +75,21 @@ def _vlan_value_from_key(key: str):
         return int(key.split("-", 1)[1])
     except (IndexError, ValueError):
         return None
+
+
+@api_bp.route("/tag-discovery/<protocol>", methods=["POST"])
+@login_required
+def api_tag_discovery(protocol: str):
+    params = request.get_json(silent=True) or {}
+    try:
+        tags = _await(discover_tags_async(protocol, params))
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+    except RuntimeError as exc:  # pragma: no cover - depende de libs externas
+        return jsonify({"message": str(exc)}), 500
+
+    return jsonify({"tags": tags})
+
 
 @api_bp.route("/get/data/clp/<ip>", methods=["GET"])
 @login_required
@@ -230,6 +258,52 @@ def dashboard_summary():
             "offline_clps": offline_payload,
         }
     )
+
+
+@api_bp.route("/dashboard/plcs", methods=["GET"])
+@login_required
+def dashboard_plc_collection():
+    alarm_by_plc = {
+        plc_id: count
+        for plc_id, count in db.session.query(Alarm.plc_id, func.count(Alarm.id))
+        .filter(Alarm.state == "ACTIVE")
+        .group_by(Alarm.plc_id)
+    }
+
+    latest_logs = {
+        plc_id: ts
+        for plc_id, ts in db.session.query(PLC.id, func.max(DataLog.timestamp))
+        .join(DataLog, DataLog.plc_id == PLC.id, isouter=True)
+        .group_by(PLC.id)
+    }
+
+    plcs = (
+        db.session.query(PLC)
+        .options(selectinload(PLC.organization))
+        .order_by(PLC.name)
+        .all()
+    )
+
+    payload = []
+    for plc in plcs:
+        status = _plc_status(plc, alarm_by_plc)
+        last_ts = latest_logs.get(plc.id)
+        payload.append(
+            {
+                "id": plc.id,
+                "name": plc.name,
+                "ip": plc.ip_address,
+                "status": status,
+                "status_label": _status_label(status),
+                "alarm_count": int(alarm_by_plc.get(plc.id, 0)),
+                "protocol": plc.protocol,
+                "vlan_id": plc.vlan_id,
+                "location": plc.organization.name if plc.organization else None,
+                "last_read": last_ts.isoformat() if last_ts else None,
+            }
+        )
+
+    return jsonify({"plcs": payload})
 
 
 @api_bp.route("/dashboard/layout", methods=["GET"])
@@ -555,6 +629,14 @@ def dashboard_plc_details(plc_id: int):
                 "name": register.name,
                 "status": key,
                 "status_label": label,
+                "tag": register.tag_name or register.tag,
+                "address": register.address,
+                "data_type": register.data_type,
+                "unit": register.unit,
+                "last_value": register.last_value,
+                "last_read": register.last_read.isoformat() if register.last_read else None,
+                "description": register.description,
+                "normalized_address": register.normalized_address,
             }
         )
 
@@ -566,6 +648,34 @@ def dashboard_plc_details(plc_id: int):
     )
 
     location_label = plc.organization.name if plc.organization else None
+
+    log_rows = (
+        db.session.query(DataLog)
+        .filter(DataLog.plc_id == plc.id)
+        .filter(DataLog.timestamp.isnot(None))
+        .order_by(DataLog.timestamp.desc())
+        .limit(200)
+        .all()
+    )
+
+    log_entries = []
+    telemetry = {}
+    for row in log_rows:
+        payload = {
+            "id": row.id,
+            "register_id": row.register_id,
+            "timestamp": row.timestamp.isoformat() if row.timestamp else None,
+            "value": row.value_float,
+            "quality": row.quality,
+        }
+        log_entries.append(payload)
+
+        if row.register_id is not None:
+            bucket = telemetry.setdefault(str(row.register_id), [])
+            bucket.append(payload)
+
+    for bucket in telemetry.values():
+        bucket.reverse()
 
     return jsonify(
         {
@@ -583,6 +693,8 @@ def dashboard_plc_details(plc_id: int):
             "location": location_label,
             "location_label": location_label,
             "registers": register_payload,
+            "logs": log_entries,
+            "telemetry": telemetry,
         }
     )
 
@@ -629,3 +741,129 @@ def remove_tag(ip, tag):
     updated = [t for t in current_tags if t != normalized]
     Plcrepo.update_tags(plc, updated)
     return jsonify({"tag": normalized, "tags": updated}), 200
+
+
+@api_bp.route("/registers/import", methods=["POST"])
+@login_required
+def import_registers():
+    clp_id = request.form.get("clp_id", type=int) or request.args.get("clp_id", type=int)
+    if not clp_id:
+        return jsonify({"message": "Informe o clp_id."}), 400
+
+    file = request.files.get("file")
+    if file is None:
+        return jsonify({"message": "Envie um ficheiro CSV ou XLSX."}), 400
+
+    plc = db.session.get(PLC, clp_id)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    try:
+        frame = register_service.dataframe_from_file(file, file.filename)
+    except Exception as exc:  # pragma: no cover - parsing externo
+        return jsonify({"message": f"Não foi possível ler o ficheiro: {exc}"}), 400
+
+    created, errors = register_service.import_dataframe(frame, plc=plc, protocol=plc.protocol)
+    return jsonify({"created": created, "errors": errors}), 201
+
+
+@api_bp.route("/registers/export", methods=["GET"])
+@login_required
+def export_registers():
+    clp_id = request.args.get("clp_id", type=int)
+    if not clp_id:
+        return jsonify({"message": "Informe o clp_id."}), 400
+
+    plc = db.session.get(PLC, clp_id)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    registers = Register.query.filter_by(plc_id=clp_id).order_by(Register.name).all()
+    frame = register_service.export_dataframe(registers)
+
+    file_format = request.args.get("format", "csv").lower()
+    if file_format not in {"csv", "xlsx"}:
+        file_format = "csv"
+
+    data, mime = register_service.export_to_bytes(frame, file_format=file_format)
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"registers_plc_{clp_id}_{timestamp}.{file_format}"
+
+    response = make_response(data)
+    response.headers["Content-Type"] = mime
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
+
+
+@api_bp.route("/plcs/<int:plc_id>/scripts", methods=["GET"])
+@login_required
+def list_plc_scripts(plc_id: int):
+    plc = db.session.get(PLC, plc_id)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    scripts = script_engine.list_scripts(plc_id)
+    return jsonify(
+        {
+            "languages": script_engine.SUPPORTED_LANGUAGES,
+            "scripts": [
+                {
+                    "id": script.id,
+                    "name": script.name,
+                    "language": script.language,
+                    "content": script.content,
+                    "updated_at": script.updated_at.isoformat() if script.updated_at else None,
+                }
+                for script in scripts
+            ],
+        }
+    )
+
+
+@api_bp.route("/plcs/<int:plc_id>/scripts", methods=["POST"])
+@login_required
+def save_plc_script(plc_id: int):
+    payload = request.get_json(silent=True) or {}
+    name = (payload.get("name") or "").strip()
+    language = (payload.get("language") or "python").lower()
+    content = payload.get("content") or ""
+
+    if not name:
+        return jsonify({"message": "Informe o nome do script."}), 400
+    if not content:
+        return jsonify({"message": "O conteúdo do script está vazio."}), 400
+
+    try:
+        script = script_engine.save_script(
+            plc_id=plc_id,
+            name=name,
+            language=language,
+            content=content,
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    return (
+        jsonify(
+            {
+                "id": script.id,
+                "name": script.name,
+                "language": script.language,
+                "content": script.content,
+                "updated_at": script.updated_at.isoformat() if script.updated_at else None,
+            }
+        ),
+        201,
+    )
+
+
+@api_bp.route("/plcs/<int:plc_id>/scripts/<int:script_id>", methods=["DELETE"])
+@login_required
+def delete_plc_script(plc_id: int, script_id: int):
+    script = script_engine.get_script(script_id)
+    if script is None or script.plc_id != plc_id:
+        return jsonify({"message": "Script não encontrado."}), 404
+
+    script_engine.delete_script(script_id)
+    return jsonify({"deleted": script_id}), 200

@@ -11,10 +11,13 @@ class Register(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     tag = db.Column(db.String(50))
+    tag_name = db.Column(db.String(120))
 
     address = db.Column(db.String(50), nullable=False)  # mantém string (p.ex. "40001" ou "40001.1")
     register_type = db.Column(db.String(20), nullable=False)
     data_type = db.Column(db.String(20), nullable=False)
+    protocol = db.Column(db.String(50))
+    normalized_address = db.Column(db.JSON)
     length = db.Column(db.Integer, default=1)
 
     scale_factor = db.Column(db.Float, default=1.0)
