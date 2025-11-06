@@ -4,30 +4,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/clp/detalhes.css') }}">
-    <style>
-        .tag-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag-item { background-color: #5a009d; color: white; padding: 4px 10px; border-radius: 15px; font-size: 0.9em; display: flex; align-items: center; }
-        .remove-tag { margin-left: 8px; cursor: pointer; font-weight: bold; }
-        .registers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .register-card { background-color: rgba(0,0,0,0.15); padding: 10px; border-radius: 5px; }
-        .register-addr { font-weight: bold; color: var(--accent); }
-        .register-val { font-size: 1.2em; text-align: right; }
-        .script-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1rem; }
-        .script-toolbar label { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; }
-        .script-toolbar label span { font-weight: 600; }
-        .script-editor-container { height: 320px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(15,23,42,0.75); }
-        .script-status { margin-top: 0.75rem; min-height: 1.2rem; font-size: 0.9rem; color: var(--accent); }
-        .script-status[data-state="error"] { color: #f87171; }
-        .script-status[data-state="success"] { color: #34d399; }
-        .script-list-wrapper { margin-top: 1rem; }
-        .script-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
-        .script-list li { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.85rem; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid transparent; }
-        .script-list li.active { border-color: var(--accent); }
-        .script-empty { justify-content: center; color: var(--text-muted); font-style: italic; }
-        .script-select { flex: 1; background: transparent; border: none; color: inherit; font-weight: 600; cursor: pointer; text-align: left; }
-        .script-language { font-size: 0.85rem; color: var(--text-muted); }
-        .script-delete { background: none; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer; padding: 0 0.25rem; }
-    </style>
+    
 {% endblock %}
 
 {% block content %}
@@ -141,29 +118,69 @@
     </div>
 </div>
 
-<div class="informacao_clp">
+<div class="informacao_clp programming-section">
     <h2>Programação do CLP</h2>
-    <div class="script-toolbar">
-        <label>
-            <span>Nome do script</span>
-            <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
-        </label>
-        <label>
-            <span>Linguagem</span>
-            <select id="script-language" class="input-form">
-                <option value="python">Python</option>
-                <option value="st">Structured Text</option>
-                <option value="ladder">Ladder</option>
-            </select>
-        </label>
-        <button id="script-save" class="btn-acao" type="button">Salvar script</button>
-    </div>
-    <div id="script-editor" class="script-editor-container" data-plc-id="{{ clp.id }}"></div>
-    <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
-    <div class="script-list-wrapper">
-        <h3>Scripts guardados</h3>
-        <ul id="script-list" class="script-list" aria-live="polite"></ul>
-    </div>
+    <p class="section-description">Consulte a documentação antes de abrir o editor – o foco é operar com segurança e reaproveitar scripts validados.</p>
+    <nav class="programming-tabs" aria-label="Opções de programação">
+        <button type="button" class="programming-tab active" data-programming-tab="docs">Documentação</button>
+        <button type="button" class="programming-tab" data-programming-tab="editor">Editor de scripts</button>
+    </nav>
+    <section id="programming-docs" class="programming-panel active" data-programming-panel="docs" aria-labelledby="programming-docs-title">
+        <article class="programming-doc">
+            <h3 id="programming-docs-title">Como programar este CLP</h3>
+            <ol>
+                <li><strong>Revise o objetivo</strong>: mapeie quais registradores e sinais serão manipulados e verifique limites e dependências de segurança.</li>
+                <li><strong>Escolha a linguagem</strong>: selecione <em>Python</em> para automações de alto nível, <em>Structured Text</em> para lógica determinística ou <em>Ladder</em> para sequências gráficas simples.</li>
+                <li><strong>Modele, teste e valide</strong>: escreva o script, utilize tags simuladas quando possível e valide com um colega antes de aplicar no CLP real.</li>
+                <li><strong>Versione e documente</strong>: descreva alterações e parâmetros utilizados na área de comentários do script e mantenha versões aprovadas nomeadas de forma consistente.</li>
+            </ol>
+            <h3>Boas práticas essenciais</h3>
+            <ul>
+                <li>Proteja operações críticas com verificações de limites e estados de segurança.</li>
+                <li>Priorize variáveis declaradas no início do script e evite dependências ocultas.</li>
+                <li>Utilize funções reutilizáveis para rotinas de inicialização e desligamento.</li>
+                <li>Atualize os responsáveis quando um script entrar em produção.</li>
+            </ul>
+            <h3>Referência rápida</h3>
+            <dl class="programming-reference">
+                <div>
+                    <dt>Python</dt>
+                    <dd>Ideal para análises e integrações. Disponível biblioteca padrão reduzida focada em cálculos e comunicação.</dd>
+                </div>
+                <div>
+                    <dt>Structured Text (ST)</dt>
+                    <dd>Sintaxe semelhante a Pascal. Utilize blocos <code>IF</code>, <code>CASE</code> e <code>FOR</code> para lógica determinística.</dd>
+                </div>
+                <div>
+                    <dt>Ladder</dt>
+                    <dd>Representação textual das redes ladder. Cada linha corresponde a um ramo executado da esquerda para a direita.</dd>
+                </div>
+            </dl>
+        </article>
+    </section>
+    <section id="programming-editor" class="programming-panel" data-programming-panel="editor" aria-label="Editor de scripts">
+        <div class="script-toolbar">
+            <label>
+                <span>Nome do script</span>
+                <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
+            </label>
+            <label>
+                <span>Linguagem</span>
+                <select id="script-language" class="input-form">
+                    <option value="python">Python</option>
+                    <option value="st">Structured Text</option>
+                    <option value="ladder">Ladder</option>
+                </select>
+            </label>
+            <button id="script-save" class="btn-acao" type="button">Salvar script</button>
+        </div>
+        <div id="script-editor" class="script-editor-container" data-plc-id="{{ clp.id }}"></div>
+        <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
+        <div class="script-list-wrapper">
+            <h3>Scripts guardados</h3>
+            <ul id="script-list" class="script-list" aria-live="polite"></ul>
+        </div>
+    </section>
 </div>
 
 <div class="informacao_clp">
@@ -177,10 +194,10 @@
 
 <div id="mensagem" role="status" style="margin-top:12px;color:var(--accent)"></div>
 
-<div class="graficos">
-    <h2>Métricas do Dispositivo (Exemplo)</h2>
-    <div class="linha-graficos">
-    </div>
+<div class="informacao_clp">
+    <h2>Registradores monitorados</h2>
+    <p class="section-description">Acompanhe o estado geral e expanda um registrador para visualizar o histórico e os limites configurados.</p>
+    <div id="register-accordion" class="register-accordion" aria-live="polite"></div>
 </div>
 
 <div class="informacao_clp">

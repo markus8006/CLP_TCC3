@@ -109,27 +109,72 @@ function violatesCondition(value, def) {
     return false;
 }
 
-// cria um canvas/card para o registrador
+// cria um painel recolhível para o registrador
 function ensureRegisterCard(registerId, unit, registerName) {
-    const linhaGraficos = document.querySelector('.graficos .linha-graficos');
-    if (!linhaGraficos) return null;
+    const accordion = document.getElementById('register-accordion');
+    if (!accordion) return null;
 
     let card = document.getElementById(`register-card-${registerId}`);
     if (card) return card;
 
-    card = document.createElement('div');
-    card.className = 'grafico-container'; // segue o estilo dos cards fixos
+    card = document.createElement('details');
+    card.className = 'register-panel';
     card.id = `register-card-${registerId}`;
-    card.innerHTML = `
-        <h3>${registerName ? `${registerName}` : `Register ${registerId}`}</h3>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <div style="font-size:0.85em; color:var(--text-muted)">Unidade: ${unit ?? '-'}</div>
-            <div class="register-val" id="register-val-${registerId}">--</div>
-        </div>
-        <canvas id="chart-register-${registerId}" width="600" height="220" style="width:100%; height:220px;"></canvas>
-        <div id="alarm-legend-${registerId}" style="margin-top:6px; font-size:0.85em; color: var(--text-muted);"></div>
-    `;
-    linhaGraficos.appendChild(card);
+    card.dataset.registerId = registerId;
+
+    const summary = document.createElement('summary');
+    const nameEl = document.createElement('span');
+    nameEl.className = 'register-summary__name';
+    nameEl.textContent = registerName || `Registrador ${registerId}`;
+
+    const statusEl = document.createElement('span');
+    statusEl.className = 'register-summary__status';
+    statusEl.id = `register-status-${registerId}`;
+    statusEl.dataset.state = 'unknown';
+    statusEl.textContent = 'Aguardando dados';
+
+    const valueEl = document.createElement('span');
+    valueEl.className = 'register-summary__value';
+    valueEl.id = `register-val-${registerId}`;
+    valueEl.textContent = '--';
+
+    summary.append(nameEl, statusEl, valueEl);
+
+    const body = document.createElement('div');
+    body.className = 'register-panel-body';
+
+    const chartWrapper = document.createElement('div');
+    chartWrapper.className = 'register-chart-wrapper';
+
+    const canvas = document.createElement('canvas');
+    canvas.id = `chart-register-${registerId}`;
+    canvas.width = 600;
+    canvas.height = 220;
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', `Histórico do registrador ${registerName || registerId}`);
+
+    chartWrapper.appendChild(canvas);
+
+    const legend = document.createElement('div');
+    legend.className = 'register-legend';
+    legend.id = `alarm-legend-${registerId}`;
+
+    body.append(chartWrapper, legend);
+
+    card.append(summary, body);
+
+    card.addEventListener('toggle', () => {
+        if (!card.open) return;
+        requestAnimationFrame(() => {
+            const chart = charts.get(registerId);
+            if (chart) {
+                chart.resize();
+                chart.update('none');
+            }
+        });
+    });
+
+    accordion.appendChild(card);
     return card;
 }
 
@@ -141,7 +186,8 @@ function createOrUpdateChart(registerId, unit, def) {
     if (!canvas) return;
 
     // 🔧 fixar tamanho real do canvas (evita height crescendo)
-    canvas.width = canvas.parentElement.clientWidth;
+    const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth : 0;
+    canvas.width = parentWidth > 0 ? parentWidth : 600;
     canvas.height = 220;
 
     const buffer = chartDataBuffers.get(registerId) || { labels: [], values: [], rawPoints: [] };
@@ -272,10 +318,11 @@ function createOrUpdateChart(registerId, unit, def) {
 
     const legendEl = document.getElementById(`alarm-legend-${registerId}`);
     if (legendEl) {
+        const unitLabel = unit ? ` — unidade: ${unit}` : '';
         if (def) {
-            legendEl.innerHTML = `<strong>Definição:</strong> ${def.name ?? '(sem nome)'} — tipo: ${def.condition_type} ${def.setpoint != null ? `| setpoint: ${def.setpoint}` : ''}`;
+            legendEl.innerHTML = `<strong>Definição:</strong> ${def.name ?? '(sem nome)'} — tipo: ${def.condition_type}${def.setpoint != null ? ` | setpoint: ${def.setpoint}` : ''}${unitLabel}`;
         } else {
-            legendEl.innerHTML = `<strong>Definição:</strong> (nenhuma)`;
+            legendEl.innerHTML = `<strong>Definição:</strong> (nenhuma)${unitLabel}`;
         }
     }
 }
@@ -343,11 +390,28 @@ function processApiPayload(payload) {
         const unit = (series.at(-1)?.unit) ?? (defsByRegister[rid]?.unit) ?? '';
         ensureRegisterCard(rid, unit, registerName);
         const last = buffer.rawPoints.at(-1);
+        const statusEl = document.getElementById(`register-status-${rid}`);
+        if (statusEl) {
+            if (last) {
+                statusEl.textContent = last.violated ? 'Violado' : 'Normal';
+                statusEl.dataset.state = last.violated ? 'violated' : 'ok';
+            } else {
+                statusEl.textContent = 'Sem dados';
+                statusEl.dataset.state = 'unknown';
+            }
+        }
         const valEl = document.getElementById(`register-val-${rid}`);
         if (valEl) {
-            valEl.textContent = last ? `${last.value} ${unit}` : '--';
-            valEl.style.color = last?.violated ? themeColors[3] : themeColors[2];
-            valEl.style.fontWeight = last?.violated ? 'bold' : 'normal';
+            if (last) {
+                const formatted = Number.isFinite(last.value) ? last.value : String(last.value ?? '--');
+                valEl.textContent = unit ? `${formatted} ${unit}` : `${formatted}`;
+                valEl.style.color = last.violated ? themeColors[3] : themeColors[2];
+                valEl.style.fontWeight = last.violated ? 'bold' : 'normal';
+            } else {
+                valEl.textContent = '--';
+                valEl.style.color = 'var(--text-muted)';
+                valEl.style.fontWeight = 'normal';
+            }
         }
 
         createOrUpdateChart(rid, unit, defsByRegister[rid] ?? null);
@@ -504,6 +568,40 @@ function showScriptStatus(message, type = 'info', element) {
     if (!statusEl) return;
     statusEl.textContent = message || '';
     statusEl.dataset.state = type;
+}
+
+function initProgrammingTabs() {
+    const tabs = document.querySelectorAll('.programming-tab');
+    const panels = document.querySelectorAll('.programming-panel');
+    if (!tabs.length || !panels.length) return;
+
+    const activate = (target) => {
+        tabs.forEach((tab) => {
+            tab.classList.toggle('active', tab.dataset.programmingTab === target);
+        });
+        panels.forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.programmingPanel === target);
+        });
+        if (target === 'editor') {
+            setTimeout(() => {
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.layout();
+                }
+            }, 50);
+        }
+    };
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.programmingTab;
+            if (target) {
+                activate(target);
+            }
+        });
+    });
+
+    const initial = Array.from(tabs).find((tab) => tab.classList.contains('active'))?.dataset.programmingTab || 'docs';
+    activate(initial);
 }
 
 function populateLanguageOptions(select, languages) {
@@ -718,6 +816,11 @@ function initScriptEditor() {
             minimap: { enabled: false },
         });
 
+        const editorPanel = document.querySelector('[data-programming-panel="editor"]');
+        if (editorPanel?.classList.contains('active')) {
+            setTimeout(() => monacoEditorInstance?.layout(), 0);
+        }
+
         loadScripts(plcId, languageSelect, listContainer, statusEl, nameInput);
 
         if (saveButton) {
@@ -775,5 +878,6 @@ window.addEventListener('DOMContentLoaded', () => {
         startPolling();
     }
     initTagManagement();
+    initProgrammingTabs();
     initScriptEditor();
 });
