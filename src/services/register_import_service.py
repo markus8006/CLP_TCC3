@@ -62,19 +62,44 @@ class RegisterImportExportService:
         db.session.commit()
         return created, errors
 
-    def export_dataframe(self, registers: Iterable[Register]) -> pd.DataFrame:
+    def export_dataframe(self, registers: Iterable[Register], *, include_plc: bool = False) -> pd.DataFrame:
         self._ensure_pandas()
         rows = []
         for register in registers:
-            rows.append(
-                {
-                    "Tag": register.tag_name or register.name,
-                    "Endereço": register.address,
-                    "Tipo": register.data_type,
-                    "Unidade": register.unit or "",
-                    "Descrição": register.description or "",
+            row = {
+                "Tag": register.tag_name or register.name,
+                "Endereço": register.address,
+                "Tipo": register.data_type,
+                "Unidade": register.unit or "",
+                "Descrição": register.description or "",
+            }
+
+            if include_plc:
+                plc = getattr(register, "plc", None)
+                row = {
+                    "Controlador": plc.name if plc else f"# {register.plc_id}",
+                    "Protocolo": (register.protocol or (plc.protocol if plc else "")) or "",
+                    "IP": plc.ip_address if plc and plc.ip_address else "",
+                    "VLAN": plc.vlan_id if plc and plc.vlan_id is not None else "",
+                    **row,
                 }
-            )
+
+            rows.append(row)
+
+        if include_plc:
+            columns = [
+                "Controlador",
+                "Protocolo",
+                "IP",
+                "VLAN",
+                "Tag",
+                "Endereço",
+                "Tipo",
+                "Unidade",
+                "Descrição",
+            ]
+            return pd.DataFrame(rows, columns=columns)
+
         return pd.DataFrame(rows)
 
     def dataframe_from_file(self, stream, filename: str) -> pd.DataFrame:

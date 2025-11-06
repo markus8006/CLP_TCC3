@@ -292,6 +292,289 @@ h1, h2 {
     padding: 0.6rem 0.8rem;
 }
 
+/* --- Suporte por protocolo --- */
+.protocol-support-card {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.protocol-support-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+@media (max-width: 992px) {
+    .protocol-support-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.protocol-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.protocol-table th,
+.protocol-table td {
+    padding: 0.95rem 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+}
+
+.protocol-table th {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.65);
+    background: rgba(12, 0, 32, 0.55);
+}
+
+.protocol-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.protocol-row {
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.protocol-row:hover,
+.protocol-row.selected {
+    background: rgba(132, 0, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.protocol-implementation {
+    display: block;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.protocol-note {
+    display: block;
+    margin-top: 0.35rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.support-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.support-full {
+    background: rgba(0, 195, 137, 0.18);
+    color: #6bf0c3;
+}
+
+.support-partial {
+    background: rgba(255, 193, 7, 0.18);
+    color: #ffd66b;
+}
+
+.support-none {
+    background: rgba(255, 59, 59, 0.18);
+    color: #ff7b7b;
+}
+
+.protocol-inspector {
+    background: rgba(12, 0, 32, 0.6);
+    border-radius: 14px;
+    border: 1px solid rgba(132, 0, 255, 0.25);
+    padding: 1.5rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.protocol-fields {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.protocol-fields label {
+    display: grid;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+}
+
+.protocol-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.protocol-feedback {
+    font-size: 0.95rem;
+    min-height: 1.2rem;
+    color: var(--text-muted);
+}
+
+.protocol-feedback.success {
+    color: #6bf0c3;
+}
+
+.protocol-feedback.error {
+    color: #ff7b7b;
+}
+
+.protocol-feedback.loading {
+    color: #ffd66b;
+}
+
+.protocol-discovery-results {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.discovery-result-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.discovery-result-list li {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    border: 1px solid rgba(132, 0, 255, 0.2);
+    padding: 0.75rem 1rem;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.discovery-result-list li strong {
+    color: #fff;
+}
+
+.discovery-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.discovery-result-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* --- Importação/exportação de tags --- */
+.register-exchange {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.register-exchange__grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+}
+
+@media (max-width: 992px) {
+    .register-exchange__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.register-dropzone {
+    border: 2px dashed rgba(132, 0, 255, 0.5);
+    border-radius: 16px;
+    padding: 2.25rem 1rem;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.55);
+    cursor: pointer;
+    transition: border 0.25s ease, background 0.25s ease, transform 0.2s ease;
+    display: grid;
+    place-items: center;
+}
+
+.register-dropzone.dragover {
+    border-color: rgba(204, 0, 255, 0.8);
+    background: rgba(40, 10, 80, 0.65);
+    transform: translateY(-2px);
+}
+
+.register-dropzone__content {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.register-exchange__actions {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+}
+
+.register-feedback {
+    font-size: 0.95rem;
+    min-height: 1.3rem;
+}
+
+.register-feedback.success {
+    color: #6bf0c3;
+}
+
+.register-feedback.error {
+    color: #ff7b7b;
+}
+
+.register-feedback.loading {
+    color: #ffd66b;
+}
+
+.export-hint {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.text-muted {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-acao.secondary {
+    background: transparent;
+    border-color: rgba(204, 0, 255, 0.55);
+    color: rgba(204, 153, 255, 0.9);
+}
+
+.btn-acao.secondary:hover {
+    background: rgba(132, 0, 255, 0.2);
+    color: #fff;
+}
+
+/* --- Área dedicada de programação --- */
+.programming-hub {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.programming-hub__header {
+    background: rgba(12, 0, 32, 0.55);
+    border: 1px solid rgba(132, 0, 255, 0.25);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+}
+
+.programming-hub__header p {
+    margin: 0.4rem 0 0;
+    color: var(--text-muted);
+}
+
 /* --- Registradores monitorados --- */
 .section-description {
     margin-top: 0.35rem;
