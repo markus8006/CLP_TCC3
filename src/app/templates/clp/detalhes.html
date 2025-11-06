@@ -118,70 +118,160 @@
     </div>
 </div>
 
-<div class="informacao_clp programming-section">
-    <h2>Programação do CLP</h2>
-    <p class="section-description">Consulte a documentação antes de abrir o editor – o foco é operar com segurança e reaproveitar scripts validados.</p>
-    <nav class="programming-tabs" aria-label="Opções de programação">
-        <button type="button" class="programming-tab active" data-programming-tab="docs">Documentação</button>
-        <button type="button" class="programming-tab" data-programming-tab="editor">Editor de scripts</button>
-    </nav>
-    <section id="programming-docs" class="programming-panel active" data-programming-panel="docs" aria-labelledby="programming-docs-title">
-        <article class="programming-doc">
-            <h3 id="programming-docs-title">Como programar este CLP</h3>
-            <ol>
-                <li><strong>Revise o objetivo</strong>: mapeie quais registradores e sinais serão manipulados e verifique limites e dependências de segurança.</li>
-                <li><strong>Escolha a linguagem</strong>: selecione <em>Python</em> para automações de alto nível, <em>Structured Text</em> para lógica determinística ou <em>Ladder</em> para sequências gráficas simples.</li>
-                <li><strong>Modele, teste e valide</strong>: escreva o script, utilize tags simuladas quando possível e valide com um colega antes de aplicar no CLP real.</li>
-                <li><strong>Versione e documente</strong>: descreva alterações e parâmetros utilizados na área de comentários do script e mantenha versões aprovadas nomeadas de forma consistente.</li>
-            </ol>
-            <h3>Boas práticas essenciais</h3>
-            <ul>
-                <li>Proteja operações críticas com verificações de limites e estados de segurança.</li>
-                <li>Priorize variáveis declaradas no início do script e evite dependências ocultas.</li>
-                <li>Utilize funções reutilizáveis para rotinas de inicialização e desligamento.</li>
-                <li>Atualize os responsáveis quando um script entrar em produção.</li>
-            </ul>
-            <h3>Referência rápida</h3>
-            <dl class="programming-reference">
-                <div>
-                    <dt>Python</dt>
-                    <dd>Ideal para análises e integrações. Disponível biblioteca padrão reduzida focada em cálculos e comunicação.</dd>
-                </div>
-                <div>
-                    <dt>Structured Text (ST)</dt>
-                    <dd>Sintaxe semelhante a Pascal. Utilize blocos <code>IF</code>, <code>CASE</code> e <code>FOR</code> para lógica determinística.</dd>
-                </div>
-                <div>
-                    <dt>Ladder</dt>
-                    <dd>Representação textual das redes ladder. Cada linha corresponde a um ramo executado da esquerda para a direita.</dd>
-                </div>
-            </dl>
-        </article>
-    </section>
-    <section id="programming-editor" class="programming-panel" data-programming-panel="editor" aria-label="Editor de scripts">
-        <div class="script-toolbar">
-            <label>
-                <span>Nome do script</span>
-                <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
-            </label>
-            <label>
-                <span>Linguagem</span>
-                <select id="script-language" class="input-form">
-                    <option value="python">Python</option>
-                    <option value="st">Structured Text</option>
-                    <option value="ladder">Ladder</option>
-                </select>
-            </label>
-            <button id="script-save" class="btn-acao" type="button">Salvar script</button>
+<div class="informacao_clp protocol-support-card">
+    <h2>Suporte por Protocolo</h2>
+    <p class="section-description">Escolha o protocolo do CLP e execute a descoberta automática, uma simulação guiada ou carregue mapas externos conforme a maturidade de integração.</p>
+    <div class="protocol-support-grid">
+        <div class="protocol-table-wrapper">
+            <table class="protocol-table" id="protocol-support-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Protocolo</th>
+                        <th scope="col">Suporte</th>
+                        <th scope="col">Implementação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for entry in protocol_support %}
+                    <tr class="protocol-row"
+                        data-protocol="{{ entry.key }}"
+                        data-support="{{ entry.support_level }}"
+                        data-discover="{{ 'true' if entry.discover_enabled else 'false' }}"
+                        data-simulate="{{ 'true' if entry.simulate_enabled else 'false' }}"
+                        data-requires-file="{{ 'true' if entry.requires_file else 'false' }}"
+                        data-fields='{{ entry.fields|tojson }}'
+                        data-defaults='{{ entry.defaults|tojson }}'
+                        data-implementation="{{ entry.implementation }}"
+                        data-notes="{{ entry.notes or '' }}">
+                        <th scope="row">{{ entry.label }}</th>
+                        <td>
+                            <span class="support-indicator support-{{ entry.support_level }}">{{ entry.support_label }}</span>
+                        </td>
+                        <td>
+                            <span class="protocol-implementation">{{ entry.implementation }}</span>
+                            {% if entry.notes %}
+                            <small class="protocol-note">{{ entry.notes }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
-        <div id="script-editor" class="script-editor-container" data-plc-id="{{ clp.id }}"></div>
-        <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
-        <div class="script-list-wrapper">
-            <h3>Scripts guardados</h3>
-            <ul id="script-list" class="script-list" aria-live="polite"></ul>
+        <div id="protocol-inspector" class="protocol-inspector" aria-live="polite">
+            <h3 id="protocol-inspector-title">Selecione um protocolo</h3>
+            <p id="protocol-inspector-description">Clique em uma linha da matriz para configurar a conexão ou acionar o simulador.</p>
+            <form id="protocol-connection-form" novalidate>
+                <div id="protocol-connection-fields" class="protocol-fields"></div>
+            </form>
+            <div class="protocol-action-buttons">
+                <button type="button" id="protocol-discover" class="btn-acao" disabled>Localizar tags</button>
+                <button type="button" id="protocol-simulate" class="btn-acao secondary" disabled>Executar simulador</button>
+            </div>
+            <div id="protocol-feedback" class="protocol-feedback" role="status" aria-live="polite"></div>
+            <div id="protocol-discovery-results" class="protocol-discovery-results" aria-live="polite"></div>
         </div>
-    </section>
+    </div>
 </div>
+
+<div class="informacao_clp register-exchange">
+    <h2>Mapa industrial de tags</h2>
+    <p class="section-description">Arraste um ficheiro CSV ou XLSX exportado do engenheiro de configuração para registrar tags e endereços de forma padronizada.</p>
+    <div class="register-exchange__grid">
+        <div id="register-import-area" class="register-dropzone" data-plc-id="{{ clp.id }}">
+            <input type="file" id="register-import-input" accept=".csv,.xls,.xlsx" hidden>
+            <div class="register-dropzone__content">
+                <strong>Solte o arquivo aqui</strong>
+                <p>ou clique para selecionar.</p>
+                <span class="text-muted">Formatos suportados: CSV, XLS, XLSX.</span>
+            </div>
+        </div>
+        <div class="register-exchange__actions">
+            <div class="export-controls">
+                <label for="register-export-format">Formato de exportação</label>
+                <select id="register-export-format" class="input-form">
+                    <option value="xlsx">XLSX</option>
+                    <option value="csv">CSV</option>
+                </select>
+            </div>
+            <button type="button" id="register-export-current" class="btn-acao">Exportar CLP atual</button>
+            <button type="button" id="register-export-all" class="btn-acao secondary">Exportar todos os CLPs</button>
+            <p class="export-hint">A exportação consolida controladores, protocolos, tags e endereços seguindo práticas ISA-95.</p>
+        </div>
+    </div>
+    <div id="register-import-feedback" class="register-feedback" role="status" aria-live="polite"></div>
+</div>
+
+<section class="programming-hub" aria-labelledby="programming-hub-title">
+    <header class="programming-hub__header">
+        <h2 id="programming-hub-title">Área dedicada de programação</h2>
+        <p>Mantenha scripts e documentação isolados da operação diária. Utilize os separadores abaixo para alternar entre guias e editor.</p>
+    </header>
+    <div class="informacao_clp programming-section">
+        <h3>Programação do CLP</h3>
+        <p class="section-description">Consulte a documentação antes de abrir o editor – o foco é operar com segurança e reaproveitar scripts validados.</p>
+        <nav class="programming-tabs" aria-label="Opções de programação">
+            <button type="button" class="programming-tab active" data-programming-tab="docs">Documentação</button>
+            <button type="button" class="programming-tab" data-programming-tab="editor">Editor de scripts</button>
+        </nav>
+        <section id="programming-docs" class="programming-panel active" data-programming-panel="docs" aria-labelledby="programming-docs-title">
+            <article class="programming-doc">
+                <h3 id="programming-docs-title">Como programar este CLP</h3>
+                <ol>
+                    <li><strong>Revise o objetivo</strong>: mapeie quais registradores e sinais serão manipulados e verifique limites e dependências de segurança.</li>
+                    <li><strong>Escolha a linguagem</strong>: selecione <em>Python</em> para automações de alto nível, <em>Structured Text</em> para lógica determinística ou <em>Ladder</em> para sequências gráficas simples.</li>
+                    <li><strong>Modele, teste e valide</strong>: escreva o script, utilize tags simuladas quando possível e valide com um colega antes de aplicar no CLP real.</li>
+                    <li><strong>Versione e documente</strong>: descreva alterações e parâmetros utilizados na área de comentários do script e mantenha versões aprovadas nomeadas de forma consistente.</li>
+                </ol>
+                <h3>Boas práticas essenciais</h3>
+                <ul>
+                    <li>Proteja operações críticas com verificações de limites e estados de segurança.</li>
+                    <li>Priorize variáveis declaradas no início do script e evite dependências ocultas.</li>
+                    <li>Utilize funções reutilizáveis para rotinas de inicialização e desligamento.</li>
+                    <li>Atualize os responsáveis quando um script entrar em produção.</li>
+                </ul>
+                <h3>Referência rápida</h3>
+                <dl class="programming-reference">
+                    <div>
+                        <dt>Python</dt>
+                        <dd>Ideal para análises e integrações. Disponível biblioteca padrão reduzida focada em cálculos e comunicação.</dd>
+                    </div>
+                    <div>
+                        <dt>Structured Text (ST)</dt>
+                        <dd>Sintaxe semelhante a Pascal. Utilize blocos <code>IF</code>, <code>CASE</code> e <code>FOR</code> para lógica determinística.</dd>
+                    </div>
+                    <div>
+                        <dt>Ladder</dt>
+                        <dd>Representação textual das redes ladder. Cada linha corresponde a um ramo executado da esquerda para a direita.</dd>
+                    </div>
+                </dl>
+            </article>
+        </section>
+        <section id="programming-editor" class="programming-panel" data-programming-panel="editor" aria-label="Editor de scripts">
+            <div class="script-toolbar">
+                <label>
+                    <span>Nome do script</span>
+                    <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
+                </label>
+                <label>
+                    <span>Linguagem</span>
+                    <select id="script-language" class="input-form">
+                        <option value="python">Python</option>
+                        <option value="st">Structured Text</option>
+                        <option value="ladder">Ladder</option>
+                    </select>
+                </label>
+                <button id="script-save" class="btn-acao" type="button">Salvar script</button>
+            </div>
+            <div id="script-editor" class="script-editor-container" data-plc-id="{{ clp.id }}"></div>
+            <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
+            <div class="script-list-wrapper">
+                <h3>Scripts guardados</h3>
+                <ul id="script-list" class="script-list" aria-live="polite"></ul>
+            </div>
+        </section>
+    </div>
+</section>
 
 <div class="informacao_clp">
     <h2>Leitor de Registrador Modbus</h2>

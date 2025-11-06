@@ -16,6 +16,7 @@ from src.repository.PLC_repository import Plcrepo
 from src.runtime.script_engine import ScriptEngine
 from src.services.register_import_service import RegisterImportExportService
 from src.services.tag_discovery_service import discover_tags as discover_tags_async
+from src.services.tag_simulation_service import get_simulated_tags
 from src.utils.role.roles import role_required
 from src.utils.tags import normalize_tag
 
@@ -87,6 +88,17 @@ def api_tag_discovery(protocol: str):
         return jsonify({"message": str(exc)}), 400
     except RuntimeError as exc:  # pragma: no cover - depende de libs externas
         return jsonify({"message": str(exc)}), 500
+
+    return jsonify({"tags": tags})
+
+
+@api_bp.route("/tag-discovery/<protocol>/simulate", methods=["GET"])
+@login_required
+def api_tag_discovery_simulate(protocol: str):
+    try:
+        tags = get_simulated_tags(protocol)
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 404
 
     return jsonify({"tags": tags})
 
@@ -789,6 +801,39 @@ def export_registers():
 
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     filename = f"registers_plc_{clp_id}_{timestamp}.{file_format}"
+
+    response = make_response(data)
+    response.headers["Content-Type"] = mime
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
+
+
+@api_bp.route("/registers/export/all", methods=["GET"])
+@login_required
+def export_all_registers():
+    file_format = request.args.get("format", "csv").lower()
+    include_inactive = request.args.get("include_inactive", "false").lower() == "true"
+    if file_format not in {"csv", "xlsx"}:
+        file_format = "csv"
+
+    query = (
+        Register.query.options(selectinload(Register.plc))
+        .join(PLC)
+        .order_by(PLC.name, Register.name)
+    )
+
+    if not include_inactive:
+        query = query.filter(Register.is_active.is_(True))
+
+    registers = query.all()
+    if not registers:
+        return jsonify({"message": "Não há registradores cadastrados."}), 404
+
+    frame = register_service.export_dataframe(registers, include_plc=True)
+    data, mime = register_service.export_to_bytes(frame, file_format=file_format)
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"registers_all_{timestamp}.{file_format}"
 
     response = make_response(data)
     response.headers["Content-Type"] = mime
