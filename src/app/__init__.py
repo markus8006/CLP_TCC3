@@ -61,6 +61,7 @@ def create_app(config_name='development'):
             AuditLog,
             DataLog,
             FactoryLayout,
+            ManualCommand,
             Organization,
             PLC,
             Register,
@@ -90,6 +91,7 @@ def register_blueprints(app):
     from src.app.routes.coleta_routes import coleta_bp
     from src.app.routes.dashboard_routes import dashboard_bp
     from src.app.routes.programming_routes import programming_bp
+    from src.app.routes.hmi_routes import hmi_bp
 #   from app.web.alarm_views import alarm_bp
 #     from app.web.polling_control import polling_bp
 #     from app.api import api_bp
@@ -101,6 +103,7 @@ def register_blueprints(app):
     app.register_blueprint(coleta_bp, url_prefix='/coleta')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(programming_bp, url_prefix='/programacao')
+    app.register_blueprint(hmi_bp, url_prefix='/hmi')
     logger.info("INICIANDO API")
     app.register_blueprint(api_bp, url_prefix='/api')
     logger.info("FIM API")

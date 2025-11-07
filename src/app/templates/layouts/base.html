@@ -73,6 +73,7 @@
             <a href="/">Home</a>
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+            <a href="{{ url_for('hmi.hmi_home') }}">Interface HMI</a>
             {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('engineer') %}
             <a href="{{ url_for('coleta.control') }}">Coleta IPs</a>

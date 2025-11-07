@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, make_response, request
 from flask_login import current_user, login_required
@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from src.app.extensions import db
 from src.models.Alarms import Alarm, AlarmDefinition
 from src.models.Data import DataLog
+from src.models.ManualControl import ManualCommand
 from src.models.PLCs import PLC
 from src.models.Registers import Register
 from src.repository.FactoryLayout_repository import FactoryLayoutRepository
@@ -18,6 +19,8 @@ from src.services.register_import_service import RegisterImportExportService
 from src.services.address_mapping import AddressMappingEngine
 from src.services.tag_discovery_service import discover_tags as discover_tags_async
 from src.services.tag_simulation_service import get_simulated_tags
+from src.services.manual_control_service import ManualControlService
+from src.services.historian_sync_service import HistorianSyncService
 from src.utils.role.roles import role_required
 from src.utils.tags import normalize_tag
 
@@ -32,6 +35,8 @@ STATUS_LABELS = {
 
 register_service = RegisterImportExportService()
 script_engine = ScriptEngine()
+manual_control_service = ManualControlService()
+historian_sync_service = HistorianSyncService()
 
 
 def _stringify(value):
@@ -1135,3 +1140,274 @@ def delete_plc_script(plc_id: int, script_id: int):
 
     script_engine.delete_script(script_id)
     return jsonify({"deleted": script_id}), 200
+
+
+@api_bp.route("/hmi/overview", methods=["GET"])
+@login_required
+def hmi_overview():
+    """Aggregates data for the synoptic HMI view and performance metrics."""
+
+    alarm_by_plc = {
+        plc_id: count
+        for plc_id, count in db.session.query(Alarm.plc_id, func.count(Alarm.id))
+        .filter(Alarm.state == "ACTIVE")
+        .group_by(Alarm.plc_id)
+    }
+
+    alarm_by_register = {
+        register_id: count
+        for register_id, count in db.session.query(Alarm.register_id, func.count(Alarm.id))
+        .filter(Alarm.state == "ACTIVE", Alarm.register_id.isnot(None))
+        .group_by(Alarm.register_id)
+    }
+
+    plcs = (
+        db.session.query(PLC)
+        .options(selectinload(PLC.registers))
+        .order_by(PLC.vlan_id.nullsfirst(), PLC.name)
+        .all()
+    )
+
+    areas: dict[str, dict] = {}
+    register_options: list[dict[str, object]] = []
+    for plc in plcs:
+        area_key = _vlan_identifier(plc.vlan_id)
+        area = areas.setdefault(
+            area_key,
+            {
+                "id": area_key,
+                "label": _vlan_label(plc.vlan_id),
+                "plcs": [],
+            },
+        )
+
+        registers_payload = []
+        for register in sorted(plc.registers, key=lambda item: item.name.lower()):
+            if not register.is_active:
+                continue
+            status = _register_status(register, alarm_by_register)
+            registers_payload.append(
+                {
+                    "id": register.id,
+                    "name": register.name,
+                    "tag": register.tag or register.tag_name,
+                    "last_value": register.last_value,
+                    "unit": register.unit,
+                    "status": status,
+                    "last_read": register.last_read.isoformat() if register.last_read else None,
+                }
+            )
+            register_options.append(
+                {
+                    "id": register.id,
+                    "label": f"{plc.name} · {register.name}",
+                    "plc_id": plc.id,
+                    "status": status,
+                }
+            )
+
+        area["plcs"].append(
+            {
+                "id": plc.id,
+                "name": plc.name,
+                "protocol": plc.protocol,
+                "status": _plc_status(plc, alarm_by_plc),
+                "registers": registers_payload,
+            }
+        )
+
+    totals_row = db.session.query(
+        func.count(PLC.id),
+        func.sum(case((PLC.is_online.is_(True), 1), else_=0)),
+    ).one()
+
+    total_clps = totals_row[0] or 0
+    online_clps = int(totals_row[1] or 0)
+    availability = (online_clps / total_clps * 100) if total_clps else 0.0
+
+    horizon_24h = datetime.now(timezone.utc) - timedelta(hours=24)
+    report_metrics = {
+        "clp_availability": round(availability, 1),
+        "active_alarms": db.session.query(func.count(Alarm.id))
+        .filter(Alarm.state == "ACTIVE")
+        .scalar()
+        or 0,
+        "manual_commands_24h": db.session.query(func.count(ManualCommand.id))
+        .filter(ManualCommand.created_at >= horizon_24h)
+        .scalar()
+        or 0,
+        "logs_last_24h": db.session.query(func.count(DataLog.id))
+        .filter(DataLog.timestamp >= horizon_24h)
+        .scalar()
+        or 0,
+    }
+
+    return jsonify(
+        {
+            "areas": list(areas.values()),
+            "register_options": register_options,
+            "report_metrics": report_metrics,
+        }
+    )
+
+
+@api_bp.route("/hmi/alarms", methods=["GET"])
+@login_required
+def hmi_active_alarms():
+    """Return active alarms with contextual information."""
+
+    alarms = (
+        db.session.query(Alarm)
+        .options(selectinload(Alarm.plc), selectinload(Alarm.register))
+        .filter(Alarm.state == "ACTIVE")
+        .order_by(Alarm.priority.desc(), Alarm.triggered_at.desc())
+        .limit(50)
+        .all()
+    )
+
+    now = datetime.now(timezone.utc)
+    payload = []
+    for alarm in alarms:
+        payload.append(
+            {
+                "id": alarm.id,
+                "priority": alarm.priority.lower() if alarm.priority else "medium",
+                "message": alarm.message,
+                "plc": alarm.plc.name if alarm.plc else None,
+                "register": alarm.register.name if alarm.register else None,
+                "triggered_at": alarm.triggered_at.isoformat()
+                if alarm.triggered_at
+                else None,
+                "age_seconds": (
+                    (now - alarm.triggered_at).total_seconds()
+                    if alarm.triggered_at
+                    else None
+                ),
+            }
+        )
+
+    return jsonify({"alarms": payload})
+
+
+@api_bp.route("/hmi/manual-commands", methods=["GET"])
+@login_required
+def hmi_manual_history():
+    """Return the most recent manual commands executed via the HMI."""
+
+    commands = manual_control_service.recent_commands(limit=25)
+    return jsonify({"commands": [command.as_dict() for command in commands]})
+
+
+@api_bp.route("/hmi/register/<int:register_id>/trend", methods=["GET"])
+@login_required
+def hmi_register_trend(register_id: int):
+    """Return the last readings for the requested register."""
+
+    register = db.session.query(Register).filter(Register.id == register_id).first()
+    if not register:
+        return jsonify({"message": "Registrador não encontrado"}), 404
+
+    logs = (
+        db.session.query(DataLog)
+        .filter(DataLog.register_id == register_id)
+        .filter(DataLog.timestamp.isnot(None))
+        .order_by(DataLog.timestamp.desc())
+        .limit(200)
+        .all()
+    )
+    logs.reverse()
+
+    points = [
+        {
+            "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+            "value": log.value_float,
+            "raw": log.raw_value,
+            "quality": log.quality,
+        }
+        for log in logs
+    ]
+
+    return jsonify(
+        {
+            "register": {
+                "id": register.id,
+                "name": register.name,
+                "unit": register.unit,
+            },
+            "points": points,
+        }
+    )
+
+
+@api_bp.route("/hmi/register/<int:register_id>/manual", methods=["POST"])
+@login_required
+@role_required("operator")
+def hmi_execute_manual_command(register_id: int):
+    """Execute a manual command for a register."""
+
+    payload = request.get_json(silent=True) or {}
+    command_type = payload.get("command_type", "setpoint")
+
+    try:
+        value = payload.get("value")
+        value_numeric = float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return jsonify({"message": "Valor numérico inválido."}), 400
+
+    note = payload.get("note")
+
+    try:
+        result = manual_control_service.execute_command(
+            register_id=register_id,
+            command_type=command_type,
+            value=value_numeric,
+            value_text=str(value) if value is not None else None,
+            executed_by=current_user.username,
+            note=note,
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    return jsonify(
+        {
+            "command": result.command.as_dict(),
+            "datalog_id": result.datalog.id,
+        }
+    )
+
+
+@api_bp.route("/historian/export", methods=["POST"])
+@login_required
+@role_required("admin")
+def historian_export():
+    """Generate a CSV snapshot of historian data for BI consumption."""
+
+    payload = request.get_json(silent=True) or {}
+
+    def _parse_dt(value):
+        if not value:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return parsed
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use ISO 8601.")
+
+    try:
+        start = _parse_dt(payload.get("start"))
+        end = _parse_dt(payload.get("end"))
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    result = historian_sync_service.export_snapshot(start=start, end=end)
+
+    return jsonify(
+        {
+            "file": str(result.file_path),
+            "rows": result.rows,
+            "started_at": result.started_at.isoformat(),
+            "finished_at": result.finished_at.isoformat(),
+        }
+    )
