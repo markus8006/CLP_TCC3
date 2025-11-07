@@ -1,66 +1,66 @@
+"""Repositórios para registradores e organizações."""
+
+from __future__ import annotations
+
+from typing import Any, List, Optional
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from src.models.PLCs import Organization
 from src.models.Registers import Register
 from src.repository.Base_repository import BaseRepo
 from src.utils.logs import logger
-from sqlalchemy.orm import Session
-from typing import Optional, List, Any
-from sqlalchemy.exc import SQLAlchemyError
-
 
 
 class RegisterRepo(BaseRepo):
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self, session: Optional[Session] = None) -> None:
         if Register is None:
             raise RuntimeError("Modelo Register não encontrado. Ajuste os imports.")
         super().__init__(Register, session=session)
 
     def list_by_plc(self, plc_id: int) -> List[Register]:
         return self.find_by(plc_id=plc_id)
-    
+
     def add(self, obj: Any, commit: bool = True) -> Any:
         try:
-            # Use filtros relevantes para saber se já existe
-            exists = self.exist(
-                plc_id=obj.plc_id,
-                address=obj.address
-            )
-            if not exists:
-                result = super().add(obj, commit=commit)
-                logger.info(f"register {obj} adicionado")
-            else:
-                result = self.update(obj, commit=commit)
-                logger.info(f"register {obj} atualizado")
-            return result
+            existing = self.first_by(plc_id=obj.plc_id, address=obj.address)
+            if existing:
+                logger.info("Registro %s já existe — actualizando dados.", existing.id)
+                for attr in [
+                    "name",
+                    "register_type",
+                    "data_type",
+                    "unit",
+                    "poll_rate",
+                    "is_active",
+                ]:
+                    if hasattr(obj, attr):
+                        setattr(existing, attr, getattr(obj, attr))
+                return self.update(existing, commit=commit)
+
+            self.session.add(obj)
+            self._commit(commit)
+            logger.info("Registro %s adicionado", obj)
+            return obj
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao adicionar %s", getattr(self.model, '__name__', str(self.model)))
+            logger.exception("Erro ao adicionar %s", self.model.__name__)
             raise
-    def get_registers_for_plc(self, plc_id: int):
-        """
-    Esta função busca os registradores para um CLP específico.
-    É o "provider" que o ActivePLCPoller usará.
-        """
-        # LOG DE DIAGNÓSTICO:
-        logger.debug(f"Buscando registradores para o plc_id: {plc_id}")
-        
-        # Filtros que estamos usando na busca
-        filters = {'plc_id': plc_id, 'is_active': True}
-        
-        registers_found = self.find_by(**filters)
-        
-        # LOG DE DIAGNÓSTICO:
-        if registers_found:
-            logger.info(f"Encontrados {len(registers_found)} registradores para o plc_id: {plc_id}")
-        else:
-            # Este é o log que você estava vendo, mas agora com mais contexto.
-            logger.warning(f"Nenhum registrador ativo encontrado para o plc_id: {plc_id} usando os filtros: {filters}")
-            
-        return registers_found
 
+    def get_registers_for_plc(self, plc_id: int) -> List[Register]:
+        """Provider utilizado pelo poller para carregar registradores activos."""
+
+        registers = self.find_by(plc_id=plc_id, is_active=True)
+        if registers:
+            logger.debug("%d registradores activos encontrados para PLC %s", len(registers), plc_id)
+        else:
+            logger.warning("Nenhum registrador activo encontrado para PLC %s", plc_id)
+        return registers
 
 
 class OrganizationRepo(BaseRepo):
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self, session: Optional[Session] = None) -> None:
         if Organization is None:
             raise RuntimeError("Modelo Organization não encontrado. Ajuste os imports.")
         super().__init__(Organization, session=session)
@@ -70,5 +70,6 @@ class OrganizationRepo(BaseRepo):
         if not org:
             return []
         return list(org.children)
-    
+
+
 RegRepo = RegisterRepo()
