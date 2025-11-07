@@ -267,8 +267,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.6);
+}
+
+.mini-card__status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.mini-card__footer .inline-form {
+    margin: 0;
 }
 
 @media (max-width: 768px) {

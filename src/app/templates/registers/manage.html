@@ -62,6 +62,7 @@
                         <th>Dados</th>
                         <th>Unidade</th>
                         <th>Tag</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,6 +75,12 @@
                         <td>{{ register.data_type }}</td>
                         <td>{{ register.unit or '-' }}</td>
                         <td>{{ register.tag or '-' }}</td>
+                        <td class="actions">
+                            <form class="inline-form" method="POST" action="{{ url_for('admin.delete_register', register_id=register.id) }}" onsubmit="return confirm('Remover este registrador? Alarmes associados também serão excluídos.');">
+                                {{ csrf_token() }}
+                                <button type="submit" class="btn danger">Eliminar</button>
+                            </form>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
