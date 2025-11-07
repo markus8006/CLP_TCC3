@@ -81,6 +81,7 @@
             {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('admin') %}
             <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
+            <a href="{{ url_for('admin.manage_email_settings') }}">Configurar Email</a>
             {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('moderator') %}
             <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>

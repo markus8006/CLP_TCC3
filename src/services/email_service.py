@@ -6,9 +6,10 @@ import smtplib
 from email.message import EmailMessage
 from typing import Iterable, Sequence
 
-from flask import current_app
+from flask import current_app, has_app_context
 
 from src.utils.logs import logger
+from src.services.email_settings_service import get_email_settings
 
 
 def _normalise_recipients(recipients: Iterable[str]) -> Sequence[str]:
@@ -33,11 +34,11 @@ def send_email(subject: str, body: str, recipients: Iterable[str]) -> bool:
         logger.debug("Nenhum destinatário válido para enviar email de alarme")
         return False
 
-    try:
-        config = current_app.config  # type: ignore[attr-defined]
-    except RuntimeError:
+    if not has_app_context():
         logger.warning("Tentativa de envio de email fora do contexto da aplicação")
         return False
+
+    config = get_email_settings()
 
     if config.get("MAIL_SUPPRESS_SEND"):
         logger.info("Envio de email suprimido (MAIL_SUPPRESS_SEND=True)")
@@ -45,16 +46,26 @@ def send_email(subject: str, body: str, recipients: Iterable[str]) -> bool:
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = config.get("MAIL_DEFAULT_SENDER", "alarms@example.com")
+    message["From"] = config.get("MAIL_DEFAULT_SENDER") or current_app.config.get(
+        "MAIL_DEFAULT_SENDER", "alarms@example.com"
+    )
     message["To"] = ", ".join(normalised)
     message.set_content(body)
 
-    server = config.get("MAIL_SERVER", "localhost")
-    port = int(config.get("MAIL_PORT", 25))
-    username = config.get("MAIL_USERNAME")
-    password = config.get("MAIL_PASSWORD")
-    use_tls = bool(config.get("MAIL_USE_TLS", False))
-    use_ssl = bool(config.get("MAIL_USE_SSL", False))
+    server = config.get("MAIL_SERVER") or current_app.config.get("MAIL_SERVER", "localhost")
+    port = int(config.get("MAIL_PORT") or current_app.config.get("MAIL_PORT", 25))
+    username = config.get("MAIL_USERNAME") or current_app.config.get("MAIL_USERNAME")
+    password = config.get("MAIL_PASSWORD") or current_app.config.get("MAIL_PASSWORD")
+    use_tls = bool(
+        config.get("MAIL_USE_TLS")
+        if config.get("MAIL_USE_TLS") is not None
+        else current_app.config.get("MAIL_USE_TLS", False)
+    )
+    use_ssl = bool(
+        config.get("MAIL_USE_SSL")
+        if config.get("MAIL_USE_SSL") is not None
+        else current_app.config.get("MAIL_USE_SSL", False)
+    )
 
     try:
         if use_ssl:
