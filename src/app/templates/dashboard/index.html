@@ -16,8 +16,20 @@
     <button id="toggle-edit" class="btn btn-secondary" type="button">Alternar modo de edição</button>
     <button id="save-layout" class="btn btn-primary" type="button">Salvar layout</button>
     {% endif %}
+    <div class="export-all-controls">
+      <label for="dashboard-export-format">Exportar registradores</label>
+      <div class="export-all-controls__row">
+        <select id="dashboard-export-format" class="input-form">
+          <option value="xlsx">XLSX</option>
+          <option value="csv">CSV</option>
+        </select>
+        <button id="dashboard-export-all" class="btn btn-secondary" type="button">Exportar todos os CLPs</button>
+      </div>
+    </div>
   </div>
 </section>
+
+<div id="dashboard-export-feedback" class="export-feedback" role="status" aria-live="polite"></div>
 
 <section class="summary-cards" aria-label="Indicadores principais">
   <article class="summary-card" data-summary="total-clps">

@@ -1,0 +1,133 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Programação de CLPs{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/clp/detalhes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/programming/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="programming-page" aria-labelledby="programming-page-title">
+    <header class="programming-page__header">
+        <div>
+            <h1 id="programming-page-title">Área dedicada de programação</h1>
+            <p>Centralize scripts aprovados e documentação técnica em um único espaço focado na engenharia de automação.</p>
+        </div>
+        <form method="get" class="programming-selector" aria-label="Selecionar CLP para programar">
+            <label for="programming-plc-select">CLP alvo</label>
+            <select id="programming-plc-select" name="plc_id" class="input-form" {% if not clps %}disabled{% endif %}>
+                {% if not clps %}
+                    <option>Nenhum CLP cadastrado</option>
+                {% else %}
+                    {% for plc in clps %}
+                        <option value="{{ plc.id }}" {% if selected_plc and plc.id == selected_plc.id %}selected{% endif %}>
+                            {{ plc.name or 'Sem nome' }} · {{ plc.ip_address }}{% if plc.vlan_id is not none %} · VLAN {{ plc.vlan_id }}{% endif %}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+            <noscript>
+                <button type="submit" class="btn-acao">Carregar</button>
+            </noscript>
+        </form>
+    </header>
+
+    {% if not selected_plc %}
+        <div class="programming-empty" role="status" aria-live="polite">
+            <p>Cadastre um CLP ou selecione um registro existente para liberar o editor de scripts.</p>
+        </div>
+    {% else %}
+        <section class="programming-hub" aria-labelledby="programming-hub-title">
+            <header class="programming-hub__header">
+                <h2 id="programming-hub-title">Programação de {{ selected_plc.name or selected_plc.ip_address }}</h2>
+                <p>Revise orientações, escolha a linguagem adequada e mantenha scripts versionados com rastreabilidade.</p>
+            </header>
+            <div class="informacao_clp programming-section">
+                <h3>Ambiente do script</h3>
+                <p class="section-description">Consulte a documentação antes de abrir o editor – utilize revisões em pares e ambientes de teste para validar cada alteração.</p>
+                <nav class="programming-tabs" aria-label="Opções de programação">
+                    <button type="button" class="programming-tab active" data-programming-tab="docs">Documentação</button>
+                    <button type="button" class="programming-tab" data-programming-tab="editor">Editor de scripts</button>
+                </nav>
+                <section id="programming-docs" class="programming-panel active" data-programming-panel="docs" aria-labelledby="programming-docs-title">
+                    <article class="programming-doc">
+                        <h3 id="programming-docs-title">Como programar este CLP</h3>
+                        <ol>
+                            <li><strong>Revise o objetivo</strong>: mapeie quais registradores e sinais serão manipulados e verifique limites e dependências de segurança.</li>
+                            <li><strong>Escolha a linguagem</strong>: selecione <em>Python</em> para automações de alto nível, <em>Structured Text</em> para lógica determinística ou <em>Ladder</em> para sequências gráficas simples.</li>
+                            <li><strong>Modele, teste e valide</strong>: escreva o script, utilize tags simuladas quando possível e valide com um colega antes de aplicar no CLP real.</li>
+                            <li><strong>Versione e documente</strong>: descreva alterações e parâmetros utilizados na área de comentários do script e mantenha versões aprovadas nomeadas de forma consistente.</li>
+                        </ol>
+                        <h3>Boas práticas essenciais</h3>
+                        <ul>
+                            <li>Proteja operações críticas com verificações de limites e estados de segurança.</li>
+                            <li>Priorize variáveis declaradas no início do script e evite dependências ocultas.</li>
+                            <li>Utilize funções reutilizáveis para rotinas de inicialização e desligamento.</li>
+                            <li>Atualize os responsáveis quando um script entrar em produção.</li>
+                        </ul>
+                        <h3>Referência rápida</h3>
+                        <dl class="programming-reference">
+                            <div>
+                                <dt>Python</dt>
+                                <dd>Ideal para análises e integrações. Disponível biblioteca padrão reduzida focada em cálculos e comunicação.</dd>
+                            </div>
+                            <div>
+                                <dt>Structured Text (ST)</dt>
+                                <dd>Sintaxe semelhante a Pascal. Utilize blocos <code>IF</code>, <code>CASE</code> e <code>FOR</code> para lógica determinística.</dd>
+                            </div>
+                            <div>
+                                <dt>Ladder</dt>
+                                <dd>Representação textual das redes ladder. Cada linha corresponde a um ramo executado da esquerda para a direita.</dd>
+                            </div>
+                        </dl>
+                    </article>
+                </section>
+                <section id="programming-editor" class="programming-panel" data-programming-panel="editor" aria-label="Editor de scripts">
+                    <div class="script-toolbar">
+                        <label>
+                            <span>Nome do script</span>
+                            <input type="text" id="script-name" class="input-form" placeholder="Ex: SequenciaInicial">
+                        </label>
+                        <label>
+                            <span>Linguagem</span>
+                            <select id="script-language" class="input-form">
+                                <option value="python">Python</option>
+                                <option value="st">Structured Text</option>
+                                <option value="ladder">Ladder</option>
+                            </select>
+                        </label>
+                        <button id="script-save" class="btn-acao" type="button">Salvar script</button>
+                    </div>
+                    <div id="script-editor" class="script-editor-container" data-plc-id="{{ selected_plc.id }}"></div>
+                    <div id="script-status" class="script-status" role="status" aria-live="polite"></div>
+                    <div class="script-list-wrapper">
+                        <h3>Scripts guardados</h3>
+                        <ul id="script-list" class="script-list" aria-live="polite"></ul>
+                    </div>
+                </section>
+            </div>
+        </section>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
+    <script>
+        window.PROGRAMMING_CONTEXT = {
+            plcId: {{ selected_plc.id if selected_plc else 'null' }},
+            hasPlc: {{ 'true' if selected_plc else 'false' }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='scripts/programming.js') }}"></script>
+    <script>
+        (function () {
+            const select = document.getElementById('programming-plc-select');
+            if (!select) return;
+            select.addEventListener('change', () => {
+                select.form?.submit();
+            });
+        })();
+    </script>
+{% endblock %}

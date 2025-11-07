@@ -76,6 +76,7 @@
             {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('engineer') %}
             <a href="{{ url_for('coleta.control') }}">Coleta IPs</a>
+            <a href="{{ url_for('programming.hub') }}">Programação</a>
             {% endif %}
             {% if current_user.is_authenticated and current_user.has_permission('admin') %}
             <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
