@@ -26,6 +26,12 @@ from src.utils.tags import normalize_tag
 
 api_bp = Blueprint("apii", __name__)
 
+
+def api_role_required(min_role):
+    """Decorator configurado para respostas JSON."""
+
+    return role_required(min_role, format="json")
+
 STATUS_LABELS = {
     "online": "Online",
     "offline": "Offline",
@@ -622,7 +628,7 @@ def dashboard_layout():
 
 @api_bp.route("/dashboard/layout", methods=["PUT"])
 @login_required
-@role_required("admin")
+@api_role_required("admin")
 def update_dashboard_layout():
     payload = request.get_json(silent=True) or {}
     nodes = payload.get("nodes")
@@ -1298,6 +1304,16 @@ def hmi_manual_history():
     return jsonify({"commands": [command.as_dict() for command in commands]})
 
 
+@api_bp.route("/hmi/manual-commands/pending", methods=["GET"])
+@login_required
+@role_required("engineer")
+def hmi_manual_pending():
+    """Expose commands awaiting approval for supervisory review."""
+
+    commands = manual_control_service.pending_commands()
+    return jsonify({"commands": [command.as_dict() for command in commands]})
+
+
 @api_bp.route("/hmi/register/<int:register_id>/trend", methods=["GET"])
 @login_required
 def hmi_register_trend(register_id: int):
@@ -1341,18 +1357,20 @@ def hmi_register_trend(register_id: int):
 
 @api_bp.route("/hmi/register/<int:register_id>/manual", methods=["POST"])
 @login_required
-@role_required("operator")
+@api_role_required("operator")
 def hmi_execute_manual_command(register_id: int):
-    """Execute a manual command for a register."""
+    """Enqueue a manual command for supervisory approval."""
 
     payload = request.get_json(silent=True) or {}
     command_type = payload.get("command_type", "setpoint")
 
-    try:
-        value = payload.get("value")
-        value_numeric = float(value) if value is not None else None
-    except (TypeError, ValueError):
-        return jsonify({"message": "Valor numérico inválido."}), 400
+    value = payload.get("value")
+    value_numeric = None
+    if value is not None:
+        try:
+            value_numeric = float(value)
+        except (TypeError, ValueError):
+            return jsonify({"message": "Valor numérico inválido."}), 400
 
     note = payload.get("note")
 
@@ -1370,15 +1388,83 @@ def hmi_execute_manual_command(register_id: int):
 
     return jsonify(
         {
+            "message": "Comando enviado para aprovação.",
             "command": result.command.as_dict(),
-            "datalog_id": result.datalog.id,
+        }
+    )
+
+
+@api_bp.route("/interlock/manual-commands/<int:command_id>/approve", methods=["POST"])
+@login_required
+@role_required("engineer")
+def interlock_approve_manual_command(command_id: int):
+    """Approve a pending manual command."""
+
+    payload = request.get_json(silent=True) or {}
+    reviewer_note = payload.get("note")
+    try:
+        command = manual_control_service.approve_command(
+            command_id,
+            approved_by=current_user.username,
+            reviewer_note=reviewer_note,
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    return jsonify({"command": command.as_dict()})
+
+
+@api_bp.route("/interlock/manual-commands/<int:command_id>/reject", methods=["POST"])
+@login_required
+@role_required("engineer")
+def interlock_reject_manual_command(command_id: int):
+    """Reject a manual command request."""
+
+    payload = request.get_json(silent=True) or {}
+    reason = payload.get("reason")
+    if not reason:
+        return jsonify({"message": "Informe o motivo da rejeição."}), 400
+
+    try:
+        command = manual_control_service.reject_command(
+            command_id,
+            rejected_by=current_user.username,
+            reason=reason,
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    return jsonify({"command": command.as_dict()})
+
+
+@api_bp.route("/interlock/manual-commands/<int:command_id>/dispatch", methods=["POST"])
+@login_required
+@role_required("engineer")
+def interlock_dispatch_manual_command(command_id: int):
+    """Dispatch an approved manual command to the PLC writer layer."""
+
+    payload = request.get_json(silent=True) or {}
+    execution_note = payload.get("note")
+    try:
+        result = manual_control_service.dispatch_command(
+            command_id,
+            dispatcher=current_user.username,
+            execution_note=execution_note,
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    return jsonify(
+        {
+            "command": result.command.as_dict(),
+            "datalog_id": result.datalog.id if result.datalog else None,
         }
     )
 
 
 @api_bp.route("/historian/export", methods=["POST"])
 @login_required
-@role_required("admin")
+@api_role_required("admin")
 def historian_export():
     """Generate a CSV snapshot of historian data for BI consumption."""
 

@@ -29,8 +29,8 @@ from src.services.register_admin_service import (
     delete_register as delete_register_entry,
 )
 from src.services.polling_runtime import trigger_polling_refresh
-from src.services.settings_service import get_polling_enabled
-from src.utils import role_required
+from src.services.settings_service import get_polling_enabled, set_polling_enabled
+from src.utils.role.roles import role_required
 from src.utils.constants.constants import ROLES_HIERARCHY
 
 from .admin_forms import (
@@ -48,6 +48,12 @@ AlarmDefRepo = AlarmDefinitionRepo()
 admin_bp = Blueprint("admin", __name__)
 
 
+def admin_role_required(min_role):
+    """Decorator configurado para respostas HTML."""
+
+    return role_required(min_role, format="html")
+
+
 def _plc_label(plc: PLC) -> str:
     """Return a concise label with name, IP and optional VLAN."""
 
@@ -57,7 +63,7 @@ def _plc_label(plc: PLC) -> str:
 
 @admin_bp.route("/users", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.ADMIN)
+@admin_role_required(UserRole.ADMIN)
 def manage_users():
     create_form = UserCreationForm()
 
@@ -116,7 +122,7 @@ def manage_users():
 
 @admin_bp.route("/users/<int:user_id>", methods=["POST"])
 @login_required
-@role_required(UserRole.ADMIN)
+@admin_role_required(UserRole.ADMIN)
 def update_user(user_id: int):
     user = User.query.get_or_404(user_id)
     form = UserUpdateForm(prefix=f"user-{user.id}", formdata=request.form)
@@ -138,7 +144,7 @@ def update_user(user_id: int):
 
 @admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
 @login_required
-@role_required(UserRole.ADMIN)
+@admin_role_required(UserRole.ADMIN)
 def delete_user(user_id: int):
     user = User.query.get_or_404(user_id)
 
@@ -158,7 +164,7 @@ def delete_user(user_id: int):
 
 @admin_bp.route("/clps", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.MODERATOR)
+@admin_role_required(UserRole.MODERATOR)
 def manage_clps():
     form = PLCForm()
 
@@ -209,7 +215,7 @@ def manage_clps():
 
 @admin_bp.route("/clps/<int:plc_id>", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.MODERATOR)
+@admin_role_required(UserRole.MODERATOR)
 def edit_clp(plc_id: int):
     plc = PLC.query.get_or_404(plc_id)
     form = PLCForm(obj=plc)
@@ -254,7 +260,7 @@ def edit_clp(plc_id: int):
 
 @admin_bp.route("/clps/<int:plc_id>/delete", methods=["POST"])
 @login_required
-@role_required(UserRole.MODERATOR)
+@admin_role_required(UserRole.MODERATOR)
 def delete_clp(plc_id: int):
     plc = PLC.query.get_or_404(plc_id)
 
@@ -271,7 +277,7 @@ def delete_clp(plc_id: int):
 
 @admin_bp.route("/registers", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.MODERATOR)
+@admin_role_required(UserRole.MODERATOR)
 def manage_registers():
     form = RegisterCreationForm()
     plcs = PLC.query.order_by(PLC.name.asc()).all()
@@ -314,7 +320,7 @@ def manage_registers():
 
 @admin_bp.route("/registers/<int:register_id>/delete", methods=["POST"])
 @login_required
-@role_required(UserRole.MODERATOR)
+@admin_role_required(UserRole.MODERATOR)
 def delete_register(register_id: int):
     register = Register.query.get_or_404(register_id)
 
@@ -330,7 +336,7 @@ def delete_register(register_id: int):
 
 @admin_bp.route("/polling/control", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.GERENTE)
+@admin_role_required(UserRole.GERENTE)
 def manage_polling_control():
     form = PollingControlForm()
     persisted_enabled = get_polling_enabled()
@@ -358,7 +364,7 @@ def manage_polling_control():
 
 @admin_bp.route("/alarms/definitions", methods=["GET", "POST"])
 @login_required
-@role_required(UserRole.ALARM_DEFINITION)
+@admin_role_required(UserRole.ALARM_DEFINITION)
 def manage_alarm_definitions():
     form = AlarmDefinitionForm()
 
@@ -438,7 +444,7 @@ def manage_alarm_definitions():
 
 @admin_bp.route("/alarms/definitions/<int:definition_id>/delete", methods=["POST"])
 @login_required
-@role_required(UserRole.ALARM_DEFINITION)
+@admin_role_required(UserRole.ALARM_DEFINITION)
 def delete_alarm_definition(definition_id: int):
     definition = AlarmDefinition.query.get_or_404(definition_id)
 
