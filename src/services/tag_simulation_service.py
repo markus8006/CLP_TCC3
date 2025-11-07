@@ -161,14 +161,21 @@ _ALIASES = {
     "opc-ua": "opcua",
     "opcua-sim": "opcua",
     "ethernet/ip": "ethernetip",
+    "ethernetip-sim": "ethernetip",
     "cip": "ethernetip",
     "beckhoff-ads": "beckhoff",
     "ads": "beckhoff",
+    "beckhoff-sim": "beckhoff",
     "siemens": "s7",
     "s7-sim": "s7",
     "modbus-rtu": "modbus",
     "modbus-tcp": "modbus",
     "modbus-sim": "modbus",
+    "profinet-sim": "profinet",
+    "dnp3-sim": "dnp3",
+    "iec104-sim": "iec104",
+    "iec-104": "iec104",
+    "iec-104-sim": "iec104",
 }
 
 

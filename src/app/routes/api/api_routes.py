@@ -59,6 +59,16 @@ def _extract_address(entry: dict) -> str | None:
     if group is not None and variation is not None and index is not None:
         return f"g{group}v{variation}/{index}"
 
+    if index is not None:
+        subindex = entry.get("subindex")
+        if subindex is not None:
+            return f"{index}/{subindex}"
+        return str(index)
+
+    tag_name = _stringify(entry.get("tag_name"))
+    if tag_name:
+        return tag_name
+
     return None
 
 

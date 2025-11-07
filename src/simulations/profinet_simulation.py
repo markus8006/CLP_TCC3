@@ -1,4 +1,4 @@
-"""Helper routines to seed the in-memory Modbus simulator."""
+"""Helper routines to seed the Profinet simulation registry."""
 
 from __future__ import annotations
 
@@ -10,16 +10,11 @@ from src.simulations.common import activate_protocol_simulation, seed_protocol_r
 
 
 def seed_from_registers(registers: Iterable[Register]) -> None:
-    """Populate the registry with deterministic values for each register."""
-
-    seed_protocol_registers("modbus", registers)
+    seed_protocol_registers("profinet", registers)
 
 
 def activate_plc_simulation(plc: PLC, registers: Iterable[Register]) -> None:
-    """Convenience helper used by tests or CLI scripts to enable simulation."""
-
-    activate_protocol_simulation("modbus", plc, registers)
+    activate_protocol_simulation("profinet", plc, registers)
 
 
 __all__ = ["seed_from_registers", "activate_plc_simulation"]
-
