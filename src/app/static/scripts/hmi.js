@@ -163,10 +163,12 @@
 
     commands.forEach((command) => {
       const li = document.createElement('li');
+      const status = (command.status || '').toUpperCase();
       li.innerHTML = `
         <span><strong>${command.command_type}</strong> → ${command.value_numeric ?? command.value_text ?? '--'}</span>
-        <span>${command.executed_by} · ${formatTimestamp(command.created_at)}</span>
+        <span>${command.executed_by} · ${formatTimestamp(command.created_at)}${status ? ` · ${status}` : ''}</span>
         ${command.note ? `<span>${command.note}</span>` : ''}
+        ${command.reviewer_note ? `<span>${command.reviewer_note}</span>` : ''}
       `;
       manualHistoryList.appendChild(li);
     });
@@ -239,9 +241,13 @@
     }
     const value = manualValueInput.value;
     const note = manualNoteInput.value;
+    if (!note || note.trim().length < 5) {
+      setFeedback('Inclua uma observação com pelo menos 5 caracteres.', true);
+      return;
+    }
 
     try {
-      await fetchJSON(`/api/hmi/register/${registerId}/manual`, {
+      const response = await fetchJSON(`/api/hmi/register/${registerId}/manual`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +258,7 @@
           command_type: 'setpoint',
         }),
       });
-      setFeedback('Comando manual executado com sucesso.');
+      setFeedback(response?.message || 'Comando enfileirado para aprovação.');
       manualValueInput.value = '';
       manualNoteInput.value = '';
       await Promise.all([loadManualHistory(), loadTrend(registerId)]);
