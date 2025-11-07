@@ -22,6 +22,9 @@
   const inspectorDetails = document.getElementById("inspector-details");
   const inspectorRegisters = document.getElementById("inspector-registers");
   const plcCardList = document.getElementById("plc-card-list");
+  const exportAllBtn = document.getElementById("dashboard-export-all");
+  const exportFormatSelect = document.getElementById("dashboard-export-format");
+  const exportFeedback = document.getElementById("dashboard-export-feedback");
 
   let isEditMode = false;
   const editable = layoutCanvas?.dataset?.editable === "true";
@@ -41,6 +44,52 @@
     if (!layoutStatus) return;
     layoutStatus.textContent = message;
     layoutStatus.className = `layout-status-message ${variant}`;
+  }
+
+  function showExportFeedback(message, variant = "info") {
+    if (!exportFeedback) return;
+    exportFeedback.textContent = message || "";
+    exportFeedback.classList.remove("success", "error", "loading");
+    if (variant && variant !== "info") {
+      exportFeedback.classList.add(variant);
+    }
+  }
+
+  async function exportAllRegisters() {
+    if (!exportAllBtn) return;
+    const format = exportFormatSelect?.value || "xlsx";
+    const url = `/api/registers/export/all?format=${encodeURIComponent(format)}`;
+    try {
+      showExportFeedback("Preparando exportação…", "loading");
+      const response = await fetch(url, { credentials: "same-origin" });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.message || "Não foi possível exportar os registradores.");
+      }
+
+      const blob = await response.blob();
+      let filename = `clps.${format}`;
+      const disposition = response.headers.get("Content-Disposition");
+      if (disposition) {
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      const link = document.createElement("a");
+      const href = URL.createObjectURL(blob);
+      link.href = href;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(href);
+      showExportFeedback("Exportação preparada com sucesso.", "success");
+    } catch (error) {
+      console.error(error);
+      showExportFeedback(error.message || "Falha ao exportar os registradores.", "error");
+    }
   }
 
   function safeFetch(url, options = {}) {
@@ -1035,6 +1084,13 @@
 
   if (layoutCanvas && !editable) {
     layoutCanvas.classList.remove("editable");
+  }
+
+  if (exportAllBtn) {
+    exportAllBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      exportAllRegisters();
+    });
   }
 
   initializeZoom();
