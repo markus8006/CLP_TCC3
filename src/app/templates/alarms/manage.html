@@ -120,8 +120,14 @@
                     {% endif %}
                 </div>
                 <footer class="mini-card__footer">
-                    <span>{{ 'Activo' if definition.is_active else 'Inactivo' }}</span>
-                    <span>Severidade {{ definition.severity }}</span>
+                    <div class="mini-card__status">
+                        <span>{{ 'Activo' if definition.is_active else 'Inactivo' }}</span>
+                        <span>Severidade {{ definition.severity }}</span>
+                    </div>
+                    <form class="inline-form" method="POST" action="{{ url_for('admin.delete_alarm_definition', definition_id=definition.id) }}" onsubmit="return confirm('Deseja mesmo remover esta definição de alarme? Alarmes activos relacionados serão eliminados.');">
+                        {{ csrf_token() }}
+                        <button type="submit" class="btn danger">Eliminar</button>
+                    </form>
                 </footer>
             </article>
             {% endfor %}

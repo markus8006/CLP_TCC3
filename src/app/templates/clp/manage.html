@@ -100,6 +100,10 @@
                         <td class="actions">
                             <a class="btn secondary" href="{{ url_for('admin.edit_clp', plc_id=plc.id) }}">Editar</a>
                             <a class="btn" href="{{ url_for('clp_bp.clp', ip=plc.ip_address, vlan=plc.vlan_id) }}">Ver detalhes</a>
+                            <form class="inline-form" method="POST" action="{{ url_for('admin.delete_clp', plc_id=plc.id) }}" onsubmit="return confirm('Tem certeza que deseja remover este CLP? Esta acção é irreversível.');">
+                                {{ csrf_token() }}
+                                <button type="submit" class="btn danger">Eliminar</button>
+                            </form>
                         </td>
                     </tr>
                 {% endfor %}

@@ -39,6 +39,13 @@ AlarmDefRepo = AlarmDefinitionRepo()
 admin_bp = Blueprint("admin", __name__)
 
 
+def _plc_label(plc: PLC) -> str:
+    """Return a concise label with name, IP and optional VLAN."""
+
+    vlan_info = f" VLAN {plc.vlan_id}" if plc.vlan_id else ""
+    return f"{plc.name} ({plc.ip_address}{vlan_info})"
+
+
 @admin_bp.route("/users", methods=["GET", "POST"])
 @login_required
 @role_required(UserRole.ADMIN)
@@ -227,18 +234,31 @@ def edit_clp(plc_id: int):
     return render_template("clp/edit.html", form=form, plc=plc)
 
 
+@admin_bp.route("/clps/<int:plc_id>/delete", methods=["POST"])
+@login_required
+@role_required(UserRole.MODERATOR)
+def delete_clp(plc_id: int):
+    plc = PLC.query.get_or_404(plc_id)
+
+    try:
+        db.session.delete(plc)
+        db.session.commit()
+        flash("CLP removido com sucesso!", "success")
+        trigger_polling_refresh(current_app)
+    except Exception as exc:
+        db.session.rollback()
+        flash(f"Erro ao remover CLP: {exc}", "danger")
+
+    return redirect(url_for("admin.manage_clps"))
+
+
 @admin_bp.route("/registers", methods=["GET", "POST"])
 @login_required
 @role_required(UserRole.MODERATOR)
 def manage_registers():
     form = RegisterCreationForm()
     plcs = PLC.query.order_by(PLC.name.asc()).all()
-
-    def _label(plc: PLC) -> str:
-        vlan_info = f" VLAN {plc.vlan_id}" if plc.vlan_id else ""
-        return f"{plc.name} ({plc.ip_address}{vlan_info})"
-
-    form.plc_id.choices = [(plc.id, _label(plc)) for plc in plcs]
+    form.plc_id.choices = [(plc.id, _plc_label(plc)) for plc in plcs]
 
     if form.validate_on_submit():
         register = Register(
@@ -273,6 +293,23 @@ def manage_registers():
         form=form,
         registers=registers,
     )
+
+
+@admin_bp.route("/registers/<int:register_id>/delete", methods=["POST"])
+@login_required
+@role_required(UserRole.MODERATOR)
+def delete_register(register_id: int):
+    register = Register.query.get_or_404(register_id)
+
+    try:
+        db.session.delete(register)
+        db.session.commit()
+        flash("Registrador removido com sucesso!", "success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(f"Erro ao remover registrador: {exc}", "danger")
+
+    return redirect(url_for("admin.manage_registers"))
 
 
 @admin_bp.route("/polling/control", methods=["GET", "POST"])
@@ -310,9 +347,7 @@ def manage_alarm_definitions():
     form = AlarmDefinitionForm()
 
     plcs = PLC.query.order_by(PLC.name.asc()).all()
-    form.plc_id.choices = [
-        (plc.id, _label(plc)) for plc in plcs
-    ]
+    form.plc_id.choices = [(plc.id, _plc_label(plc)) for plc in plcs]
 
     registers_by_plc = {}
     default_register_choices = [(0, "Sem registrador associado")]
@@ -322,15 +357,24 @@ def manage_alarm_definitions():
             .order_by(Register.name.asc())
             .all()
         )
-        registers_by_plc[plc.id] = [
+        formatted_registers = [
             {"id": register.id, "label": f"{register.name} ({register.address})"}
             for register in registers
         ]
+        registers_by_plc[plc.id] = formatted_registers
         default_register_choices.extend(
-            [(register.id, f"{register.name} — {_label(plc)}") for register in registers]
+            [
+                (
+                    register["id"],
+                    f"{register['label']} — {_plc_label(plc)}",
+                )
+                for register in formatted_registers
+            ]
         )
 
-    form.register_id.choices = default_register_choices or [(0, "Sem registradores disponíveis")]
+    form.register_id.choices = (
+        default_register_choices or [(0, "Sem registradores disponíveis")]
+    )
 
     if form.validate_on_submit():
         register_id = form.register_id.data if form.register_id.data != 0 else None
@@ -376,3 +420,20 @@ def manage_alarm_definitions():
         registers_by_plc=registers_by_plc,
         role_labels=ROLE_LABELS,
     )
+
+
+@admin_bp.route("/alarms/definitions/<int:definition_id>/delete", methods=["POST"])
+@login_required
+@role_required(UserRole.ALARM_DEFINITION)
+def delete_alarm_definition(definition_id: int):
+    definition = AlarmDefinition.query.get_or_404(definition_id)
+
+    try:
+        db.session.delete(definition)
+        db.session.commit()
+        flash("Definição de alarme removida com sucesso!", "success")
+    except Exception as exc:
+        db.session.rollback()
+        flash(f"Erro ao remover definição de alarme: {exc}", "danger")
+
+    return redirect(url_for("admin.manage_alarm_definitions"))
