@@ -21,6 +21,10 @@ class SettingsRepo(BaseRepo):
             logger.exception("Erro ao obter configuração %s", key)
             return None
 
+    def get_value(self, key: str) -> Optional[str]:
+        setting = self.get_by_key(key)
+        return setting.value if setting else None
+
     def set_value(
         self,
         key: str,
@@ -47,6 +51,22 @@ class SettingsRepo(BaseRepo):
         except SQLAlchemyError:
             self.session.rollback()
             logger.exception("Erro ao gravar configuração %s", key)
+            raise
+
+    def delete_key(self, key: str, *, commit: bool = True) -> bool:
+        try:
+            setting = self.get_by_key(key)
+            if not setting:
+                return False
+            self.session.delete(setting)
+            if commit:
+                self.session.commit()
+            else:
+                self.session.flush()
+            return True
+        except SQLAlchemyError:
+            self.session.rollback()
+            logger.exception("Erro ao remover configuração %s", key)
             raise
 
     def get_bool(self, key: str, default: bool = False) -> bool:

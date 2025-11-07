@@ -163,3 +163,21 @@ class AlarmDefinitionForm(FlaskForm):
         default=UserRole.ALARM_DEFINITION.value,
     )
     submit = SubmitField("Criar definição")
+
+
+class EmailSettingsForm(FlaskForm):
+    mail_server = StringField("Servidor SMTP", validators=[Optional(), Length(max=120)])
+    mail_port = IntegerField(
+        "Porta",
+        validators=[Optional(), NumberRange(min=1, max=65535)],
+    )
+    mail_username = StringField("Utilizador", validators=[Optional(), Length(max=120)])
+    mail_password = PasswordField("Senha", validators=[Optional(), Length(max=255)])
+    mail_default_sender = StringField(
+        "Remetente padrão",
+        validators=[Optional(), Length(max=120)],
+    )
+    mail_use_tls = BooleanField("Usar TLS")
+    mail_use_ssl = BooleanField("Usar SSL")
+    mail_suppress_send = BooleanField("Suprimir envio (modo teste)")
+    submit = SubmitField("Guardar configurações")

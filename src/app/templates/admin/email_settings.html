@@ -1,0 +1,106 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Configurações de Email{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <section class="page-header">
+        <h1>Alertas por Email</h1>
+        <p>Configure as credenciais SMTP utilizadas para enviar notificações de alarme. Campos vazios utilizam os valores padrão definidos no ficheiro de configuração.</p>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Servidor SMTP</h2>
+            <p class="card__description">Indique o servidor responsável pelo envio dos emails. Utilize uma conta de serviço ou credenciais específicas para notificações automáticas.</p>
+        </div>
+        <div class="card__content">
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="form-grid">
+                    <label>
+                        <span>Servidor</span>
+                        {{ form.mail_server(class_='input', placeholder='smtp.exemplo.com') }}
+                    </label>
+                    <label>
+                        <span>Porta</span>
+                        {{ form.mail_port(class_='input', placeholder='587') }}
+                    </label>
+                    <label>
+                        <span>Utilizador</span>
+                        {{ form.mail_username(class_='input', placeholder='notificacoes@exemplo.com') }}
+                    </label>
+                    <label>
+                        <span>Senha</span>
+                        {{ form.mail_password(class_='input', autocomplete='new-password') }}
+                    </label>
+                    <label>
+                        <span>Remetente padrão</span>
+                        {{ form.mail_default_sender(class_='input', placeholder='alertas@exemplo.com') }}
+                    </label>
+                </div>
+                <div class="form-grid form-grid--compact">
+                    <label class="checkbox">
+                        {{ form.mail_use_tls() }} Usar TLS
+                    </label>
+                    <label class="checkbox">
+                        {{ form.mail_use_ssl() }} Usar SSL
+                    </label>
+                    <label class="checkbox">
+                        {{ form.mail_suppress_send() }} Suprimir envio (modo teste)
+                    </label>
+                </div>
+                <p class="text-muted">Ao deixar um campo em branco, o sistema recorre ao valor padrão definido nas variáveis de ambiente.</p>
+                <div class="actions">
+                    {{ form.submit(class_='btn primary') }}
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="card">
+        <div>
+            <h2>Valores em vigor</h2>
+            <p class="card__description">Resumo das definições actualmente utilizadas pelo serviço de alarmes.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Parâmetro</th>
+                        <th>Valor</th>
+                        <th>Origem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for key, value in effective_settings.items() %}
+                    <tr>
+                        <td><code>{{ key }}</code></td>
+                        <td>
+                            {% if value is none %}
+                                <span class="text-muted">—</span>
+                            {% elif key == 'MAIL_PASSWORD' %}
+                                <span class="text-muted">••••••</span>
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if stored_settings.get(key) is not none %}
+                                <span class="badge badge-success">Base de dados</span>
+                            {% else %}
+                                <span class="badge">Padrão</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

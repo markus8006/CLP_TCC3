@@ -30,12 +30,18 @@ from src.services.register_admin_service import (
 )
 from src.services.polling_runtime import trigger_polling_refresh
 from src.services.settings_service import get_polling_enabled, set_polling_enabled
+from src.services.email_settings_service import (
+    get_email_settings,
+    get_stored_email_settings,
+    update_email_settings,
+)
 from src.utils.role.roles import role_required
 from src.utils.constants.constants import ROLES_HIERARCHY
 
 from .admin_forms import (
     ROLE_LABELS,
     AlarmDefinitionForm,
+    EmailSettingsForm,
     PLCForm,
     PollingControlForm,
     RegisterCreationForm,
@@ -359,6 +365,48 @@ def manage_polling_control():
         form=form,
         db_enabled=persisted_enabled,
         runtime_enabled=runtime_enabled,
+    )
+
+
+@admin_bp.route("/settings/email", methods=["GET", "POST"])
+@login_required
+@admin_role_required(UserRole.ADMIN)
+def manage_email_settings():
+    form = EmailSettingsForm()
+    effective_settings = get_email_settings()
+    stored_settings = get_stored_email_settings()
+
+    if form.validate_on_submit():
+        payload = {
+            "MAIL_SERVER": form.mail_server.data or None,
+            "MAIL_PORT": form.mail_port.data,
+            "MAIL_USERNAME": form.mail_username.data or None,
+            "MAIL_PASSWORD": form.mail_password.data or None,
+            "MAIL_DEFAULT_SENDER": form.mail_default_sender.data or None,
+            "MAIL_USE_TLS": form.mail_use_tls.data,
+            "MAIL_USE_SSL": form.mail_use_ssl.data,
+            "MAIL_SUPPRESS_SEND": form.mail_suppress_send.data,
+        }
+
+        update_email_settings(payload)
+        flash("Configurações de email actualizadas.", "success")
+        return redirect(url_for("admin.manage_email_settings"))
+
+    if request.method == "GET":
+        form.mail_server.data = stored_settings.get("MAIL_SERVER") or effective_settings.get("MAIL_SERVER")
+        form.mail_port.data = stored_settings.get("MAIL_PORT") or effective_settings.get("MAIL_PORT")
+        form.mail_username.data = stored_settings.get("MAIL_USERNAME") or effective_settings.get("MAIL_USERNAME")
+        form.mail_password.data = stored_settings.get("MAIL_PASSWORD") or ""
+        form.mail_default_sender.data = stored_settings.get("MAIL_DEFAULT_SENDER") or effective_settings.get("MAIL_DEFAULT_SENDER")
+        form.mail_use_tls.data = bool(effective_settings.get("MAIL_USE_TLS"))
+        form.mail_use_ssl.data = bool(effective_settings.get("MAIL_USE_SSL"))
+        form.mail_suppress_send.data = bool(effective_settings.get("MAIL_SUPPRESS_SEND"))
+
+    return render_template(
+        "admin/email_settings.html",
+        form=form,
+        stored_settings=stored_settings,
+        effective_settings=effective_settings,
     )
 
 
