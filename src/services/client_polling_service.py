@@ -1,4 +1,7 @@
-import asyncio
+"""Sincronização do serviço de polling dos CLPs."""
+
+from __future__ import annotations
+
 import asyncio
 from datetime import datetime
 from types import SimpleNamespace
@@ -11,7 +14,6 @@ from src.utils.logs import logger
 if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
     from src.services.polling_runtime import PollingRuntime
 
-
 StateCache = Dict[str, Tuple[bool, Optional[datetime], bool]]
 
 
@@ -22,6 +24,8 @@ def _split_key(key: str) -> Tuple[str, Optional[int]]:
 
 
 def _ensure_runtime(runtime_or_manager: Any) -> Any:
+    """Permite aceitar ``PollingRuntime`` ou um gestor simples nos testes."""
+
     if hasattr(runtime_or_manager, "manager"):
         return runtime_or_manager
 
@@ -72,9 +76,7 @@ async def sync_polling_state(
                 plc.status_changed_at or plc.updated_at,
                 polling_enabled,
             )
-            registers_provider = (
-                lambda plc_id=plc.id: RegRepo.get_registers_for_plc(plc_id)
-            )
+            registers_provider = lambda plc_id=plc.id: RegRepo.get_registers_for_plc(plc_id)
 
             if plc.is_active and polling_enabled:
                 needs_add = (
@@ -95,7 +97,6 @@ async def sync_polling_state(
 
             cache[key] = status_token
 
-        # Remove pollers para CLPs eliminados
         removed_keys = set(cache.keys()) - db_keys
         for key in list(removed_keys):
             active, _, _ = cache.pop(key)
@@ -122,7 +123,7 @@ async def start_polling_service(app, runtime_or_manager: Any) -> StateCache:
     return cache
 
 
-async def main_async(app, runtime_or_manager: Any, interval: float = 10.0):
+async def main_async(app, runtime_or_manager: Any, interval: float = 10.0) -> None:
     runtime = _ensure_runtime(runtime_or_manager)
     runtime.cache = await start_polling_service(app, runtime)
     trigger = runtime.ensure_trigger()
@@ -140,7 +141,7 @@ async def main_async(app, runtime_or_manager: Any, interval: float = 10.0):
         )
 
 
-def run_async_polling(app, runtime_or_manager: Any, interval: float = 10.0):
+def run_async_polling(app, runtime_or_manager: Any, interval: float = 10.0) -> None:
     runtime = _ensure_runtime(runtime_or_manager)
     loop = asyncio.new_event_loop()
     runtime.loop = loop

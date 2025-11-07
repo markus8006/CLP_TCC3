@@ -1,98 +1,119 @@
-"""
-Repositórios genéricos para o projeto SCADA.
+"""Infraestrutura simples de repositórios baseada em SQLAlchemy."""
 
-Coloque este arquivo em `src/repos/repositories.py` ou divida em vários módulos.
+from __future__ import annotations
 
-Funcionalidades principais:
-- BaseRepo: operações comuns (get, list, add, update, delete, filter)
-- PLCRepo, RegisterRepo, OrganizationRepo, AlarmDefinitionRepo, AlarmRepo, DataLogRepo
-- DataLogRepo tem `bulk_insert()` para inserir muitos pontos rapidamente
+from typing import Any, Iterable, List, Optional, Type
 
-"""
-from typing import Type, List, Optional, Dict, Any, Iterable
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
 from src.app import db
 from src.utils.logs import logger
 
+
 class BaseRepo:
-    """Repositório base genérico.
+    """Implementa operações CRUD básicas com tratamento de erros consistente."""
 
-    Params
-    ------
-    model: classe ORM (ex: PLC)
-    session: SQLAlchemy session (opcional) — por padrão usa `db.session`
-    """
-
-    def __init__(self, model: Type[Any], session: Optional[Session] = None):
+    def __init__(self, model: Type[Any], session: Optional[Session] = None) -> None:
         self.model = model
         self.session = session or db.session
 
+    # ------------------------------------------------------------------
+    # Utilitários internos
+    # ------------------------------------------------------------------
+    def _commit(self, commit: bool) -> None:
+        if commit:
+            self.session.commit()
+        else:
+            self.session.flush()
+
+    # ------------------------------------------------------------------
+    # Operações de leitura
+    # ------------------------------------------------------------------
     def get(self, id: int) -> Optional[Any]:
         try:
-            return self.session.query(self.model).get(id)
+            return self.session.get(self.model, id)
         except SQLAlchemyError:
-            logger.exception("Erro get %s id=%s", getattr(self.model, '__name__', str(self.model)), id)
+            logger.exception("Erro ao buscar %s id=%s", self.model.__name__, id)
             return None
 
     def list_all(self, limit: Optional[int] = None, offset: Optional[int] = None) -> List[Any]:
-        q = self.session.query(self.model).order_by(self.model.id)
+        query = self.session.query(self.model).order_by(self.model.id)
         if offset:
-            q = q.offset(offset)
+            query = query.offset(offset)
         if limit:
-            q = q.limit(limit)
+            query = query.limit(limit)
         try:
-            return q.all()
+            return query.all()
         except SQLAlchemyError:
-            logger.exception("Erro list_all %s", getattr(self.model, '__name__', str(self.model)))
+            logger.exception("Erro ao listar %s", self.model.__name__)
             return []
 
-    def find_by(self, **filters) -> List[Any]:
+    def find_by(self, **filters: Any) -> List[Any]:
         try:
             return self.session.query(self.model).filter_by(**filters).all()
         except SQLAlchemyError:
-            logger.exception("Erro find_by %s filters=%s", getattr(self.model, '__name__', str(self.model)), filters)
+            logger.exception("Erro em find_by %s filtros=%s", self.model.__name__, filters)
             return []
 
-    def first_by(self, **filters) -> Optional[Any]:
+    def first_by(self, **filters: Any) -> Optional[Any]:
         try:
             return self.session.query(self.model).filter_by(**filters).first()
         except SQLAlchemyError:
-            logger.exception("Erro first_by %s filters=%s", getattr(self.model, '__name__', str(self.model)), filters)
+            logger.exception("Erro em first_by %s filtros=%s", self.model.__name__, filters)
             return None
 
+    def exists(self, **filters: Any) -> bool:
+        try:
+            return self.session.query(self.model).filter_by(**filters).first() is not None
+        except SQLAlchemyError:
+            logger.exception(
+                "Erro ao verificar existência de %s com filtros=%s",
+                self.model.__name__,
+                filters,
+            )
+            return False
+
+    # ------------------------------------------------------------------
+    # Operações de escrita
+    # ------------------------------------------------------------------
     def add(self, obj: Any, commit: bool = True) -> Any:
         try:
             self.session.add(obj)
-            if commit:
-                logger.info("CLP ja cadastrado, atualizando se aplicavél")
-                self.session.commit()
+            self._commit(commit)
             return obj
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao adicionar %s", getattr(self.model, '__name__', str(self.model)))
+            logger.exception("Erro ao adicionar %s", self.model.__name__)
+            raise
+
+    def add_all(self, items: Iterable[Any], commit: bool = True) -> None:
+        try:
+            self.session.add_all(items)
+            self._commit(commit)
+        except SQLAlchemyError:
+            self.session.rollback()
+            logger.exception("Erro ao adicionar múltiplos %s", self.model.__name__)
             raise
 
     def update(self, obj: Any, commit: bool = True) -> Any:
         try:
             merged = self.session.merge(obj)
-            if commit:
-                self.session.commit()
+            self._commit(commit)
             return merged
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao atualizar %s", getattr(self.model, '__name__', str(self.model)))
+            logger.exception("Erro ao actualizar %s", self.model.__name__)
             raise
 
     def delete(self, obj: Any, commit: bool = True) -> bool:
         try:
             self.session.delete(obj)
-            if commit:
-                self.session.commit()
+            self._commit(commit)
             return True
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao deletar %s", getattr(self.model, '__name__', str(self.model)))
+            logger.exception("Erro ao apagar %s", self.model.__name__)
             raise
 
     def delete_by_id(self, id: int, commit: bool = True) -> bool:
@@ -100,27 +121,3 @@ class BaseRepo:
         if not obj:
             return False
         return self.delete(obj, commit=commit)
-    
-    def exist(self, **filters : Any) -> bool:
-        try:
-            return True if self.find_by(**filters) != [] else False
-        except:
-            return False
-
-
-
-# ===== Exemplo de uso (usuário: adapte ao seu app) =====
-# from src.repos.repositories import PLCRepo, RegisterRepo, DataLogRepo
-# plc_repo = PLCRepo()
-# new_plc = PLC(name='PLC1', ip_address='10.0.0.1', protocol='modbus', port=502)
-# plc_repo.add(new_plc)
-
-# register_repo = RegisterRepo()
-# r = Register(plc_id=new_plc.id, name='Temp', address='0', register_type='holding', data_type='int16')
-# register_repo.add(r)
-
-# datalog_repo = DataLogRepo()
-# datalog_repo.bulk_insert([{'plc_id': new_plc.id, 'register_id': r.id, 'raw_value': '123', 'value_float': 12.3}])
-
-
-# Fim do arquivo
