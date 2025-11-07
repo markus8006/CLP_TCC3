@@ -26,6 +26,12 @@ from src.utils.tags import normalize_tag
 
 api_bp = Blueprint("apii", __name__)
 
+
+def api_role_required(min_role):
+    """Decorator configurado para respostas JSON."""
+
+    return role_required(min_role, format="json")
+
 STATUS_LABELS = {
     "online": "Online",
     "offline": "Offline",
@@ -622,7 +628,7 @@ def dashboard_layout():
 
 @api_bp.route("/dashboard/layout", methods=["PUT"])
 @login_required
-@role_required("admin")
+@api_role_required("admin")
 def update_dashboard_layout():
     payload = request.get_json(silent=True) or {}
     nodes = payload.get("nodes")
@@ -1341,7 +1347,7 @@ def hmi_register_trend(register_id: int):
 
 @api_bp.route("/hmi/register/<int:register_id>/manual", methods=["POST"])
 @login_required
-@role_required("operator")
+@api_role_required("operator")
 def hmi_execute_manual_command(register_id: int):
     """Execute a manual command for a register."""
 
@@ -1378,7 +1384,7 @@ def hmi_execute_manual_command(register_id: int):
 
 @api_bp.route("/historian/export", methods=["POST"])
 @login_required
-@role_required("admin")
+@api_role_required("admin")
 def historian_export():
     """Generate a CSV snapshot of historian data for BI consumption."""
 
