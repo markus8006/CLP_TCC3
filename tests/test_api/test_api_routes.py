@@ -104,7 +104,14 @@ def test_get_data_optimized_returns_expected_payload(client, db):
 
     payload = response.get_json()
     assert payload["clp_id"] == plc.id
-    assert payload["registers"] == {str(active_register.id): active_register.name}
+    assert payload["registers"] == {
+        str(active_register.id): {
+            "name": active_register.name,
+            "tag": None,
+            "tag_name": None,
+            "address": active_register.address,
+        }
+    }
     assert len(payload["data"]) == 3
     assert all(entry["register_id"] == active_register.id for entry in payload["data"])
     assert len(payload["alarms"]) == 1

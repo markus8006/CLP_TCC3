@@ -110,71 +110,101 @@ function violatesCondition(value, def) {
 }
 
 // cria um painel recolhível para o registrador
-function ensureRegisterCard(registerId, unit, registerName) {
+function ensureRegisterCard(registerId, unit, registerName, registerTag = null, registerAddress = null) {
     const accordion = document.getElementById('register-accordion');
     if (!accordion) return null;
 
     let card = document.getElementById(`register-card-${registerId}`);
-    if (card) return card;
+    let isNewCard = false;
 
-    card = document.createElement('details');
-    card.className = 'register-panel';
-    card.id = `register-card-${registerId}`;
-    card.dataset.registerId = registerId;
+    if (!card) {
+        card = document.createElement('details');
+        card.className = 'register-panel';
+        card.id = `register-card-${registerId}`;
+        card.dataset.registerId = registerId;
+        isNewCard = true;
 
-    const summary = document.createElement('summary');
-    const nameEl = document.createElement('span');
-    nameEl.className = 'register-summary__name';
-    nameEl.textContent = registerName || `Registrador ${registerId}`;
+        const summary = document.createElement('summary');
+        const nameEl = document.createElement('span');
+        nameEl.className = 'register-summary__name';
+        summary.appendChild(nameEl);
 
-    const statusEl = document.createElement('span');
-    statusEl.className = 'register-summary__status';
-    statusEl.id = `register-status-${registerId}`;
-    statusEl.dataset.state = 'unknown';
-    statusEl.textContent = 'Aguardando dados';
+        const statusEl = document.createElement('span');
+        statusEl.className = 'register-summary__status';
+        statusEl.id = `register-status-${registerId}`;
+        statusEl.dataset.state = 'unknown';
+        statusEl.textContent = 'Aguardando dados';
+        summary.appendChild(statusEl);
 
-    const valueEl = document.createElement('span');
-    valueEl.className = 'register-summary__value';
-    valueEl.id = `register-val-${registerId}`;
-    valueEl.textContent = '--';
+        const valueEl = document.createElement('span');
+        valueEl.className = 'register-summary__value';
+        valueEl.id = `register-val-${registerId}`;
+        valueEl.textContent = '--';
+        summary.appendChild(valueEl);
 
-    summary.append(nameEl, statusEl, valueEl);
+        const body = document.createElement('div');
+        body.className = 'register-panel-body';
 
-    const body = document.createElement('div');
-    body.className = 'register-panel-body';
+        const chartWrapper = document.createElement('div');
+        chartWrapper.className = 'register-chart-wrapper';
 
-    const chartWrapper = document.createElement('div');
-    chartWrapper.className = 'register-chart-wrapper';
+        const canvas = document.createElement('canvas');
+        canvas.id = `chart-register-${registerId}`;
+        canvas.width = 600;
+        canvas.height = 220;
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', `Histórico do registrador ${registerName || registerId}`);
+        chartWrapper.appendChild(canvas);
 
-    const canvas = document.createElement('canvas');
-    canvas.id = `chart-register-${registerId}`;
-    canvas.width = 600;
-    canvas.height = 220;
-    canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', `Histórico do registrador ${registerName || registerId}`);
+        const legend = document.createElement('div');
+        legend.className = 'register-legend';
+        legend.id = `alarm-legend-${registerId}`;
 
-    chartWrapper.appendChild(canvas);
+        body.append(chartWrapper, legend);
+        card.append(summary, body);
 
-    const legend = document.createElement('div');
-    legend.className = 'register-legend';
-    legend.id = `alarm-legend-${registerId}`;
-
-    body.append(chartWrapper, legend);
-
-    card.append(summary, body);
-
-    card.addEventListener('toggle', () => {
-        if (!card.open) return;
-        requestAnimationFrame(() => {
-            const chart = charts.get(registerId);
-            if (chart) {
-                chart.resize();
-                chart.update('none');
-            }
+        card.addEventListener('toggle', () => {
+            if (!card.open) return;
+            requestAnimationFrame(() => {
+                const chart = charts.get(registerId);
+                if (chart) {
+                    chart.resize();
+                    chart.update('none');
+                }
+            });
         });
-    });
 
-    accordion.appendChild(card);
+        accordion.appendChild(card);
+    }
+
+    const summary = card.querySelector('summary');
+    const nameEl = summary.querySelector('.register-summary__name');
+
+    const displaySegments = [];
+    if (registerTag) {
+        displaySegments.push(registerTag);
+    }
+    const fallbackName = registerName || `Registrador ${registerId}`;
+    displaySegments.push(fallbackName);
+    if (registerAddress) {
+        displaySegments.push(`@ ${registerAddress}`);
+    }
+    nameEl.textContent = displaySegments.join(' • ');
+
+    card.dataset.tag = registerTag || '';
+    card.dataset.address = registerAddress || '';
+    card.dataset.unit = unit || '';
+
+    const canvas = card.querySelector(`#chart-register-${registerId}`);
+    if (canvas) {
+        const descriptor = registerTag || registerName || registerId;
+        canvas.setAttribute('aria-label', `Histórico do registrador ${descriptor}`);
+    }
+
+    if (isNewCard) {
+        return card;
+    }
+
     return card;
 }
 
@@ -357,7 +387,11 @@ function processApiPayload(payload) {
     const MAX_POINTS = 100;
 
     for (const rid of registers) {
-        const registerName = registersMap[rid]; // nome a exibir
+        const info = registersMap[rid];
+        const registerInfo = (info && typeof info === 'object') ? info : { name: info };
+        const registerName = registerInfo.name || null;
+        const registerTag = registerInfo.tag_name || registerInfo.tag || null;
+        const registerAddress = registerInfo.address || null;
         const series = (dataByRegister[rid] || []).slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
         const newLabels = [];
@@ -385,10 +419,10 @@ function processApiPayload(payload) {
         const buffer = { labels: newLabels, values: newValues, rawPoints: newRawPoints };
         chartDataBuffers.set(rid, buffer);
 
-        console.log(`[DEBUG] Register ${rid} (${registerName}): ${newLabels.length} pontos processados, ${violatedCount} violados.`);
+        console.log(`[DEBUG] Register ${rid} (${registerTag || registerName || 'sem identificação'}): ${newLabels.length} pontos processados, ${violatedCount} violados.`);
 
         const unit = (series.at(-1)?.unit) ?? (defsByRegister[rid]?.unit) ?? '';
-        ensureRegisterCard(rid, unit, registerName);
+        ensureRegisterCard(rid, unit, registerName, registerTag, registerAddress);
         const last = buffer.rawPoints.at(-1);
         const statusEl = document.getElementById(`register-status-${rid}`);
         if (statusEl) {
