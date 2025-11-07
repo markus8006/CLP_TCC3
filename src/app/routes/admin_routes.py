@@ -18,11 +18,20 @@ from src.models.Alarms import AlarmDefinition
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
 from src.repository.Alarms_repository import AlarmDefinitionRepo
+from src.services.alarm_admin_service import (
+    create_alarm_definition,
+    delete_alarm_definition as delete_alarm_definition_entry,
+)
+from src.services.plc_admin_service import create_plc, delete_plc, update_plc
+from src.services.polling_admin_service import update_polling_state
+from src.services.register_admin_service import (
+    create_register,
+    delete_register as delete_register_entry,
+)
 from src.services.polling_runtime import trigger_polling_refresh
 from src.services.settings_service import get_polling_enabled, set_polling_enabled
 from src.utils.role.roles import role_required
 from src.utils.constants.constants import ROLES_HIERARCHY
-from src.utils.tags import parse_tags
 
 from .admin_forms import (
     ROLE_LABELS,
@@ -164,29 +173,26 @@ def manage_clps():
 
     if form.validate_on_submit():
         actor = current_user.username if current_user.is_authenticated else None
-        plc = PLC(
-            name=form.name.data,
-            description=form.description.data,
-            ip_address=form.ip_address.data,
-            protocol=form.protocol.data,
-            port=form.port.data,
-            vlan_id=form.vlan_id.data,
-            subnet_mask=form.subnet_mask.data,
-            gateway=form.gateway.data,
-            unit_id=form.unit_id.data,
-            manufacturer=form.manufacturer.data,
-            model=form.model.data,
-            firmware_version=form.firmware_version.data,
-            is_active=form.is_active.data,
-        )
-        plc.set_tags(parse_tags(form.tags.data))
-        if plc.is_active:
-            plc.mark_active(actor=actor, source="admin_ui")
-        else:
-            plc.mark_inactive(actor=actor, source="admin_ui")
         try:
-            Plcrepo.add(plc, commit=False)
-            db.session.commit()
+            create_plc(
+                {
+                    "name": form.name.data,
+                    "description": form.description.data,
+                    "ip_address": form.ip_address.data,
+                    "protocol": form.protocol.data,
+                    "port": form.port.data,
+                    "vlan_id": form.vlan_id.data,
+                    "subnet_mask": form.subnet_mask.data,
+                    "gateway": form.gateway.data,
+                    "unit_id": form.unit_id.data,
+                    "manufacturer": form.manufacturer.data,
+                    "model": form.model.data,
+                    "firmware_version": form.firmware_version.data,
+                    "is_active": form.is_active.data,
+                    "tags": form.tags.data,
+                },
+                actor=actor,
+            )
             flash("CLP criado com sucesso!", "success")
             trigger_polling_refresh(current_app)
         except IntegrityError:
@@ -217,16 +223,28 @@ def edit_clp(plc_id: int):
         form.tags.data = ", ".join(plc.tags_as_list())
 
     if form.validate_on_submit():
-        previous_state = plc.is_active
         actor = current_user.username if current_user.is_authenticated else None
         try:
-            form.populate_obj(plc)
-            plc.set_tags(parse_tags(form.tags.data))
-            if plc.is_active and not previous_state:
-                plc.mark_active(actor=actor, source="admin_ui")
-            elif previous_state and not plc.is_active:
-                plc.mark_inactive(actor=actor, source="admin_ui")
-            db.session.commit()
+            update_plc(
+                plc,
+                {
+                    "name": form.name.data,
+                    "description": form.description.data,
+                    "ip_address": form.ip_address.data,
+                    "protocol": form.protocol.data,
+                    "port": form.port.data,
+                    "vlan_id": form.vlan_id.data,
+                    "subnet_mask": form.subnet_mask.data,
+                    "gateway": form.gateway.data,
+                    "unit_id": form.unit_id.data,
+                    "manufacturer": form.manufacturer.data,
+                    "model": form.model.data,
+                    "firmware_version": form.firmware_version.data,
+                    "is_active": form.is_active.data,
+                    "tags": form.tags.data,
+                },
+                actor=actor,
+            )
             flash("CLP actualizado com sucesso!", "success")
             trigger_polling_refresh(current_app)
         except IntegrityError:
@@ -247,8 +265,7 @@ def delete_clp(plc_id: int):
     plc = PLC.query.get_or_404(plc_id)
 
     try:
-        db.session.delete(plc)
-        db.session.commit()
+        delete_plc(plc)
         flash("CLP removido com sucesso!", "success")
         trigger_polling_refresh(current_app)
     except Exception as exc:
@@ -267,22 +284,22 @@ def manage_registers():
     form.plc_id.choices = [(plc.id, _plc_label(plc)) for plc in plcs]
 
     if form.validate_on_submit():
-        register = Register(
-            plc_id=form.plc_id.data,
-            name=form.name.data,
-            description=form.description.data,
-            address=form.address.data,
-            register_type=form.register_type.data,
-            data_type=form.data_type.data,
-            length=form.length.data or 1,
-            unit=form.unit.data,
-            scale_factor=form.scale_factor.data if form.scale_factor.data is not None else 1.0,
-            offset=form.offset.data if form.offset.data is not None else 0.0,
-            tag=form.tag.data,
-        )
         try:
-            RegRepo.add(register, commit=False)
-            db.session.commit()
+            create_register(
+                {
+                    "plc_id": form.plc_id.data,
+                    "name": form.name.data,
+                    "description": form.description.data,
+                    "address": form.address.data,
+                    "register_type": form.register_type.data,
+                    "data_type": form.data_type.data,
+                    "length": form.length.data,
+                    "unit": form.unit.data,
+                    "scale_factor": form.scale_factor.data,
+                    "offset": form.offset.data,
+                    "tag": form.tag.data,
+                }
+            )
             flash("Registrador criado com sucesso!", "success")
         except IntegrityError:
             db.session.rollback()
@@ -308,8 +325,7 @@ def delete_register(register_id: int):
     register = Register.query.get_or_404(register_id)
 
     try:
-        db.session.delete(register)
-        db.session.commit()
+        delete_register_entry(register)
         flash("Registrador removido com sucesso!", "success")
     except Exception as exc:
         db.session.rollback()
@@ -331,7 +347,7 @@ def manage_polling_control():
         form.enabled.data = persisted_enabled
 
     if form.validate_on_submit():
-        set_polling_enabled(
+        update_polling_state(
             form.enabled.data,
             actor=current_user.username if current_user.is_authenticated else None,
         )
@@ -383,28 +399,26 @@ def manage_alarm_definitions():
     )
 
     if form.validate_on_submit():
-        register_id = form.register_id.data if form.register_id.data != 0 else None
-        definition = AlarmDefinition(
-            plc_id=form.plc_id.data,
-            register_id=register_id,
-            name=form.name.data,
-            description=form.description.data,
-            condition_type=form.condition_type.data,
-            setpoint=form.setpoint.data,
-            threshold_low=form.threshold_low.data,
-            threshold_high=form.threshold_high.data,
-            deadband=form.deadband.data if form.deadband.data is not None else 0.0,
-            priority=form.priority.data,
-            severity=form.severity.data if form.severity.data is not None else 3,
-            is_active=form.is_active.data,
-            auto_acknowledge=form.auto_acknowledge.data,
-            email_enabled=form.email_enabled.data,
-            email_min_role=UserRole(form.email_min_role.data),
-        )
-
         try:
-            AlarmDefRepo.add(definition, commit=False)
-            db.session.commit()
+            create_alarm_definition(
+                {
+                    "plc_id": form.plc_id.data,
+                    "register_id": form.register_id.data,
+                    "name": form.name.data,
+                    "description": form.description.data,
+                    "condition_type": form.condition_type.data,
+                    "setpoint": form.setpoint.data,
+                    "threshold_low": form.threshold_low.data,
+                    "threshold_high": form.threshold_high.data,
+                    "deadband": form.deadband.data,
+                    "priority": form.priority.data,
+                    "severity": form.severity.data,
+                    "is_active": form.is_active.data,
+                    "auto_acknowledge": form.auto_acknowledge.data,
+                    "email_enabled": form.email_enabled.data,
+                    "email_min_role": form.email_min_role.data,
+                }
+            )
             flash("Definição de alarme criada com sucesso!", "success")
             return redirect(url_for("admin.manage_alarm_definitions"))
         except IntegrityError:
@@ -435,8 +449,7 @@ def delete_alarm_definition(definition_id: int):
     definition = AlarmDefinition.query.get_or_404(definition_id)
 
     try:
-        db.session.delete(definition)
-        db.session.commit()
+        delete_alarm_definition_entry(definition)
         flash("Definição de alarme removida com sucesso!", "success")
     except Exception as exc:
         db.session.rollback()
