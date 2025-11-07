@@ -87,7 +87,7 @@ def register_blueprints(app):
     from src.app.routes.clps_routes.detalhes_clp import clp_bp
     from src.app.routes.admin_routes import admin_bp
     from src.app.routes.login_routes.auth_routes import auth_bp
-    from src.app.routes.api.api_routes import api_bp
+    from src.app.routes.api import api_bp
     from src.app.routes.coleta_routes import coleta_bp
     from src.app.routes.dashboard_routes import dashboard_bp
     from src.app.routes.programming_routes import programming_bp

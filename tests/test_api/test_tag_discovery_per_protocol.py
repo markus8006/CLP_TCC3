@@ -140,9 +140,7 @@ def test_discover_creates_registers_for_protocol(
         assert protocol_name == protocol
         return get_simulated_tags(protocol_name)
 
-    monkeypatch.setattr(
-        "src.app.routes.api.api_routes.discover_tags_async", fake_discover
-    )
+    monkeypatch.setattr("src.app.routes.api.plc_api.discover_tags_async", fake_discover)
 
     with client.session_transaction() as session:
         session["_user_id"] = str(user.id)
