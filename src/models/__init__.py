@@ -6,6 +6,7 @@ from src.models.Registers import Register
 from src.models.Scripts import Script
 from src.models.PLCs import Organization, PLC
 from src.models.FactoryLayout import FactoryLayout
+from src.models.ManualControl import ManualCommand
 from src.models.Security_event import SecurityEvent
 from src.models.Users import User, UserRole
 from src.models.Settings import SystemSetting
@@ -21,6 +22,7 @@ __all__ = [
     "Script",
     "SecurityEvent",
     "FactoryLayout",
+    "ManualCommand",
     "User",
     "UserRole",
     "SystemSetting",
