@@ -41,13 +41,25 @@ sudo systemctl enable postgresql
 # Ubuntu (já iniciado automaticamente)
 sudo systemctl enable postgresql
 
-# Criar banco e usuário
-sudo -u postgres psql << EOF
+# Criar banco e usuários (separando app e migrações)
+sudo -u postgres psql <<'EOF'
 CREATE DATABASE scada_prod;
-CREATE USER scada_user WITH PASSWORD 'SuaSenhaForteAqui123!';
-GRANT ALL PRIVILEGES ON DATABASE scada_prod TO scada_user;
-ALTER USER scada_user CREATEDB;
-\q
+
+-- Usuário utilizado pela aplicação em produção (privilégios mínimos)
+CREATE USER scada_app WITH PASSWORD 'TroqueEstaSenha!';
+REVOKE ALL ON DATABASE scada_prod FROM PUBLIC;
+GRANT CONNECT ON DATABASE scada_prod TO scada_app;
+
+\connect scada_prod
+GRANT USAGE ON SCHEMA public TO scada_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO scada_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO scada_app;
+
+-- Usuário opcional para rodar migrações/administração
+CREATE USER scada_migrator WITH PASSWORD 'TroqueEstaSenhaMigrator!';
+GRANT CONNECT ON DATABASE scada_prod TO scada_migrator;
+GRANT ALL PRIVILEGES ON SCHEMA public TO scada_migrator;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO scada_migrator;
 EOF
 ```
 
@@ -93,33 +105,39 @@ pip install -r requirements/production.txt
 
 #### 3. Configuração de Ambiente
 ```bash
-# Criar arquivo de configuração de produção
-cat > .env << EOF
-FLASK_ENV=production
-SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')
-ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+# Copie o template (apenas para desenvolvimento/local)
+cp .env.example .env
 
-# Banco de dados
-DATABASE_URL=postgresql://scada_user:SuaSenhaForteAqui123!@localhost/scada_prod
+# Preencha os segredos manualmente ou via gerenciador
+$EDITOR .env
 
-# Redis
-REDIS_URL=redis://localhost:6379/0
+# Variáveis obrigatórias
+# SECRET_KEY=...
+# DATABASE_URL=...
+# PLC_DEFAULT_USERNAME=...
+# PLC_DEFAULT_PASSWORD=...
+# (Opcional) PLC_SECRET_BACKEND_PATH=vault:secret/data/scada/plc
 
-# Email (configurar com seu provedor)
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=seu-email@empresa.com
-MAIL_PASSWORD=sua-senha-de-app
-
-# Configurações de produção
-SESSION_COOKIE_SECURE=True
-WTF_CSRF_ENABLED=True
-EOF
-
-# Proteger arquivo de configuração
+# Proteja o arquivo localmente
 chmod 600 .env
 ```
+
+> ⚠️ **Produção:** não armazene segredos sensíveis em arquivos de texto. Utilize Vault, AWS SSM Parameter Store, Azure Key Vault ou outra solução gerenciada e injete as variáveis no serviço (systemd, Docker secrets, Kubernetes secrets, etc.).
+
+### 🔐 Gestão de Segredos
+
+- **Carregamento automático:** o módulo `src/app/config.py` utiliza `python-dotenv` para carregar `.env` em desenvolvimento sem sobrepor variáveis já exportadas. Em produção, basta definir as variáveis no ambiente que o Flask irá carregá-las.
+- **Segredos obrigatórios:**
+  - `SECRET_KEY` — assinatura de sessões Flask.
+  - `DATABASE_URL` — string de conexão (utilize a role `scada_app`).
+  - `PLC_DEFAULT_USERNAME` / `PLC_DEFAULT_PASSWORD` — credenciais usadas pelos adaptadores de PLC; em produção, armazene-as no secret manager e referencie via `PLC_SECRET_BACKEND_PATH` quando houver integração com Vault/SSM/Key Vault.
+  - *(Opcional)* `ENCRYPTION_KEY` — chave usada por `DataEncryption` para persistir senhas de PLC; defina-a para permitir rotação controlada.
+- **Rotação de segredos:**
+  1. Gere novos valores no secret manager (novo par de credenciais do PLC, senha do banco, etc.).
+  2. Atualize o serviço (por exemplo, `systemctl reload`, `kubectl rollout restart`) para carregar as variáveis atualizadas.
+  3. Para o banco, troque a senha do usuário `scada_app` e atualize o segredo consumido pela aplicação. Utilize janelas de manutenção para evitar interrupções.
+  4. Para `SECRET_KEY`, programe a rotação alinhada ao tempo de expiração de sessões. Avise os usuários de que sessões antigas podem ser invalidadas.
+- **Ambientes múltiplos:** mantenha um cofre/namespace por ambiente (`vault://prod/scada`, `vault://staging/scada`, etc.). Os valores podem divergir: use PLCs simulados em staging (`PLC_DEFAULT_*` apontando para mocks) e conexões reais apenas em produção.
 
 #### 4. Inicialização do Banco
 ```bash
