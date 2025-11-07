@@ -211,11 +211,16 @@ def get_data_optimized(ip):
         "registers": {},
         "data": [],
         "alarms": [],
-        "definitions_alarms": []
+        "definitions_alarms": [],
     }
 
     for register in filter(lambda r: r.is_active, clp.registers):
-        result["registers"][register.id] = register.name
+        result["registers"][str(register.id)] = {
+            "name": register.name,
+            "tag": register.tag,
+            "tag_name": register.tag_name,
+            "address": register.address,
+        }
 
         # 1️⃣ Últimos 30 DataLogs (ordenados por timestamp desc)
         sorted_logs = sorted(register.datalogs, key=lambda d: d.timestamp or 0, reverse=True)[:30]
