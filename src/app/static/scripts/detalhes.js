@@ -30,7 +30,6 @@ let monacoEditorInstance = null;
 let currentScripts = [];
 let selectedScriptId = null;
 let scriptLanguages = {};
-let selectedProtocolConfig = null;
 
 // Paleta de cores para tema escuro
 const themeColors = [
@@ -461,305 +460,65 @@ function parseJsonAttribute(value, fallback = null) {
     }
 }
 
-function renderDiscoveryResults(results, container) {
-    if (!container) return;
-    container.innerHTML = '';
-    if (!Array.isArray(results) || results.length === 0) {
-        const empty = document.createElement('p');
-        empty.className = 'text-muted';
-        empty.textContent = 'Nenhum resultado disponível.';
-        container.appendChild(empty);
+function initAutoDiscoverySync() {
+    const button = document.getElementById('auto-discovery-sync');
+    const feedback = document.getElementById('auto-discovery-feedback');
+    if (!button) return;
+
+    const plcId = Number(button.dataset.plcId);
+    if (!Number.isFinite(plcId) || plcId <= 0) {
         return;
     }
 
-    const MAX_ENTRIES = 100;
-    const list = document.createElement('ul');
-    list.className = 'discovery-result-list';
-
-    results.slice(0, MAX_ENTRIES).forEach((item) => {
-        const li = document.createElement('li');
-        const title = document.createElement('strong');
-        const name =
-            item.tag_name ||
-            item.display_path ||
-            (Array.isArray(item.path) ? item.path.join(' / ') : null) ||
-            item.node_id ||
-            item.address ||
-            (item.index !== undefined ? `Índice ${item.index}` : null) ||
-            'Tag';
-        title.textContent = String(name);
-        li.appendChild(title);
-
-        const meta = document.createElement('div');
-        meta.className = 'discovery-result-meta';
-
-        const metaPairs = [
-            ['Origem', item.source],
-            ['Nó', item.node_id],
-            ['Endereço', item.address],
-            ['Tipo', item.data_type],
-            ['Índice', item.index],
-            ['Subíndice', item.subindex],
-            ['Grupo', item.group],
-            ['Variação', item.variation],
-        ];
-
-        if (Array.isArray(item.dimensions)) {
-            metaPairs.push(['Dimensões', item.dimensions.join('×')]);
-        } else if (item.dimensions) {
-            metaPairs.push(['Dimensões', item.dimensions]);
-        }
-
-        metaPairs.forEach(([label, value]) => {
-            if (value === undefined || value === null || value === '') return;
-            const span = document.createElement('span');
-            span.textContent = `${label}: ${value}`;
-            meta.appendChild(span);
-        });
-
-        if (meta.children.length > 0) {
-            li.appendChild(meta);
-        }
-
-        if (item.description) {
-            const desc = document.createElement('p');
-            desc.className = 'text-muted';
-            desc.textContent = String(item.description);
-            li.appendChild(desc);
-        }
-
-        list.appendChild(li);
-    });
-
-    container.appendChild(list);
-
-    if (results.length > MAX_ENTRIES) {
-        const hint = document.createElement('p');
-        hint.className = 'text-muted';
-        hint.textContent = `Mostrando ${MAX_ENTRIES} de ${results.length} itens.`;
-        container.appendChild(hint);
-    }
-}
-
-function initProtocolWorkbench() {
-    const table = document.getElementById('protocol-support-table');
-    const inspector = document.getElementById('protocol-inspector');
-    if (!table || !inspector) return;
-
-    const titleEl = document.getElementById('protocol-inspector-title');
-    const descriptionEl = document.getElementById('protocol-inspector-description');
-    const fieldContainer = document.getElementById('protocol-connection-fields');
-    const discoverBtn = document.getElementById('protocol-discover');
-    const simulateBtn = document.getElementById('protocol-simulate');
-    const feedbackEl = document.getElementById('protocol-feedback');
-    const resultsContainer = document.getElementById('protocol-discovery-results');
-
-    selectedProtocolConfig = null;
-
     function setFeedback(message, type) {
-        if (!feedbackEl) return;
-        feedbackEl.textContent = '';
-        feedbackEl.className = 'protocol-feedback';
+        if (!feedback) return;
+        feedback.textContent = '';
+        feedback.className = 'protocol-feedback';
         if (type) {
-            feedbackEl.classList.add(type);
+            feedback.classList.add(type);
         }
         if (message) {
-            feedbackEl.textContent = message;
+            feedback.textContent = message;
         }
     }
 
-    function buildField(field, defaults) {
-        const label = document.createElement('label');
-        const span = document.createElement('span');
-        span.textContent = field.label || field.name;
-        label.appendChild(span);
-
-        const input = document.createElement('input');
-        input.className = 'input-form';
-        input.name = field.name;
-        input.type = field.type || 'text';
-        if (field.placeholder) input.placeholder = field.placeholder;
-        if (field.required) input.required = true;
-
-        Object.entries(field).forEach(([key, value]) => {
-            if (['name', 'label', 'placeholder', 'type', 'required'].includes(key)) return;
-            if (value !== undefined && value !== null && value !== '') {
-                input.setAttribute(key, value);
-            }
-        });
-
-        if (defaults && defaults[field.name] !== undefined && defaults[field.name] !== null) {
-            input.value = String(defaults[field.name]);
-        }
-
-        label.appendChild(input);
-        return label;
-    }
-
-    function selectRow(row) {
-        table.querySelectorAll('.protocol-row.selected').forEach((entry) => entry.classList.remove('selected'));
-        row.classList.add('selected');
-
-        const protocol = row.dataset.protocol;
-        const label = row.querySelector('th')?.textContent?.trim() || protocol?.toUpperCase() || 'Protocolo';
-        const implementation = row.dataset.implementation || '';
-        const notes = row.dataset.notes || '';
-        const discoverEnabled = row.dataset.discover === 'true';
-        const simulateEnabled = row.dataset.simulate === 'true';
-        const requiresFile = row.dataset.requiresFile === 'true';
-        const fields = parseJsonAttribute(row.dataset.fields, []) || [];
-        const defaults = parseJsonAttribute(row.dataset.defaults, {}) || {};
-
-        selectedProtocolConfig = {
-            protocol,
-            label,
-            implementation,
-            notes,
-            discoverEnabled,
-            simulateEnabled,
-            requiresFile,
-            fields,
-            defaults,
-        };
-
-        if (titleEl) {
-            titleEl.textContent = label;
-        }
-        if (descriptionEl) {
-            descriptionEl.textContent = notes ? `${implementation} ${notes}` : implementation;
-        }
-
-        if (fieldContainer) {
-            fieldContainer.innerHTML = '';
-            if (fields.length === 0) {
-                const placeholder = document.createElement('p');
-                placeholder.className = 'text-muted';
-                placeholder.textContent = 'Este protocolo depende de mapas externos. Utilize a área de importação para carregar os dados.';
-                fieldContainer.appendChild(placeholder);
-            } else {
-                fields.forEach((field) => {
-                    const control = buildField(field, defaults);
-                    fieldContainer.appendChild(control);
-                });
-            }
-        }
-
-        if (resultsContainer) {
-            resultsContainer.innerHTML = '';
-        }
-
-        if (discoverBtn) {
-            discoverBtn.disabled = !discoverEnabled;
-            discoverBtn.dataset.protocol = protocol;
-            discoverBtn.dataset.requiresFile = requiresFile ? 'true' : 'false';
-        }
-        if (simulateBtn) {
-            simulateBtn.disabled = !simulateEnabled;
-            simulateBtn.dataset.protocol = protocol;
-        }
-
-        if (requiresFile && fields.length === 0) {
-            setFeedback('Carregue um arquivo CSV/XLSX no painel "Mapa industrial de tags" para registrar este protocolo.', 'loading');
-        } else {
-            setFeedback('', null);
-        }
-    }
-
-    table.addEventListener('click', (event) => {
-        const row = event.target.closest('.protocol-row');
-        if (!row) return;
-        selectRow(row);
-    });
-
-    async function runDiscovery(mode) {
-        if (!selectedProtocolConfig) return;
-        const { protocol, discoverEnabled, requiresFile, defaults } = selectedProtocolConfig;
-        const isSimulation = mode === 'simulate';
-
-        if (!protocol) return;
-
-        if (!isSimulation && !discoverEnabled) {
-            setFeedback('A descoberta automática não está disponível para este protocolo.', 'error');
-            return;
-        }
-
-        if (!isSimulation && requiresFile && (!selectedProtocolConfig.fields || selectedProtocolConfig.fields.length === 0)) {
-            setFeedback('Importe o mapa industrial correspondente para continuar.', 'error');
-            return;
-        }
-
-        const params = {};
-        if (!isSimulation && fieldContainer) {
-            const inputs = fieldContainer.querySelectorAll('input, select, textarea');
-            for (const input of inputs) {
-                if (input.disabled) continue;
-                const value = input.value.trim();
-                if (input.required && !value) {
-                    setFeedback(`Preencha o campo "${input.previousElementSibling?.textContent || input.name}".`, 'error');
-                    input.focus();
-                    return;
-                }
-                if (value !== '') {
-                    params[input.name] = input.type === 'number' ? Number(value) : value;
-                }
-            }
-        }
-
-        if (!isSimulation) {
-            Object.entries(defaults || {}).forEach(([key, value]) => {
-                if (params[key] === undefined && value !== undefined && value !== null && value !== '') {
-                    params[key] = value;
-                }
-            });
-        }
-
+    button.addEventListener('click', async () => {
+        button.disabled = true;
+        setFeedback('Sincronizando tags e registradores…', 'loading');
         try {
-            setFeedback(isSimulation ? 'Executando simulador…' : 'Pesquisando tags…', 'loading');
-            if (resultsContainer) {
-                resultsContainer.innerHTML = '';
-            }
-
-            const endpoint = isSimulation
-                ? `/api/tag-discovery/${encodeURIComponent(protocol)}/simulate`
-                : `/api/tag-discovery/${encodeURIComponent(protocol)}`;
-
-            const options = isSimulation
-                ? { method: 'GET', credentials: 'same-origin' }
-                : {
-                      method: 'POST',
-                      credentials: 'same-origin',
-                      headers: {
-                          'Content-Type': 'application/json',
-                          'X-CSRFToken': getCsrfToken(),
-                      },
-                      body: JSON.stringify(params),
-                  };
-
-            const response = await fetch(endpoint, options);
+            const response = await fetch(`/api/plcs/${encodeURIComponent(plcId)}/discover`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                },
+            });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {
-                throw new Error(payload.message || 'Não foi possível concluir a operação.');
+                throw new Error(payload.message || 'Não foi possível sincronizar as tags.');
             }
 
-            const tags = payload.tags || [];
-            renderDiscoveryResults(tags, resultsContainer);
-            if (tags.length > 0) {
-                setFeedback(`Foram localizados ${tags.length} itens.`, 'success');
-            } else {
-                setFeedback('Nenhuma tag encontrada para os parâmetros informados.', 'loading');
+            if (Array.isArray(payload.tags)) {
+                renderTagList(payload.tags);
+            }
+
+            const created = Number(payload.registers_created || 0);
+            const updated = Number(payload.registers_updated || 0);
+            const statusType = created + updated > 0 ? 'success' : 'loading';
+            const message = payload.message || 'Sincronização concluída.';
+            setFeedback(message, statusType);
+
+            if (typeof pollOnce === 'function') {
+                pollOnce();
             }
         } catch (error) {
             console.error(error);
-            setFeedback(error.message || 'Falha ao executar a descoberta.', 'error');
+            setFeedback(error.message || 'Falha ao sincronizar as tags.', 'error');
+        } finally {
+            button.disabled = false;
         }
-    }
-
-    if (discoverBtn) {
-        discoverBtn.addEventListener('click', () => runDiscovery('discover'));
-    }
-    if (simulateBtn) {
-        simulateBtn.addEventListener('click', () => runDiscovery('simulate'));
-    }
+    });
 }
 
 function initRegisterExchange() {
@@ -915,6 +674,29 @@ function initRegisterExchange() {
     if (exportAllBtn) {
         exportAllBtn.addEventListener('click', () => triggerExport('all'));
     }
+}
+
+function renderTagList(tags) {
+    const list = document.getElementById('tag-list-container');
+    if (!list) return;
+
+    list.innerHTML = '';
+    if (!Array.isArray(tags) || tags.length === 0) {
+        const placeholder = document.createElement('li');
+        placeholder.id = 'no-tags-msg';
+        placeholder.textContent = 'Nenhuma tag associada.';
+        list.appendChild(placeholder);
+        return;
+    }
+
+    tags.forEach((tag) => {
+        const item = document.createElement('li');
+        item.className = 'tag-item';
+        item.innerHTML = `<span>${tag}</span><span class="remove-tag" data-tag="${tag}" title="Remover Tag">&times;</span>`;
+        list.appendChild(item);
+    });
+
+    ensureNoTagsMessage();
 }
 
 function ensureNoTagsMessage() {
@@ -1344,7 +1126,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } else {
         startPolling();
     }
-    initProtocolWorkbench();
+    initAutoDiscoverySync();
     initRegisterExchange();
     initTagManagement();
     initProgrammingTabs();

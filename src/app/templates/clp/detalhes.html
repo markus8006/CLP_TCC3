@@ -118,60 +118,13 @@
     </div>
 </div>
 
-<div class="informacao_clp protocol-support-card">
-    <h2>Suporte por Protocolo</h2>
-    <p class="section-description">Escolha o protocolo do CLP e execute a descoberta automática, uma simulação guiada ou carregue mapas externos conforme a maturidade de integração.</p>
-    <div class="protocol-support-grid">
-        <div class="protocol-table-wrapper">
-            <table class="protocol-table" id="protocol-support-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Protocolo</th>
-                        <th scope="col">Suporte</th>
-                        <th scope="col">Implementação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for entry in protocol_support %}
-                    <tr class="protocol-row"
-                        data-protocol="{{ entry.key }}"
-                        data-support="{{ entry.support_level }}"
-                        data-discover="{{ 'true' if entry.discover_enabled else 'false' }}"
-                        data-simulate="{{ 'true' if entry.simulate_enabled else 'false' }}"
-                        data-requires-file="{{ 'true' if entry.requires_file else 'false' }}"
-                        data-fields='{{ entry.fields|tojson }}'
-                        data-defaults='{{ entry.defaults|tojson }}'
-                        data-implementation="{{ entry.implementation }}"
-                        data-notes="{{ entry.notes or '' }}">
-                        <th scope="row">{{ entry.label }}</th>
-                        <td>
-                            <span class="support-indicator support-{{ entry.support_level }}">{{ entry.support_label }}</span>
-                        </td>
-                        <td>
-                            <span class="protocol-implementation">{{ entry.implementation }}</span>
-                            {% if entry.notes %}
-                            <small class="protocol-note">{{ entry.notes }}</small>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div id="protocol-inspector" class="protocol-inspector" aria-live="polite">
-            <h3 id="protocol-inspector-title">Selecione um protocolo</h3>
-            <p id="protocol-inspector-description">Clique em uma linha da matriz para configurar a conexão ou acionar o simulador.</p>
-            <form id="protocol-connection-form" novalidate>
-                <div id="protocol-connection-fields" class="protocol-fields"></div>
-            </form>
-            <div class="protocol-action-buttons">
-                <button type="button" id="protocol-discover" class="btn-acao" disabled>Localizar tags</button>
-                <button type="button" id="protocol-simulate" class="btn-acao secondary" disabled>Executar simulador</button>
-            </div>
-            <div id="protocol-feedback" class="protocol-feedback" role="status" aria-live="polite"></div>
-            <div id="protocol-discovery-results" class="protocol-discovery-results" aria-live="polite"></div>
-        </div>
+<div class="informacao_clp">
+    <h2>Sincronização automática</h2>
+    <p class="section-description">Utilize o protocolo configurado para tentar descobrir tags e atualizar o mapa de registradores automaticamente.</p>
+    <div class="protocol-action-buttons">
+        <button type="button" id="auto-discovery-sync" class="btn-acao" data-plc-id="{{ clp.id }}">Sincronizar tags e registradores</button>
     </div>
+    <div id="auto-discovery-feedback" class="protocol-feedback" role="status" aria-live="polite"></div>
 </div>
 
 <div class="informacao_clp register-exchange">
