@@ -1,8 +1,6 @@
 from flask import Blueprint, abort, render_template, request
 from flask_login import current_user, login_required
 from src.repository.PLC_repository import Plcrepo
-from src.utils import role_required
-from src.services.protocol_support_service import get_protocol_support_matrix
 from src.services.security.industrial_security import assess_plc_security
 
 
@@ -24,5 +22,4 @@ def clp(ip):
         security_report=security_report,
         tags=plc.tags_as_list(),
         vlan_id=vlan_id,
-        protocol_support=get_protocol_support_matrix(plc),
     )

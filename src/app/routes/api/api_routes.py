@@ -15,6 +15,7 @@ from src.repository.FactoryLayout_repository import FactoryLayoutRepository
 from src.repository.PLC_repository import Plcrepo
 from src.runtime.script_engine import ScriptEngine
 from src.services.register_import_service import RegisterImportExportService
+from src.services.address_mapping import AddressMappingEngine
 from src.services.tag_discovery_service import discover_tags as discover_tags_async
 from src.services.tag_simulation_service import get_simulated_tags
 from src.utils.role.roles import role_required
@@ -31,6 +32,83 @@ STATUS_LABELS = {
 
 register_service = RegisterImportExportService()
 script_engine = ScriptEngine()
+
+
+def _stringify(value):
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        parts = [str(item) for item in value if item is not None and str(item).strip()]
+        return " / ".join(parts) if parts else None
+    text = str(value).strip()
+    return text or None
+
+
+def _extract_address(entry: dict) -> str | None:
+    direct = _stringify(entry.get("address")) or _stringify(entry.get("node_id"))
+    if direct:
+        return direct
+
+    path = _stringify(entry.get("path")) or _stringify(entry.get("display_path"))
+    if path:
+        return path
+
+    group = entry.get("group")
+    variation = entry.get("variation")
+    index = entry.get("index")
+    if group is not None and variation is not None and index is not None:
+        return f"g{group}v{variation}/{index}"
+
+    return None
+
+
+def _extract_label(entry: dict, fallback: str | None = None) -> str | None:
+    label = (
+        _stringify(entry.get("tag_name"))
+        or _stringify(entry.get("name"))
+        or _stringify(entry.get("label"))
+        or _stringify(entry.get("display_path"))
+    )
+    if label:
+        return label
+
+    path = _stringify(entry.get("path"))
+    if path:
+        return path
+
+    node_id = _stringify(entry.get("node_id"))
+    if node_id:
+        return node_id
+
+    return fallback
+
+
+def _build_discovery_params(plc: PLC) -> dict:
+    params = {
+        "ip": plc.ip_address,
+        "host": plc.ip_address,
+        "address": plc.ip_address,
+        "port": plc.port,
+    }
+
+    protocol = (plc.protocol or "").lower()
+    if protocol in {"modbus", "modbus-tcp", "modbus_rtu", "modbus-rtu"}:
+        if plc.unit_id is not None:
+            params["unit_id"] = plc.unit_id
+            params["slave"] = plc.unit_id
+
+    if protocol in {"s7", "siemens"} and plc.rack_slot:
+        rack_slot = str(plc.rack_slot).replace(",", ".").split(".")
+        try:
+            params["rack"] = int(rack_slot[0])
+        except (ValueError, IndexError):
+            pass
+        try:
+            params["slot"] = int(rack_slot[1])
+        except (ValueError, IndexError):
+            pass
+
+    return {key: value for key, value in params.items() if value not in (None, "")}
 
 
 def _await(coro):
@@ -753,6 +831,136 @@ def remove_tag(ip, tag):
     updated = [t for t in current_tags if t != normalized]
     Plcrepo.update_tags(plc, updated)
     return jsonify({"tag": normalized, "tags": updated}), 200
+
+
+@api_bp.route("/plcs/<int:plc_id>/discover", methods=["POST"])
+@login_required
+def discover_and_store(plc_id: int):
+    plc = db.session.get(PLC, plc_id)
+    if plc is None:
+        return jsonify({"message": "CLP não encontrado."}), 404
+
+    if not plc.protocol:
+        return jsonify({"message": "O protocolo do CLP não está configurado."}), 400
+
+    params = _build_discovery_params(plc)
+
+    try:
+        discovered = _await(discover_tags_async(plc.protocol, params))
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+    except RuntimeError as exc:  # pragma: no cover - depende de libs externas
+        return jsonify({"message": str(exc)}), 500
+
+    engine = AddressMappingEngine()
+    existing = {
+        register.address: register
+        for register in Register.query.filter_by(plc_id=plc.id).all()
+    }
+
+    created = 0
+    updated = 0
+    processed_ids = []
+    discovered_slugs = set()
+
+    try:
+        for entry in discovered:
+            address = _extract_address(entry)
+            if not address:
+                continue
+
+            address_key = str(address).strip()
+            if not address_key:
+                continue
+
+            label = _extract_label(entry, address_key)
+            tag_source = label or address_key
+            slug = normalize_tag(tag_source) if tag_source else None
+
+            data_type = (
+                _stringify(entry.get("data_type"))
+                or _stringify(entry.get("type"))
+                or "desconhecido"
+            )
+            unit = _stringify(entry.get("unit")) or _stringify(entry.get("units"))
+            description = _stringify(entry.get("description")) or _stringify(entry.get("comment"))
+            register_type = _stringify(entry.get("register_type")) or "analogue"
+            length = entry.get("length")
+
+            try:
+                normalized_address = engine.normalize(plc.protocol, address_key)
+            except ValueError:
+                normalized_address = {"raw": address_key}
+
+            register = existing.get(address_key)
+            if register:
+                register.name = label or register.name or address_key
+                register.tag = slug or register.tag
+                register.tag_name = label or register.tag_name
+                register.data_type = data_type or register.data_type
+                register.unit = unit or register.unit
+                register.description = description or register.description
+                register.protocol = plc.protocol
+                register.register_type = register_type or register.register_type
+                register.normalized_address = normalized_address
+                if length is not None:
+                    register.length = length
+                updated += 1
+            else:
+                register = Register(
+                    plc_id=plc.id,
+                    name=label or address_key,
+                    tag=slug,
+                    tag_name=label or None,
+                    address=address_key,
+                    register_type=register_type or "analogue",
+                    data_type=data_type or "desconhecido",
+                    unit=unit,
+                    description=description,
+                    protocol=plc.protocol,
+                    normalized_address=normalized_address,
+                )
+                if length is not None:
+                    register.length = length
+                db.session.add(register)
+                db.session.flush()
+                existing[address_key] = register
+                created += 1
+
+            if register.id not in processed_ids:
+                processed_ids.append(register.id)
+
+            if slug:
+                discovered_slugs.add(slug)
+
+        if discovered_slugs:
+            combined = set(plc.tags_as_list())
+            combined.update(discovered_slugs)
+            Plcrepo.update_tags(plc, combined, commit=False)
+
+        db.session.commit()
+    except Exception as exc:  # pragma: no cover - commit/flush errors
+        db.session.rollback()
+        return jsonify({"message": f"Falha ao guardar os dados descobertos: {exc}"}), 500
+
+    total_registers = Register.query.filter_by(plc_id=plc.id).count()
+    message = (
+        "Nenhuma tag encontrada para o protocolo configurado."
+        if created == 0 and updated == 0
+        else f"Sincronização concluída: {created} registradores criados e {updated} atualizados."
+    )
+
+    return jsonify(
+        {
+            "message": message,
+            "tags": plc.tags_as_list(),
+            "discovered": len(discovered),
+            "registers_created": created,
+            "registers_updated": updated,
+            "registers_total": total_registers,
+            "register_ids": processed_ids,
+        }
+    )
 
 
 @api_bp.route("/registers/import", methods=["POST"])
