@@ -4,179 +4,208 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/clp/detalhes.css') }}">
-    
+
 {% endblock %}
 
 {% block content %}
-<div class="status_clp">
-    <span id="statusText" class="{{ 'status_online' if clp.is_online else 'status_offline' }}">
-        Status: {{ 'Online' if clp.is_online else 'Offline' }}
-    </span>
-
-    <div id="connect-container" style="display: {{ 'none' if clp.is_online else 'inline-block' }};" class="form-acao">
-        <label for="portSelect">Porta:</label>
-        <select id="portSelect" class="input-form">
-            <option value="{{ clp.port }}">{{ clp.port }}</option>
-        </select>
-        <button id="btnConnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}" class="btn-acao">Conectar</button>
-    </div>
-
-    <div id="disconnect-container" style="display: {{ 'inline-block' if clp.is_online else 'none' }};">
-        <button id="btnDisconnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}" class="btn-acao">Desconectar</button>
-    </div>
-
-    <div id="mensagemCLP" role="status" style="margin-top:12px;color:var(--accent)"></div>
-</div>
-
-
-<div class="informacao_clp">
-    <h2>Informações do CLP</h2>
-    <ul>
-        <li class="info-item-editavel">
-            <strong>Nome:</strong>
-            <div id="viewMode">
-                <span id="clpName">{{ clp.name }}</span>
-            </div>
-            <div id="editMode" style="display: none;">
-                <input type="text" id="inputClpName" class="form-input" value="{{ clp.name }}">
-                <button id="saveNameBtn" class="btn">Salvar</button>
-                <button id="cancelNameBtn" class="btn btn-secondary">Cancelar</button>
-            </div>
-        </li>
-        <li><strong>Modelo:</strong> {{ clp.model or 'Desconhecido' }}</li>
-        <li><strong>Fabricante:</strong> {{ clp.manufacturer or 'Desconhecido' }}</li>
-        <li><strong>IP:</strong> <span id="clpIp">{{ clp.ip_address }}</span></li>
-        <li><strong>VLAN:</strong> {{ clp.vlan_id or 'Não definido' }}</li>
-        <li><strong>Máscara:</strong> {{ clp.subnet_mask or 'Não informado' }}</li>
-        <li><strong>Gateway:</strong> {{ clp.gateway or 'Não informado' }}</li>
-        <li><strong>Última leitura:</strong> {{ clp.last_seen.strftime('%d/%m/%Y %H:%M:%S') if clp.last_seen else 'Nunca registada' }}</li>
-        <li><strong>Tags Associadas:</strong>
-            <ul class="tag-list" id="tag-list-container">
-                {% if tags %}
-                    {% for tag in tags %}
-                        <li class="tag-item">
-                            <span>{{ tag }}</span>
-                            <span class="remove-tag" data-tag="{{ tag }}" title="Remover Tag">&times;</span>
-                        </li>
-                    {% endfor %}
-                {% else %}
-                    <li id="no-tags-msg">Nenhuma tag associada.</li>
-                {% endif %}
-            </ul>
-        </li>
-        <li><strong>Portas Abertas:</strong>
-            <span id="listaportas">{{ clp.port }}</span>
-        </li>
-        <li><strong>Versão Firmware:</strong> {{ clp.firmware_version or 'N/A' }}</li>
-        <li><strong>Data de Registro:</strong> {{ clp.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</li>
-    </ul>
-</div>
-
-<div class="informacao_clp">
-    <h2>Adicionar Tag</h2>
-    <form id="formAddTag" onsubmit="return false;" class="form-acao">
-        <input type="text" id="inputTag" placeholder="Nova tag" required class="input-form">
-        <button id="btnAddTag" class="btn-acao">Adicionar</button>
-    </form>
-    <div id="tagMessage" style="margin-top: 10px;"></div>
-</div>
-
-<div class="informacao_clp">
-    <h2>Segurança Industrial</h2>
-    <div class="security-overview" data-level="{{ security_report.level|lower|replace('í', 'i') }}">
-        <div class="security-score">
-            <span class="score-value">{{ security_report.score }}</span>
-            <span class="score-label">Score</span>
-            <span class="score-level">Risco {{ security_report.level }}</span>
+<div class="clp-detalhes">
+    <div class="clp-tab-container">
+        <div class="clp-tab-navigation" role="tablist" aria-label="Seções de detalhes do CLP">
+            <button id="tab-operacao-button" class="clp-tab active" type="button" role="tab"
+                    data-tab-target="operacao" aria-controls="tab-operacao" aria-selected="true">
+                Operação
+            </button>
+            <button id="tab-configuracao-button" class="clp-tab" type="button" role="tab"
+                    data-tab-target="configuracao" aria-controls="tab-configuracao" aria-selected="false">
+                Configuração
+            </button>
+            <button id="tab-seguranca-button" class="clp-tab" type="button" role="tab"
+                    data-tab-target="seguranca" aria-controls="tab-seguranca" aria-selected="false">
+                Segurança &amp; Importação
+            </button>
         </div>
-        <div class="security-highlights">
-            <h3>Principais destaques</h3>
-            {% if security_report.highlights %}
-                <ul>
-                    {% for item in security_report.highlights %}
-                        <li>
-                            <strong class="severity severity-{{ item.severity }}">{{ item.severity|capitalize }}</strong>
-                            <div>
-                                <span class="highlight-title">{{ item.title }}</span>
-                                <p>{{ item.description }}</p>
+
+        <div class="clp-tab-panels">
+            <section id="tab-operacao" class="clp-tab-panel active" data-tab-panel="operacao" role="tabpanel"
+                     aria-labelledby="tab-operacao-button">
+                <div class="status_clp">
+                    <span id="statusText" class="{{ 'status_online' if clp.is_online else 'status_offline' }}">
+                        Status: {{ 'Online' if clp.is_online else 'Offline' }}
+                    </span>
+
+                    <div id="connect-container" style="display: {{ 'none' if clp.is_online else 'inline-block' }};" class="form-acao">
+                        <label for="portSelect">Porta:</label>
+                        <select id="portSelect" class="input-form">
+                            <option value="{{ clp.port }}">{{ clp.port }}</option>
+                        </select>
+                        <button id="btnConnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}"
+                                class="btn-acao">Conectar</button>
+                    </div>
+
+                    <div id="disconnect-container" style="display: {{ 'inline-block' if clp.is_online else 'none' }};">
+                        <button id="btnDisconnect" data-ip="{{ clp.ip_address }}" data-vlan="{{ vlan_id if vlan_id is not none else clp.vlan_id }}"
+                                class="btn-acao">Desconectar</button>
+                    </div>
+
+                    <div id="mensagemCLP" role="status" class="clp-status-message"></div>
+                </div>
+
+                <div class="informacao_clp">
+                    <h2>Informações do CLP</h2>
+                    <ul>
+                        <li class="info-item-editavel">
+                            <strong>Nome:</strong>
+                            <div id="viewMode">
+                                <span id="clpName">{{ clp.name }}</span>
+                            </div>
+                            <div id="editMode" style="display: none;">
+                                <input type="text" id="inputClpName" class="form-input" value="{{ clp.name }}">
+                                <button id="saveNameBtn" class="btn">Salvar</button>
+                                <button id="cancelNameBtn" class="btn btn-secondary">Cancelar</button>
                             </div>
                         </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>Sem achados críticos registados.</p>
-            {% endif %}
-        </div>
-        <div class="security-recommendations">
-            <h3>Recomendações</h3>
-            <ol>
-                {% for recommendation in security_report.recommendations %}
-                <li>{{ recommendation }}</li>
-                {% endfor %}
-            </ol>
-        </div>
-    </div>
-</div>
-
-<div class="informacao_clp">
-    <h2>Sincronização automática</h2>
-    <p class="section-description">Utilize o protocolo configurado para tentar descobrir tags e atualizar o mapa de registradores automaticamente.</p>
-    <div class="protocol-action-buttons">
-        <button type="button" id="auto-discovery-sync" class="btn-acao" data-plc-id="{{ clp.id }}">Sincronizar tags e registradores</button>
-    </div>
-    <div id="auto-discovery-feedback" class="protocol-feedback" role="status" aria-live="polite"></div>
-</div>
-
-<div class="informacao_clp register-exchange">
-    <h2>Mapa industrial de tags</h2>
-    <p class="section-description">Arraste um ficheiro CSV ou XLSX exportado do engenheiro de configuração para registrar tags e endereços de forma padronizada.</p>
-    <div class="register-exchange__grid">
-        <div id="register-import-area" class="register-dropzone" data-plc-id="{{ clp.id }}">
-            <input type="file" id="register-import-input" accept=".csv,.xls,.xlsx" hidden>
-            <div class="register-dropzone__content">
-                <strong>Solte o arquivo aqui</strong>
-                <p>ou clique para selecionar.</p>
-                <span class="text-muted">Formatos suportados: CSV, XLS, XLSX.</span>
-            </div>
-        </div>
-            <div class="register-exchange__actions">
-                <div class="export-controls">
-                    <label for="register-export-format">Formato de exportação</label>
-                    <select id="register-export-format" class="input-form">
-                        <option value="xlsx">XLSX</option>
-                        <option value="csv">CSV</option>
-                    </select>
+                        <li><strong>Modelo:</strong> {{ clp.model or 'Desconhecido' }}</li>
+                        <li><strong>Fabricante:</strong> {{ clp.manufacturer or 'Desconhecido' }}</li>
+                        <li><strong>IP:</strong> <span id="clpIp">{{ clp.ip_address }}</span></li>
+                        <li><strong>VLAN:</strong> {{ clp.vlan_id or 'Não definido' }}</li>
+                        <li><strong>Máscara:</strong> {{ clp.subnet_mask or 'Não informado' }}</li>
+                        <li><strong>Gateway:</strong> {{ clp.gateway or 'Não informado' }}</li>
+                        <li><strong>Última leitura:</strong> {{ clp.last_seen.strftime('%d/%m/%Y %H:%M:%S') if clp.last_seen else 'Nunca registrada' }}</li>
+                        <li><strong>Tags Associadas:</strong>
+                            <ul class="tag-list" id="tag-list-container">
+                                {% if tags %}
+                                    {% for tag in tags %}
+                                        <li class="tag-item">
+                                            <span>{{ tag }}</span>
+                                            <span class="remove-tag" data-tag="{{ tag }}" title="Remover Tag">&times;</span>
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li id="no-tags-msg">Nenhuma tag associada.</li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        <li><strong>Portas Abertas:</strong>
+                            <span id="listaportas">{{ clp.port }}</span>
+                        </li>
+                        <li><strong>Versão Firmware:</strong> {{ clp.firmware_version or 'N/A' }}</li>
+                        <li><strong>Data de Registro:</strong> {{ clp.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</li>
+                    </ul>
                 </div>
-                <button type="button" id="register-export-current" class="btn-acao">Exportar CLP atual</button>
-                <p class="export-hint">A exportação consolida controladores, protocolos, tags e endereços seguindo práticas ISA-95.</p>
-            </div>
+
+                <div id="mensagem" role="status" class="clp-status-message"></div>
+
+                <div class="informacao_clp">
+                    <h2>Registradores monitorados</h2>
+                    <p class="section-description">Acompanhe o estado geral e expanda um registrador para visualizar o histórico e os limites configurados.</p>
+                    <div id="register-accordion" class="register-accordion" aria-live="polite"></div>
+                </div>
+
+                <div class="informacao_clp">
+                    <h2>Logs de Atividade</h2>
+                    <div id="logContainer" class="log-container"></div>
+                </div>
+            </section>
+
+            <section id="tab-configuracao" class="clp-tab-panel" data-tab-panel="configuracao" role="tabpanel"
+                     aria-labelledby="tab-configuracao-button" hidden>
+                <div class="informacao_clp">
+                    <h2>Adicionar Tag</h2>
+                    <form id="formAddTag" onsubmit="return false;" class="form-acao">
+                        <input type="text" id="inputTag" placeholder="Nova tag" required class="input-form">
+                        <button id="btnAddTag" class="btn-acao">Adicionar</button>
+                    </form>
+                    <div id="tagMessage" class="tag-feedback"></div>
+                </div>
+
+                <div class="informacao_clp">
+                    <h2>Sincronização automática</h2>
+                    <p class="section-description">Utilize o protocolo configurado para tentar descobrir tags e atualizar o mapa de registradores automaticamente.</p>
+                    <div class="protocol-action-buttons">
+                        <button type="button" id="auto-discovery-sync" class="btn-acao" data-plc-id="{{ clp.id }}">Sincronizar tags e registradores</button>
+                    </div>
+                    <div id="auto-discovery-feedback" class="protocol-feedback" role="status" aria-live="polite"></div>
+                </div>
+
+                <div class="informacao_clp">
+                    <h2>Leitor de Registrador Modbus</h2>
+                    <form id="formReadRegister" onsubmit="return false;" class="form-acao">
+                        <input type="number" id="inputAddress" placeholder="Endereço (ex: 0)" required class="input-form">
+                        <button id="btnReadRegister" class="btn-acao">Ler Registrador</button>
+                    </form>
+                    <div id="readResult" class="resultado-acao"></div>
+                </div>
+            </section>
+
+            <section id="tab-seguranca" class="clp-tab-panel" data-tab-panel="seguranca" role="tabpanel"
+                     aria-labelledby="tab-seguranca-button" hidden>
+                <div class="informacao_clp">
+                    <h2>Segurança Industrial</h2>
+                    <div class="security-overview" data-level="{{ security_report.level|lower|replace('í', 'i') }}">
+                        <div class="security-score">
+                            <span class="score-value">{{ security_report.score }}</span>
+                            <span class="score-label">Score</span>
+                            <span class="score-level">Risco {{ security_report.level }}</span>
+                        </div>
+                        <div class="security-highlights">
+                            <h3>Principais destaques</h3>
+                            {% if security_report.highlights %}
+                                <ul>
+                                    {% for item in security_report.highlights %}
+                                        <li>
+                                            <strong class="severity severity-{{ item.severity }}">{{ item.severity|capitalize }}</strong>
+                                            <div>
+                                                <span class="highlight-title">{{ item.title }}</span>
+                                                <p>{{ item.description }}</p>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Sem achados críticos registados.</p>
+                            {% endif %}
+                        </div>
+                        <div class="security-recommendations">
+                            <h3>Recomendações</h3>
+                            <ol>
+                                {% for recommendation in security_report.recommendations %}
+                                <li>{{ recommendation }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="informacao_clp register-exchange">
+                    <h2>Mapa industrial de tags</h2>
+                    <p class="section-description">Arraste um ficheiro CSV ou XLSX exportado do engenheiro de configuração para registrar tags e endereços de forma padronizada.</p>
+                    <div class="register-exchange__grid">
+                        <div id="register-import-area" class="register-dropzone" data-plc-id="{{ clp.id }}">
+                            <input type="file" id="register-import-input" accept=".csv,.xls,.xlsx" hidden>
+                            <div class="register-dropzone__content">
+                                <strong>Solte o arquivo aqui</strong>
+                                <p>ou clique para selecionar.</p>
+                                <span class="text-muted">Formatos suportados: CSV, XLS, XLSX.</span>
+                            </div>
+                        </div>
+                        <div class="register-exchange__actions">
+                            <div class="export-controls">
+                                <label for="register-export-format">Formato de exportação</label>
+                                <select id="register-export-format" class="input-form">
+                                    <option value="xlsx">XLSX</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                            <button type="button" id="register-export-current" class="btn-acao">Exportar CLP atual</button>
+                            <p class="export-hint">A exportação consolida controladores, protocolos, tags e endereços seguindo práticas ISA-95.</p>
+                        </div>
+                    </div>
+                    <div id="register-import-feedback" class="register-feedback" role="status" aria-live="polite"></div>
+                </div>
+            </section>
         </div>
-        <div id="register-import-feedback" class="register-feedback" role="status" aria-live="polite"></div>
-</div>
-
-<div class="informacao_clp">
-    <h2>Leitor de Registrador Modbus</h2>
-    <form id="formReadRegister" onsubmit="return false;" class="form-acao">
-        <input type="number" id="inputAddress" placeholder="Endereço (ex: 0)" required class="input-form">
-        <button id="btnReadRegister" class="btn-acao">Ler Registrador</button>
-    </form>
-    <div id="readResult" class="resultado-acao" style="margin-top: 10px;"></div>
-</div>
-
-<div id="mensagem" role="status" style="margin-top:12px;color:var(--accent)"></div>
-
-<div class="informacao_clp">
-    <h2>Registradores monitorados</h2>
-    <p class="section-description">Acompanhe o estado geral e expanda um registrador para visualizar o histórico e os limites configurados.</p>
-    <div id="register-accordion" class="register-accordion" aria-live="polite"></div>
-</div>
-
-<div class="informacao_clp">
-    <h2>Logs de Atividade</h2>
-    <div id="logContainer" style="height: 200px; overflow-y: scroll; background-color: rgba(0,0,0,0.2); border-radius: 5px; padding: 10px; font-family: monospace;">
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
