@@ -7,6 +7,7 @@
     --light-dark-bg: #1b0030;
     --text-color: whitesmoke;
     --text-muted: #adb5bd;
+    --navbar-offset: 72px;
 }
 
 body {
@@ -35,14 +36,29 @@ body {
     flex-wrap: wrap;
     gap: 12px;
     position: sticky;
-    top: 88px;
-    z-index: 20;
+    top: calc(var(--navbar-offset) + 12px);
+    z-index: 950;
     background: linear-gradient(180deg, rgba(10, 0, 24, 0.95) 0%, rgba(10, 0, 24, 0.6) 100%);
     backdrop-filter: blur(12px);
     padding: 12px 18px;
     border-radius: 18px;
     border: 1px solid rgba(132, 0, 255, 0.35);
     box-shadow: 0 8px 24px rgba(10, 0, 24, 0.45);
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --navbar-offset: 60px;
+    }
+
+    .clp-tab-navigation {
+        top: calc(var(--navbar-offset) + 8px);
+        padding: 10px 14px;
+        border-radius: 14px;
+    }
 }
 
 .clp-tab {
