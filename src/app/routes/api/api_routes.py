@@ -1274,6 +1274,9 @@ def hmi_active_alarms():
     now = datetime.now(timezone.utc)
     payload = []
     for alarm in alarms:
+        triggered_at = alarm.triggered_at
+        if triggered_at and triggered_at.tzinfo is None:
+            triggered_at = triggered_at.replace(tzinfo=timezone.utc)
         payload.append(
             {
                 "id": alarm.id,
@@ -1281,12 +1284,12 @@ def hmi_active_alarms():
                 "message": alarm.message,
                 "plc": alarm.plc.name if alarm.plc else None,
                 "register": alarm.register.name if alarm.register else None,
-                "triggered_at": alarm.triggered_at.isoformat()
-                if alarm.triggered_at
+                "triggered_at": triggered_at.isoformat()
+                if triggered_at
                 else None,
                 "age_seconds": (
-                    (now - alarm.triggered_at).total_seconds()
-                    if alarm.triggered_at
+                    (now - triggered_at).total_seconds()
+                    if triggered_at
                     else None
                 ),
             }
