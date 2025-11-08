@@ -11,9 +11,110 @@
   const reportMetricsDl = document.getElementById('report-metrics');
   const refreshBtn = document.getElementById('refresh-hmi');
   const exportBtn = document.getElementById('export-historian');
+  const panelToolList = document.getElementById('synoptic-tool-list');
+  const panelPlcList = document.getElementById('panel-plc-list');
+  const panelHelpText = document.getElementById('panel-help-text');
+  const panelHelpButton = document.getElementById('panel-help-button');
 
   const context = window.HMI_CONTEXT || {};
   let trendChart;
+  const toolDefinitions = [
+    {
+      id: 'add-component',
+      label: 'Adicionar componente',
+      description:
+        'Clique em uma área vazia do sinótico para posicionar o novo componente e vincular ao CLP correspondente.',
+    },
+    {
+      id: 'select-plc',
+      label: 'Selecionar CLP',
+      description:
+        'Use esta ferramenta para destacar um CLP no sinótico e editar suas propriedades ou registrar observações.',
+    },
+    {
+      id: 'help-guided',
+      label: 'Ver instruções rápidas',
+      description:
+        'Mostra um passo a passo para revisar conexões, ajustar legendas e compartilhar a captura com a equipe.',
+    },
+  ];
+
+  function setPanelHelp(message) {
+    if (!panelHelpText) return;
+    panelHelpText.textContent = message;
+  }
+
+  function buildToolPanel() {
+    if (!panelToolList) return;
+    panelToolList.innerHTML = '';
+    toolDefinitions.forEach((tool) => {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'panel-tool-button';
+      button.dataset.toolId = tool.id;
+      button.setAttribute('aria-pressed', 'false');
+      button.innerHTML = `${tool.label}<small>${tool.description.split('.')[0]}.</small>`;
+      button.addEventListener('click', () => {
+        if (!panelToolList) return;
+        panelToolList.querySelectorAll('.panel-tool-button').forEach((btn) => {
+          btn.setAttribute('aria-pressed', String(btn === button));
+        });
+        setPanelHelp(tool.description);
+        const event = new CustomEvent('hmi:tool-selected', {
+          detail: { toolId: tool.id, timestamp: Date.now() },
+        });
+        document.dispatchEvent(event);
+      });
+      item.appendChild(button);
+      panelToolList.appendChild(item);
+    });
+  }
+
+  function renderPanelPlcs(areas) {
+    if (!panelPlcList) return;
+    panelPlcList.innerHTML = '';
+    if (!areas || !areas.length) {
+      const info = document.createElement('p');
+      info.className = 'empty-placeholder';
+      info.textContent = 'Nenhum CLP cadastrado. Utilize “Adicionar componente” para começar.';
+      panelPlcList.appendChild(info);
+      return;
+    }
+
+    areas.forEach((area) => {
+      const areaEl = document.createElement('div');
+      areaEl.className = 'panel-plc-area';
+      const title = document.createElement('h3');
+      title.textContent = area.name || 'Área sem nome';
+      areaEl.appendChild(title);
+
+      (area.plcs || []).forEach((plc) => {
+        const plcEl = document.createElement('div');
+        plcEl.className = 'panel-plc';
+        plcEl.dataset.status = plc.status || 'unknown';
+        const plcTitle = document.createElement('strong');
+        plcTitle.textContent = plc.name || 'CLP sem nome';
+        plcEl.appendChild(plcTitle);
+
+        if (plc.registers && plc.registers.length) {
+          const list = document.createElement('ul');
+          list.className = 'panel-register-list';
+          plc.registers.slice(0, 6).forEach((reg) => {
+            const li = document.createElement('li');
+            const value = reg.last_value != null ? reg.last_value : '--';
+            li.textContent = `${reg.name || 'Registrador'} · ${value}${reg.unit ? ` ${reg.unit}` : ''}`;
+            list.appendChild(li);
+          });
+          plcEl.appendChild(list);
+        }
+
+        areaEl.appendChild(plcEl);
+      });
+
+      panelPlcList.appendChild(areaEl);
+    });
+  }
 
   function setFeedback(message, isError = false) {
     if (!feedbackEl) return;
@@ -56,7 +157,8 @@
     if (!synopticCanvas) return;
     synopticCanvas.innerHTML = '';
     if (!areas || !areas.length) {
-      synopticCanvas.innerHTML = '<p>Nenhum CLP encontrado.</p>';
+      synopticCanvas.innerHTML =
+        '<p class="empty-placeholder">Nenhum CLP cadastrado para esta planta. Use “Adicionar componente” no painel lateral.</p>';
       return;
     }
 
@@ -131,7 +233,8 @@
     alarmList.innerHTML = '';
     if (!alarms || !alarms.length) {
       const li = document.createElement('li');
-      li.textContent = 'Nenhum alarme ativo.';
+      li.className = 'empty-placeholder';
+      li.textContent = 'Nenhum alarme ativo. O painel atualizará automaticamente quando um evento ocorrer.';
       alarmList.appendChild(li);
       return;
     }
@@ -156,7 +259,8 @@
     manualHistoryList.innerHTML = '';
     if (!commands || !commands.length) {
       const li = document.createElement('li');
-      li.textContent = 'Sem comandos manuais registrados.';
+      li.className = 'empty-placeholder';
+      li.textContent = 'Sem comandos manuais registrados. Utilize o formulário acima para registrar intervenções.';
       manualHistoryList.appendChild(li);
       return;
     }
@@ -289,6 +393,7 @@
     try {
       const data = await fetchJSON('/api/hmi/overview');
       renderSynoptic(data.areas || []);
+      renderPanelPlcs(data.areas || []);
       populateRegisterSelect(trendSelect, data.register_options || []);
       if (manualSelect) {
         populateRegisterSelect(manualSelect, data.register_options || []);
@@ -322,6 +427,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    buildToolPanel();
     refreshAll();
 
     if (trendSelect) {
@@ -329,6 +435,9 @@
         const registerId = event.target.value;
         if (registerId) {
           loadTrend(registerId);
+          setPanelHelp(
+            'Tendência atualizada. Utilize os filtros do painel para comparar registradores relacionados.'
+          );
         }
       });
     }
@@ -343,6 +452,17 @@
 
     if (exportBtn && context.isAdmin) {
       exportBtn.addEventListener('click', exportHistorian);
+    }
+
+    if (panelHelpButton) {
+      panelHelpButton.addEventListener('click', () => {
+        setPanelHelp('Solicitação enviada. A equipe será notificada pelo centro de operações.');
+        setFeedback('Suporte notificado. Aguarde contato da equipe.', false);
+        const event = new CustomEvent('hmi:help-requested', {
+          detail: { source: 'panel', timestamp: Date.now() },
+        });
+        document.dispatchEvent(event);
+      });
     }
   });
 })();
