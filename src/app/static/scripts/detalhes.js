@@ -31,6 +31,13 @@ let currentScripts = [];
 let selectedScriptId = null;
 let scriptLanguages = {};
 
+let pollingIntervalId = null;
+let isPollingRunning = false;
+let tagManagementInitialized = false;
+let autoDiscoveryInitialized = false;
+let registerExchangeInitialized = false;
+let chartWarningLogged = false;
+
 // Paleta de cores para tema escuro
 const themeColors = [
     'rgba(132, 0, 255, 0.9)',       // Roxo primário
@@ -475,8 +482,31 @@ async function pollOnce() {
 }
 
 function startPolling() {
+    if (isPollingRunning) {
+        return;
+    }
+    if (typeof Chart === 'undefined') {
+        if (!chartWarningLogged) {
+            console.error('Chart.js não encontrado.');
+            chartWarningLogged = true;
+        }
+        return;
+    }
+
     pollOnce();
-    setInterval(pollOnce, POLL_INTERVAL);
+    pollingIntervalId = setInterval(pollOnce, POLL_INTERVAL);
+    isPollingRunning = true;
+}
+
+function stopPolling() {
+    if (!isPollingRunning) {
+        return;
+    }
+    if (pollingIntervalId) {
+        clearInterval(pollingIntervalId);
+        pollingIntervalId = null;
+    }
+    isPollingRunning = false;
 }
 
 function getCsrfToken() {
@@ -1154,15 +1184,106 @@ function initScriptEditor() {
     });
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js não encontrado.');
-    } else {
-        startPolling();
+function refreshActiveCharts() {
+    if (!charts.size) return;
+    requestAnimationFrame(() => {
+        charts.forEach((chart) => {
+            if (chart && typeof chart.resize === 'function') {
+                chart.resize();
+                chart.update('none');
+            }
+        });
+    });
+}
+
+function initDetailTabs() {
+    const tabs = Array.from(document.querySelectorAll('[data-tab-target]'));
+    const panels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+    if (!tabs.length || !panels.length) {
+        return;
     }
-    initAutoDiscoverySync();
-    initRegisterExchange();
-    initTagManagement();
+
+    const activate = (target) => {
+        tabs.forEach((tab) => {
+            const isActive = tab.dataset.tabTarget === target;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+
+        panels.forEach((panel) => {
+            const isActive = panel.dataset.tabPanel === target;
+            panel.classList.toggle('active', isActive);
+            panel.toggleAttribute('hidden', !isActive);
+            panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        });
+
+        if (target === 'operacao') {
+            if (!tagManagementInitialized) {
+                initTagManagement();
+                tagManagementInitialized = true;
+            }
+            startPolling();
+            refreshActiveCharts();
+        } else {
+            stopPolling();
+        }
+
+        if (target === 'configuracao') {
+            if (!tagManagementInitialized) {
+                initTagManagement();
+                tagManagementInitialized = true;
+            }
+            if (!autoDiscoveryInitialized) {
+                initAutoDiscoverySync();
+                autoDiscoveryInitialized = true;
+            }
+        }
+
+        if (target === 'seguranca' && !registerExchangeInitialized) {
+            initRegisterExchange();
+            registerExchangeInitialized = true;
+        }
+    };
+
+    tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tabTarget;
+            if (!target || tab.classList.contains('active')) {
+                return;
+            }
+            activate(target);
+        });
+
+        tab.addEventListener('keydown', (event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                return;
+            }
+            event.preventDefault();
+            let newIndex = index;
+            if (event.key === 'ArrowRight') {
+                newIndex = (index + 1) % tabs.length;
+            } else if (event.key === 'ArrowLeft') {
+                newIndex = (index - 1 + tabs.length) % tabs.length;
+            } else if (event.key === 'Home') {
+                newIndex = 0;
+            } else if (event.key === 'End') {
+                newIndex = tabs.length - 1;
+            }
+            const nextTab = tabs[newIndex];
+            if (nextTab) {
+                nextTab.focus();
+                nextTab.click();
+            }
+        });
+    });
+
+    const initialTab = tabs.find((tab) => tab.classList.contains('active'))?.dataset.tabTarget || tabs[0].dataset.tabTarget;
+    activate(initialTab);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initDetailTabs();
     initProgrammingTabs();
     initScriptEditor();
 });
