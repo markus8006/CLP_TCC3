@@ -7,6 +7,7 @@
     --light-dark-bg: #1b0030;
     --text-color: whitesmoke;
     --text-muted: #adb5bd;
+    --navbar-offset: 72px;
 }
 
 body {
