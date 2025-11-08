@@ -1,7 +1,7 @@
-"""Routes dedicated to the interactive HMI/SCADA interface."""
+"""Routes dedicated to the alarm monitoring interface."""
 
 from flask import Blueprint, render_template
-from flask_login import login_required, current_user
+from flask_login import login_required
 
 
 hmi_bp = Blueprint("hmi", __name__)
@@ -10,10 +10,6 @@ hmi_bp = Blueprint("hmi", __name__)
 @hmi_bp.route("/", methods=["GET"])
 @login_required
 def hmi_home():
-    """Render the Synoptic HMI bringing process overview and controls."""
+    """Render the streamlined alarm monitor."""
 
-    return render_template(
-        "hmi/index.html",
-        can_control=current_user.has_permission("operator"),
-        is_admin=current_user.has_permission("admin"),
-    )
+    return render_template("hmi/index.html")
