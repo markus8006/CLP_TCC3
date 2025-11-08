@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField
-from wtforms.validators import DataRequired, EqualTo, ValidationError
+from wtforms.validators import DataRequired, EqualTo, ValidationError, Email
 from src.models.Users import User, UserRole
 from src.app.routes.admin_forms import ROLE_LABELS
 from flask_wtf import FlaskForm
@@ -21,7 +21,7 @@ ROLE_CHOICES = [(role.value, ROLE_LABELS.get(role, role.name.title())) for role 
 class RegistrationForm(FlaskForm):
     username = StringField('Usuário', validators=[DataRequired()])
     password = PasswordField('Senha', validators=[DataRequired()])
-    email = EmailField('Email', validators=[DataRequired()])
+    email = EmailField('Email', validators=[DataRequired(), Email(message='Informe um email válido.')])
     password2 = PasswordField(
         'Repetir Senha', validators=[DataRequired(), EqualTo('password', message='As senhas devem ser iguais.')])
     user_type = SelectField(

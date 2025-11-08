@@ -62,7 +62,7 @@ def register():
         # definir papel: primeiro -> ADMIN, senão usar o escolhido no form
         role = UserRole.ADMIN if was_first else UserRole(form.user_type.data)
 
-        user = User(username=form.username.data, role=role, email=form.username.data)
+        user = User(username=form.username.data, role=role, email=form.email.data)
         user.set_password(form.password.data)
         db.session.add(user)
 
