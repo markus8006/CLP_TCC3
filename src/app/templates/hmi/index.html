@@ -1,120 +1,94 @@
 {% extends 'layouts/base.html' %}
-{% block title %}Interface HMI/SCADA{% endblock %}
+{% block title %}Monitoramento de Alarmes{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/hmi/hmi.css') }}">
 {% endblock %}
 
 {% block content %}
-<section class="hmi-header">
-  <div>
-    <h1>Centro de Operações</h1>
-    <p>Sinótico ao vivo, tendências e comandos manuais integrados ao histórico.</p>
-  </div>
-  <div class="hmi-actions">
-    <button id="refresh-hmi" class="btn btn-secondary" type="button">Atualizar dados</button>
-    {% if is_admin %}
-    <button id="export-historian" class="btn btn-primary" type="button">Sincronizar histórico</button>
-    {% endif %}
-  </div>
-</section>
-<div id="hmi-feedback" class="hmi-feedback" role="status" aria-live="polite"></div>
+<section class="alarm-monitor" aria-labelledby="alarm-monitor-title">
+  <header class="alarm-monitor__header">
+    <div>
+      <h1 id="alarm-monitor-title">Monitoramento de alarmes</h1>
+      <p>Visualize rapidamente os alarmes ativos, filtre por prioridade e localize ocorrências específicas.</p>
+    </div>
+    <div class="alarm-monitor__header-actions">
+      <button id="refresh-alarms" class="btn btn-primary" type="button">Atualizar lista</button>
+      <span id="alarm-last-updated" class="last-updated" role="status" aria-live="polite">Última atualização: --</span>
+    </div>
+  </header>
 
-<section class="hmi-workspace">
-  <aside class="hmi-side-panel" aria-label="Ferramentas e ajuda para edição do sinótico">
-    <section class="panel-section" aria-labelledby="panel-tools-title">
-      <h2 id="panel-tools-title">Ferramentas rápidas</h2>
-      <p class="panel-description">Escolha uma ferramenta para editar ou anotar a tela sinótica.</p>
-      <ul id="synoptic-tool-list" class="panel-tool-list" role="list"></ul>
-    </section>
-    <section class="panel-section" aria-labelledby="panel-plc-title">
-      <h2 id="panel-plc-title">CLPs e registradores</h2>
-      <div id="panel-plc-list" class="panel-plc-list" role="tree"></div>
-    </section>
-    <section class="panel-section help" aria-labelledby="panel-help-title">
-      <h2 id="panel-help-title">Dicas de uso</h2>
-      <p id="panel-help-text" class="panel-help-text">Selecione uma ferramenta para ver instruções detalhadas.</p>
-      <button id="panel-help-button" class="btn btn-outline" type="button">Solicitar ajuda da equipe</button>
-    </section>
-  </aside>
+  <section class="alarm-summary" aria-label="Resumo dos alarmes ativos">
+    <article class="summary-card">
+      <h2>Total</h2>
+      <p id="summary-total" class="summary-value">0</p>
+    </article>
+    <article class="summary-card critical">
+      <h2>Críticos</h2>
+      <p id="summary-critical" class="summary-value">0</p>
+    </article>
+    <article class="summary-card high">
+      <h2>Alta prioridade</h2>
+      <p id="summary-high" class="summary-value">0</p>
+    </article>
+    <article class="summary-card medium">
+      <h2>Média prioridade</h2>
+      <p id="summary-medium" class="summary-value">0</p>
+    </article>
+    <article class="summary-card low">
+      <h2>Baixa prioridade</h2>
+      <p id="summary-low" class="summary-value">0</p>
+    </article>
+  </section>
 
-  <div class="hmi-main">
-    <section class="hmi-grid">
-      <article class="hmi-card synoptic" aria-labelledby="synoptic-title">
-        <header>
-          <h2 id="synoptic-title">Tela sinótica</h2>
-          <p>Visualize células de produção, status dos CLPs e principais tags.</p>
-        </header>
-        <div id="synoptic-canvas" class="synoptic-canvas" role="presentation">
-          <p class="empty-placeholder">Nenhum CLP carregado ainda. Atualize os dados ou utilize “Adicionar componente”.</p>
-        </div>
-      </article>
+  <section class="alarm-filters" aria-label="Filtros de alarme">
+    <label class="filter-control">
+      <span>Buscar</span>
+      <input id="alarm-search" type="search" placeholder="Mensagem, CLP ou registrador" autocomplete="off">
+    </label>
+    <label class="filter-control">
+      <span>Prioridade</span>
+      <select id="alarm-severity">
+        <option value="all" selected>Todas</option>
+        <option value="critical">Crítica</option>
+        <option value="high">Alta</option>
+        <option value="medium">Média</option>
+        <option value="low">Baixa</option>
+      </select>
+    </label>
+    <label class="filter-control">
+      <span>Ordenar por</span>
+      <select id="alarm-sort">
+        <option value="priority">Prioridade</option>
+        <option value="recent">Mais recentes</option>
+        <option value="older">Mais antigos</option>
+      </select>
+    </label>
+  </section>
 
-      <article class="hmi-card trends" aria-labelledby="trend-title">
-        <header>
-          <div>
-            <h2 id="trend-title">Painel de tendência</h2>
-            <p id="trend-subtitle">Selecione um registrador para acompanhar seu histórico.</p>
-          </div>
-          <select id="trend-register-picker" class="input-form" aria-label="Selecionar registrador para tendência"></select>
-        </header>
-        <canvas id="trend-chart" aria-label="Gráfico de tendência" role="img"></canvas>
-      </article>
-
-      <article class="hmi-card alarms" aria-labelledby="alarm-title">
-        <header>
-          <h2 id="alarm-title">Alarmes em tempo real</h2>
-          <p>Monitoramento com classificação por prioridade e tempo ativo.</p>
-        </header>
-        <ul id="alarm-list" class="alarm-list" aria-live="polite"></ul>
-      </article>
-
-      <article class="hmi-card controls" aria-labelledby="manual-title">
-        <header>
-          <div>
-            <h2 id="manual-title">Controles manuais</h2>
-            <p>Envie setpoints ou comandos discretos registrados no histórico.</p>
-          </div>
-          {% if can_control %}
-          <form id="manual-command-form" class="manual-form" autocomplete="off">
-            <label for="manual-register">Registrador</label>
-            <select id="manual-register" required></select>
-            <label for="manual-value">Valor</label>
-            <input id="manual-value" type="number" step="0.01" required>
-            <label for="manual-note">Observação</label>
-            <input id="manual-note" type="text" placeholder="Motivo ou autorização">
-            <button type="submit" class="btn btn-primary">Executar comando</button>
-          </form>
-          {% else %}
-          <p class="muted">Somente operadores podem executar comandos manuais.</p>
-          {% endif %}
-        </header>
-        <section class="manual-history" aria-live="polite">
-          <h3>Histórico recente</h3>
-          <ul id="manual-history-list" class="manual-history-list"></ul>
-        </section>
-      </article>
-
-      <article class="hmi-card reports" aria-labelledby="reports-title">
-        <header>
-          <h2 id="reports-title">Relatórios de desempenho</h2>
-          <p>Indicadores extraídos do histórico para análise em BI.</p>
-        </header>
-        <dl id="report-metrics" class="report-metrics"></dl>
-      </article>
-    </section>
-  </div>
+  <section class="alarm-table" aria-live="polite">
+    <table>
+      <caption class="visually-hidden">Tabela de alarmes ativos</caption>
+      <thead>
+        <tr>
+          <th scope="col">Prioridade</th>
+          <th scope="col">Mensagem</th>
+          <th scope="col">CLP</th>
+          <th scope="col">Registrador</th>
+          <th scope="col">Ativo desde</th>
+          <th scope="col">Idade</th>
+        </tr>
+      </thead>
+      <tbody id="alarm-table-body">
+        <tr class="empty-row">
+          <td colspan="6">Nenhum alarme ativo encontrado.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 </section>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-<script>
-  window.HMI_CONTEXT = {
-    canControl: {{ 'true' if can_control else 'false' }},
-    isAdmin: {{ 'true' if is_admin else 'false' }},
-    csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-  };
-</script>
 <script src="{{ url_for('static', filename='scripts/hmi.js') }}" defer></script>
 {% endblock %}
