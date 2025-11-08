@@ -1,6 +1,7 @@
 import asyncio
 import time
 import socket
+import threading
 from typing import Dict, Any, Optional, List
 from src.utils.logs import logger
 from src.adapters.factory import get_adapter
@@ -56,7 +57,7 @@ class ActivePLCPoller:
 
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
-        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        self._executor: Optional[ThreadPoolExecutor] = None
         self._mqtt = get_mqtt_publisher()
 
         # detecta se adapter.read_register é coroutinefunction
@@ -172,6 +173,16 @@ class ActivePLCPoller:
             except Exception:
                 logger.exception("Erro geral em _process_batch_sync")
 
+    def _get_executor(self) -> ThreadPoolExecutor:
+        if self._executor is None:
+            self._executor = ThreadPoolExecutor(max_workers=max_workers)
+        return self._executor
+
+    def _release_executor(self) -> None:
+        if self._executor is not None:
+            self._executor.shutdown(wait=False)
+            self._executor = None
+
     def _key(self) -> str:
         return f"{self.plc_orm.ip_address}|{self.plc_orm.vlan_id or 0}"
 
@@ -185,6 +196,7 @@ class ActivePLCPoller:
             self._task.cancel()
             await asyncio.sleep(0)
             self._task = None
+        self._release_executor()
         self._mark_offline()
 
     async def _run_loop(self):
@@ -234,7 +246,7 @@ class ActivePLCPoller:
                             if self._read_is_coroutine:
                                 return await self.adapter.read_register(register)
                             # Caso contrário, rode no executor (função bloqueante/síncrona)
-                            return await loop.run_in_executor(self._executor, self.adapter.read_register, register)
+                            return await loop.run_in_executor(self._get_executor(), self.adapter.read_register, register)
                         except Exception as e:
                             logger.error(f"Erro lendo {getattr(register, 'id', register)} @ {getattr(register, 'address', '')}: {e}")
                             return None
@@ -311,7 +323,7 @@ class ActivePLCPoller:
 
                 # processa lote completo (inserção + alarm checks) no executor
                 if results_batch:
-                    await loop.run_in_executor(self._executor, self._process_batch_sync, results_batch)
+                    await loop.run_in_executor(self._get_executor(), self._process_batch_sync, results_batch)
                     self._touch_last_seen()
 
                 # intervalo de polling
@@ -334,6 +346,7 @@ class ActivePLCPoller:
             await self.adapter.disconnect()
         except Exception:
             logger.exception("Falha ao desconectar adapter no final do loop.")
+        self._release_executor()
         self._mark_offline()
         logger.info(f"PLCPoller stopped for {self._key()}")
 
@@ -375,6 +388,21 @@ class SimpleManager:
         async with self._lock:
             pollers = list(self._pollers.values())
             self._pollers.clear()
+        if not pollers:
+            logger.info(
+                "Manager shutdown requested but no pollers were active (threads=%d)",
+                threading.active_count(),
+            )
+            return
+
+        logger.info(
+            "Manager shutdown stopping %d pollers (threads_before=%d)",
+            len(pollers),
+            threading.active_count(),
+        )
         tasks = [p.stop() for p in pollers]
         await asyncio.gather(*tasks, return_exceptions=True)
-        logger.info("Manager shutdown complete")
+        logger.info(
+            "Manager shutdown complete (threads_after=%d)",
+            threading.active_count(),
+        )

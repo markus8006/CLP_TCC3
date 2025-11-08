@@ -358,6 +358,15 @@ python -m pytest -v -s
 python -m pytest -n auto
 ```
 
+#### Teste manual: estabilidade de threads dos pollers
+1. Inicie a aplicação (`python run.py`) com logging em nível `INFO`.
+2. Adicione e remova a mesma lista de CLPs algumas vezes (ex.: três ciclos completos).
+3. Observe os logs do `SimpleManager.shutdown`: eles reportam `threads_before` e `threads_after` usando `threading.active_count()`.
+4. Confirme manualmente que os valores não crescem a cada ciclo — o número de threads deve estabilizar após o primeiro uso do executor.
+5. Opcionalmente, execute `watch -n 1 "python - <<'PY'\nimport threading; print(threading.active_count())\nPY"` em outro terminal para acompanhar a contagem global de threads durante o teste.
+
+> Resultado esperado: após cada desligamento do gerenciador, `threads_after` retorna ao patamar inicial, indicando que os executores foram liberados corretamente.
+
 ## 🔧 Ferramentas de Desenvolvimento
 
 ### Linting e Formatação
