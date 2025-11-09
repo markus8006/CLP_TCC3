@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from html import escape
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from src.app import db
 from src.models.Alarms import Alarm, AlarmDefinition
@@ -183,8 +184,11 @@ class AlarmService:
             return
 
         subject = f"[ALARME {defn.priority or 'MEDIUM'}] {defn.name}"
-        body = self._format_trigger_body(defn, alarm)
-        send_email(subject, body, recipients)
+        text_body, html_body = self._format_trigger_body(defn, alarm)
+        try:
+            send_email(subject, text_body, recipients, html_body=html_body)
+        except TypeError:
+            send_email(subject, text_body, recipients)
 
     def _notify_clear(self, defn: AlarmDefinition, alarm: Alarm) -> None:
         if not getattr(defn, "email_enabled", False):
@@ -194,8 +198,11 @@ class AlarmService:
             return
 
         subject = f"[ALARME {defn.priority or 'MEDIUM'}] {defn.name} normalizado"
-        body = self._format_clear_body(defn, alarm)
-        send_email(subject, body, recipients)
+        text_body, html_body = self._format_clear_body(defn, alarm)
+        try:
+            send_email(subject, text_body, recipients, html_body=html_body)
+        except TypeError:
+            send_email(subject, text_body, recipients)
 
     def _resolve_recipients(self, defn: AlarmDefinition) -> List[str]:
         min_role = getattr(defn, "email_min_role", UserRole.ALARM_DEFINITION)
@@ -220,10 +227,15 @@ class AlarmService:
                 logger.debug("Erro ao avaliar permissões do utilizador %s", getattr(user, "id", "unknown"))
         return recipients
 
-    def _format_trigger_body(self, defn: AlarmDefinition, alarm: Alarm) -> str:
+    def _format_trigger_body(self, defn: AlarmDefinition, alarm: Alarm) -> Tuple[str, str]:
         plc_name = getattr(defn.plc, "name", None) if hasattr(defn, "plc") else None
         register_name = getattr(defn.register, "name", None) if hasattr(defn, "register") else None
-        lines = [
+        occurred_at = (
+            alarm.triggered_at.strftime("%Y-%m-%d %H:%M:%S %Z")
+            if alarm.triggered_at
+            else "N/D"
+        )
+        text_lines = [
             f"Alarme: {defn.name}",
             f"Prioridade: {defn.priority or 'MEDIUM'}",
             f"PLC: {plc_name or defn.plc_id}",
@@ -231,24 +243,175 @@ class AlarmService:
             f"Mensagem: {alarm.message}",
             f"Valor actual: {alarm.current_value}",
             f"Valor de disparo: {alarm.trigger_value}",
-            f"Ocorrido em: {alarm.triggered_at.strftime('%Y-%m-%d %H:%M:%S %Z') if alarm.triggered_at else 'N/D'}",
+            f"Ocorrido em: {occurred_at}",
         ]
         if defn.description:
-            lines.extend(["", "Descrição:", defn.description])
-        return "\n".join(str(line) for line in lines if line is not None)
+            text_lines.extend(["", "Descrição:", defn.description])
 
-    def _format_clear_body(self, defn: AlarmDefinition, alarm: Alarm) -> str:
+        html_body = self._build_email_html(
+            title="Alerta de Alarme",
+            subtitle=f"{escape(defn.name or 'Alarme')} · Prioridade {escape(defn.priority or 'MEDIUM')}",
+            rows=[
+                ("PLC", plc_name or defn.plc_id),
+                ("Registrador", register_name or defn.register_id),
+                ("Mensagem", alarm.message),
+                ("Valor actual", alarm.current_value),
+                ("Valor de disparo", alarm.trigger_value),
+                ("Ocorrido em", occurred_at),
+            ],
+            description=defn.description,
+        )
+
+        return "\n".join(str(line) for line in text_lines if line is not None), html_body
+
+    def _format_clear_body(self, defn: AlarmDefinition, alarm: Alarm) -> Tuple[str, str]:
         plc_name = getattr(defn.plc, "name", None) if hasattr(defn, "plc") else None
         register_name = getattr(defn.register, "name", None) if hasattr(defn, "register") else None
-        lines = [
+        cleared_at = (
+            alarm.cleared_at.strftime("%Y-%m-%d %H:%M:%S %Z") if alarm.cleared_at else "N/D"
+        )
+        text_lines = [
             f"O alarme {defn.name} foi normalizado.",
             f"Prioridade: {defn.priority or 'MEDIUM'}",
             f"PLC: {plc_name or defn.plc_id}",
             f"Registrador: {register_name or defn.register_id}",
             f"Valor actual: {alarm.current_value}",
-            f"Limpado em: {alarm.cleared_at.strftime('%Y-%m-%d %H:%M:%S %Z') if alarm.cleared_at else 'N/D'}",
+            f"Limpado em: {cleared_at}",
         ]
-        return "\n".join(str(line) for line in lines if line is not None)
+
+        html_body = self._build_email_html(
+            title="Alarme Normalizado",
+            subtitle=f"{escape(defn.name or 'Alarme')} · Prioridade {escape(defn.priority or 'MEDIUM')}",
+            rows=[
+                ("PLC", plc_name or defn.plc_id),
+                ("Registrador", register_name or defn.register_id),
+                ("Valor actual", alarm.current_value),
+                ("Normalizado em", cleared_at),
+            ],
+            description="O alarme foi normalizado e encontra-se estável.",
+        )
+
+        return "\n".join(str(line) for line in text_lines if line is not None), html_body
+
+    def _build_email_html(
+        self,
+        *,
+        title: str,
+        subtitle: str,
+        rows: Sequence[Tuple[str, object]],
+        description: Optional[str] = None,
+    ) -> str:
+        description_html = ""
+        if description:
+            escaped_description = escape(str(description)).replace("\n", "<br />")
+            description_html = (
+                "<div class=\"card__section\">"
+                "<h3>Descrição</h3>"
+                f"<p>{escaped_description}</p>"
+                "</div>"
+            )
+
+        rows_html = "".join(
+            """
+            <tr>
+              <th>{label}</th>
+              <td>{value}</td>
+            </tr>
+            """.format(
+                label=escape(str(label)),
+                value=escape(str(value))
+            )
+            for label, value in rows
+            if value is not None
+        )
+
+        return f"""<!DOCTYPE html>
+<html lang=\"pt-BR\">
+  <head>
+    <meta charset=\"utf-8\" />
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+    <style>
+      body {{
+        margin: 0;
+        background: #f5f7fb;
+        font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+        color: #1f2937;
+        padding: 32px 0;
+      }}
+      .card {{
+        max-width: 560px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+      }}
+      .card__header {{
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #ffffff;
+        padding: 28px 32px;
+      }}
+      .card__header h1 {{
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+      }}
+      .card__header p {{
+        margin: 6px 0 0;
+        font-size: 15px;
+        opacity: 0.85;
+      }}
+      .card__section {{
+        padding: 24px 32px;
+        border-bottom: 1px solid #eef2ff;
+      }}
+      .card__section:last-child {{
+        border-bottom: none;
+      }}
+      table {{
+        width: 100%;
+        border-collapse: collapse;
+      }}
+      th {{
+        text-align: left;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        padding: 8px 0;
+        width: 35%;
+      }}
+      td {{
+        padding: 8px 0;
+        font-size: 15px;
+        color: #111827;
+      }}
+      .card__footer {{
+        padding: 20px 32px 28px;
+        font-size: 13px;
+        color: #6b7280;
+        background: #f9fafb;
+      }}
+    </style>
+  </head>
+  <body>
+    <div class=\"card\">
+      <div class=\"card__header\">
+        <h1>{escape(title)}</h1>
+        <p>{escape(subtitle)}</p>
+      </div>
+      <div class=\"card__section\">
+        <table>
+          <tbody>
+            {rows_html}
+          </tbody>
+        </table>
+      </div>
+      {description_html}
+      <div class=\"card__footer\">Esta é uma mensagem automática do sistema de monitorização de alarmes.</div>
+    </div>
+  </body>
+</html>"""
 
 
 __all__ = ["AlarmService", "evaluate_alarm"]
