@@ -25,7 +25,7 @@ from src.services.mqtt_service import get_mqtt_publisher
 # ===========================================================
 # CONFIGURAÇÕES
 # ===========================================================
-CLPS_POR_PROTOCOLO = 5
+CLPS_POR_PROTOCOLO = 10
 MAX_THREADS = 4  # reservado para futura paralelização
 
 
