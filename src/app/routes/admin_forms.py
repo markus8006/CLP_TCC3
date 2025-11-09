@@ -40,6 +40,8 @@ class UserCreationForm(FlaskForm):
 
 
 class UserUpdateForm(FlaskForm):
+    username = StringField("Utilizador", validators=[DataRequired(), Length(min=3, max=80)])
+    email = StringField("Email", validators=[DataRequired(), Email()])
     role = SelectField("Função", choices=iter_role_choices(), validators=[DataRequired()])
     is_active = BooleanField("Activo")
     submit = SubmitField("Actualizar")
