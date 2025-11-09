@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import smtplib
 from email.message import EmailMessage
-from typing import Iterable, Sequence
+from typing import Iterable, Optional, Sequence
 
 from flask import current_app, has_app_context
 
@@ -26,7 +26,13 @@ def _normalise_recipients(recipients: Iterable[str]) -> Sequence[str]:
     return unique
 
 
-def send_email(subject: str, body: str, recipients: Iterable[str]) -> bool:
+def send_email(
+    subject: str,
+    body: str,
+    recipients: Iterable[str],
+    *,
+    html_body: Optional[str] = None,
+) -> bool:
     """Send an email using the SMTP credentials defined in the Flask config."""
 
     normalised = _normalise_recipients(recipients)
@@ -51,6 +57,8 @@ def send_email(subject: str, body: str, recipients: Iterable[str]) -> bool:
     )
     message["To"] = ", ".join(normalised)
     message.set_content(body)
+    if html_body:
+        message.add_alternative(html_body, subtype="html")
 
     server = config.get("MAIL_SERVER") or current_app.config.get("MAIL_SERVER", "localhost")
     port = int(config.get("MAIL_PORT") or current_app.config.get("MAIL_PORT", 25))
