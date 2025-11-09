@@ -164,13 +164,15 @@
             <section class="management-tab-panel" data-view="inventory" role="tabpanel" hidden>
                 <div class="card">
                     <div class="inventory-toolbar">
-                        <h2>Inventário de CLPs</h2>
+                        <div class="inventory-header">
+                            <h2>Inventário de CLPs</h2>
+                            <span class="inventory-caption">{{ total_plcs }} registos listados</span>
+                        </div>
                         <div class="inventory-actions">
                             <label class="inventory-search">
                                 <span class="sr-only">Pesquisar</span>
                                 <input type="search" class="input" placeholder="Pesquisar por nome, IP ou tag" data-table-filter="#clp-table">
                             </label>
-                            <span class="inventory-caption">{{ total_plcs }} registos listados</span>
                         </div>
                     </div>
 
