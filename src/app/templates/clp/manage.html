@@ -86,76 +86,90 @@
                     </div>
                     <form method="POST" novalidate>
                         {{ form.hidden_tag() }}
-                        <div class="form-grid">
-                            <label class="form-field{% if form.name.errors %} has-error{% endif %}">
-                                <span>Nome</span>
-                                {{ form.name(class_='input') }}
-                                {% if form.name.errors %}<small class="input-error">{{ form.name.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.ip_address.errors %} has-error{% endif %}">
-                                <span>IP</span>
-                                {{ form.ip_address(class_='input') }}
-                                {% if form.ip_address.errors %}<small class="input-error">{{ form.ip_address.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.protocol.errors %} has-error{% endif %}">
-                                <span>Protocolo</span>
-                                {{ form.protocol(class_='input') }}
-                                {% if form.protocol.errors %}<small class="input-error">{{ form.protocol.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.port.errors %} has-error{% endif %}">
-                                <span>Porta</span>
-                                {{ form.port(class_='input') }}
-                                {% if form.port.errors %}<small class="input-error">{{ form.port.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.vlan_id.errors %} has-error{% endif %}">
-                                <span>VLAN</span>
-                                {{ form.vlan_id(class_='input', placeholder='ex: 10') }}
-                                {% if form.vlan_id.errors %}<small class="input-error">{{ form.vlan_id.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.subnet_mask.errors %} has-error{% endif %}">
-                                <span>Máscara</span>
-                                {{ form.subnet_mask(class_='input', placeholder='255.255.255.0') }}
-                                {% if form.subnet_mask.errors %}<small class="input-error">{{ form.subnet_mask.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.gateway.errors %} has-error{% endif %}">
-                                <span>Gateway</span>
-                                {{ form.gateway(class_='input') }}
-                                {% if form.gateway.errors %}<small class="input-error">{{ form.gateway.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.unit_id.errors %} has-error{% endif %}">
-                                <span>Unit ID</span>
-                                {{ form.unit_id(class_='input') }}
-                                {% if form.unit_id.errors %}<small class="input-error">{{ form.unit_id.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.manufacturer.errors %} has-error{% endif %}">
-                                <span>Fabricante</span>
-                                {{ form.manufacturer(class_='input') }}
-                                {% if form.manufacturer.errors %}<small class="input-error">{{ form.manufacturer.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.model.errors %} has-error{% endif %}">
-                                <span>Modelo</span>
-                                {{ form.model(class_='input') }}
-                                {% if form.model.errors %}<small class="input-error">{{ form.model.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.firmware_version.errors %} has-error{% endif %}">
-                                <span>Firmware</span>
-                                {{ form.firmware_version(class_='input') }}
-                                {% if form.firmware_version.errors %}<small class="input-error">{{ form.firmware_version.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="form-field{% if form.tags.errors %} has-error{% endif %}">
-                                <span>Tags</span>
-                                {{ form.tags(class_='input', placeholder='crítico, linha-1, modbus') }}
-                                {% if form.tags.errors %}<small class="input-error">{{ form.tags.errors[0] }}</small>{% endif %}
-                            </label>
-                            <label class="checkbox">{{ form.is_active() }} Activo</label>
+                        <div class="form-step active" data-step="1">
+                            <div class="form-grid">
+                                <label class="form-field{% if form.name.errors %} has-error{% endif %}">
+                                    <span>Nome</span>
+                                    {{ form.name(class_='input') }}
+                                    {% if form.name.errors %}<small class="input-error">{{ form.name.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.ip_address.errors %} has-error{% endif %}">
+                                    <span>IP</span>
+                                    {{ form.ip_address(class_='input') }}
+                                    {% if form.ip_address.errors %}<small class="input-error">{{ form.ip_address.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.protocol.errors %} has-error{% endif %}">
+                                    <span>Protocolo</span>
+                                    {{ form.protocol(class_='input') }}
+                                    {% if form.protocol.errors %}<small class="input-error">{{ form.protocol.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.port.errors %} has-error{% endif %}">
+                                    <span>Porta</span>
+                                    {{ form.port(class_='input') }}
+                                    {% if form.port.errors %}<small class="input-error">{{ form.port.errors[0] }}</small>{% endif %}
+                                </label>
+                            </div>
                         </div>
-                        <label class="form-field{% if form.description.errors %} has-error{% endif %}">
-                            <span>Descrição</span>
-                            {{ form.description(class_='input', rows=3) }}
-                            {% if form.description.errors %}<small class="input-error">{{ form.description.errors[0] }}</small>{% endif %}
-                        </label>
-                        <div class="actions">
-                            {{ form.submit(class_='btn primary') }}
+                        <div class="form-step" data-step="2">
+                            <div class="form-grid">
+                                <label class="form-field{% if form.vlan_id.errors %} has-error{% endif %}">
+                                    <span>VLAN</span>
+                                    {{ form.vlan_id(class_='input', placeholder='ex: 10') }}
+                                    {% if form.vlan_id.errors %}<small class="input-error">{{ form.vlan_id.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.subnet_mask.errors %} has-error{% endif %}">
+                                    <span>Máscara</span>
+                                    {{ form.subnet_mask(class_='input', placeholder='255.255.255.0') }}
+                                    {% if form.subnet_mask.errors %}<small class="input-error">{{ form.subnet_mask.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.gateway.errors %} has-error{% endif %}">
+                                    <span>Gateway</span>
+                                    {{ form.gateway(class_='input') }}
+                                    {% if form.gateway.errors %}<small class="input-error">{{ form.gateway.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.unit_id.errors %} has-error{% endif %}">
+                                    <span>Unit ID</span>
+                                    {{ form.unit_id(class_='input') }}
+                                    {% if form.unit_id.errors %}<small class="input-error">{{ form.unit_id.errors[0] }}</small>{% endif %}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-step" data-step="3">
+                            <div class="form-grid">
+                                <label class="form-field{% if form.manufacturer.errors %} has-error{% endif %}">
+                                    <span>Fabricante</span>
+                                    {{ form.manufacturer(class_='input') }}
+                                    {% if form.manufacturer.errors %}<small class="input-error">{{ form.manufacturer.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.model.errors %} has-error{% endif %}">
+                                    <span>Modelo</span>
+                                    {{ form.model(class_='input') }}
+                                    {% if form.model.errors %}<small class="input-error">{{ form.model.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.firmware_version.errors %} has-error{% endif %}">
+                                    <span>Firmware</span>
+                                    {{ form.firmware_version(class_='input') }}
+                                    {% if form.firmware_version.errors %}<small class="input-error">{{ form.firmware_version.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.tags.errors %} has-error{% endif %}">
+                                    <span>Tags</span>
+                                    {{ form.tags(class_='input', placeholder='crítico, linha-1, modbus') }}
+                                    {% if form.tags.errors %}<small class="input-error">{{ form.tags.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.description.errors %} has-error{% endif %}">
+                                    <span>Descrição</span>
+                                    {{ form.description(class_='input', rows=3) }}
+                                    {% if form.description.errors %}<small class="input-error">{{ form.description.errors[0] }}</small>{% endif %}
+                                </label>
+                            </div>
+                            <label class="checkbox">{{ form.is_active() }} Activo</label>
+                            <div class="actions">
+                                {{ form.submit(class_='btn primary', value='Salvar CLP') }}
+                            </div>
+                        </div>
+                        <div class="step-navigation" data-step-nav>
+                            <button type="button" class="btn secondary" data-step-action="prev" disabled>Anterior</button>
+                            <button type="button" class="btn primary" data-step-action="next">Próximo</button>
                         </div>
                     </form>
                 </div>
