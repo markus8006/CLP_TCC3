@@ -111,6 +111,17 @@ class RegisterCreationForm(FlaskForm):
     submit = SubmitField("Adicionar Registrador")
 
 
+class RegisterUpdateForm(RegisterCreationForm):
+    is_active = BooleanField("Activo", default=True)
+    log_enabled = BooleanField("Registar histórico", default=True)
+    poll_rate = IntegerField(
+        "Taxa de polling (ms)",
+        validators=[Optional(), NumberRange(min=100, max=60000)],
+        default=1000,
+    )
+    submit = SubmitField("Guardar alterações")
+
+
 class AlarmDefinitionForm(FlaskForm):
     plc_id = SelectField("CLP", coerce=int, validators=[DataRequired()])
     register_id = SelectField(

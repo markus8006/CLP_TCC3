@@ -47,6 +47,10 @@ body {
         padding: 10px 14px;
         border-radius: 14px;
     }
+
+    .clp-admin-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .clp-tab {
@@ -90,6 +94,49 @@ body {
 .clp-tab-panel.active {
     display: flex;
     animation: fadeInTab 0.35s ease;
+}
+
+.clp-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.clp-admin-card {
+    gap: 1.5rem;
+}
+
+.register-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.register-admin-item {
+    background: rgba(12, 0, 26, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.register-admin-item summary {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(20, 0, 42, 0.7);
+}
+
+.register-admin-item[open] summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.register-admin-item form {
+    padding: 1.25rem;
 }
 
 @keyframes fadeInTab {

@@ -27,6 +27,7 @@ from src.services.polling_admin_service import update_polling_state
 from src.services.register_admin_service import (
     create_register,
     delete_register as delete_register_entry,
+    update_register,
 )
 from src.services.polling_runtime import trigger_polling_refresh
 from src.services.settings_service import get_polling_enabled, set_polling_enabled
@@ -45,6 +46,7 @@ from .admin_forms import (
     PLCForm,
     PollingControlForm,
     RegisterCreationForm,
+    RegisterUpdateForm,
     UserCreationForm,
     UserUpdateForm,
 )
@@ -259,6 +261,9 @@ def edit_clp(plc_id: int):
         except Exception as exc:
             db.session.rollback()
             flash(f"Erro ao actualizar CLP: {exc}", "danger")
+        next_url = request.form.get("next") or request.args.get("next")
+        if next_url:
+            return redirect(next_url)
         return redirect(url_for("admin.manage_clps"))
 
     return render_template("clp/edit.html", form=form, plc=plc)
@@ -338,6 +343,66 @@ def delete_register(register_id: int):
         flash(f"Erro ao remover registrador: {exc}", "danger")
 
     return redirect(url_for("admin.manage_registers"))
+
+
+@admin_bp.route("/registers/<int:register_id>", methods=["GET", "POST"])
+@login_required
+@admin_role_required(UserRole.MODERATOR)
+def edit_register(register_id: int):
+    register = Register.query.get_or_404(register_id)
+    form = RegisterUpdateForm(obj=register)
+
+    plcs = PLC.query.order_by(PLC.name.asc()).all()
+    form.plc_id.choices = [(plc.id, _plc_label(plc)) for plc in plcs]
+
+    if request.method == "GET":
+        form.plc_id.data = register.plc_id
+        form.is_active.data = register.is_active
+        form.log_enabled.data = register.log_enabled
+        form.poll_rate.data = register.poll_rate
+
+    if form.validate_on_submit():
+        payload = {
+            "plc_id": form.plc_id.data,
+            "name": form.name.data,
+            "description": form.description.data,
+            "address": form.address.data,
+            "register_type": form.register_type.data,
+            "data_type": form.data_type.data,
+            "length": form.length.data,
+            "unit": form.unit.data,
+            "scale_factor": form.scale_factor.data,
+            "offset": form.offset.data,
+            "tag": form.tag.data,
+            "is_active": form.is_active.data,
+            "log_enabled": form.log_enabled.data,
+            "poll_rate": form.poll_rate.data,
+        }
+
+        try:
+            update_register(register, payload)
+            flash("Registrador actualizado com sucesso!", "success")
+        except IntegrityError:
+            db.session.rollback()
+            flash(
+                "Endereço já utilizado para este CLP. Actualização não concluída.",
+                "warning",
+            )
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Erro ao actualizar registrador: {exc}", "danger")
+
+        next_url = request.form.get("next") or request.args.get("next")
+        if next_url:
+            return redirect(next_url)
+        return redirect(url_for("admin.manage_registers"))
+
+    return render_template(
+        "registers/edit.html",
+        form=form,
+        register=register,
+        plc_choices=form.plc_id.choices,
+    )
 
 
 @admin_bp.route("/polling/control", methods=["GET", "POST"])

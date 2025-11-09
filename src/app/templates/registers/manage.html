@@ -1,94 +1,227 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Criar Registradores{% endblock %}
+{% block title %}Gestão de registradores{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
 {% endblock %}
 
 {% block content %}
+{% set total_registers = registers|length %}
+{% set active_registers = registers|selectattr('is_active')|list|length %}
+{% set inactive_registers = total_registers - active_registers %}
+{% set ns = namespace(units=[], types=[]) %}
+{% for register in registers %}
+    {% if register.unit and register.unit not in ns.units %}
+        {% set ns.units = ns.units + [register.unit] %}
+    {% endif %}
+    {% if register.register_type and register.register_type not in ns.types %}
+        {% set ns.types = ns.types + [register.register_type] %}
+    {% endif %}
+{% endfor %}
+
 <div class="management-container">
-    <section class="page-header">
-        <h1>Cadastro de Registradores</h1>
-        <p>Associe novos pontos de medição aos CLPs disponíveis e configure unidades, escalas e limites.</p>
-    </section>
-
-    <section class="card">
+    <section class="page-header management-hero">
         <div>
-            <h2>Novo registrador</h2>
-            <p class="card__description">Mapeie variáveis de processo e ligue-as ao CLP adequado para iniciar a recolha de dados.</p>
+            <p class="eyebrow">Aquisição de dados</p>
+            <h1>Registradores industriais</h1>
+            <p class="page-lead">Centralize a configuração de pontos monitorados, atribua escalas correctas e mantenha o ciclo de aquisição consistente.</p>
         </div>
-        <div class="card__content">
-            {% if form.plc_id.choices %}
-            <form method="POST">
-                {{ form.hidden_tag() }}
-                <div class="form-grid">
-                    <label><span>CLP</span>{{ form.plc_id(class_='input') }}</label>
-                    <label><span>Nome</span>{{ form.name(class_='input') }}</label>
-                    <label><span>Endereço</span>{{ form.address(class_='input') }}</label>
-                    <label><span>Tipo</span>{{ form.register_type(class_='input') }}</label>
-                    <label><span>Tipo de Dados</span>{{ form.data_type(class_='input') }}</label>
-                    <label><span>Comprimento</span>{{ form.length(class_='input') }}</label>
-                    <label><span>Unidade</span>{{ form.unit(class_='input') }}</label>
-                    <label><span>Tag</span>{{ form.tag(class_='input') }}</label>
-                    <label><span>Fator de Escala</span>{{ form.scale_factor(class_='input') }}</label>
-                    <label><span>Offset</span>{{ form.offset(class_='input') }}</label>
-                </div>
-                <label><span>Descrição</span>{{ form.description(class_='input') }}</label>
-                <div class="actions">
-                    {{ form.submit(class_='btn primary') }}
-                </div>
-            </form>
-            {% else %}
-                <p class="text-muted">Crie um CLP primeiro antes de adicionar registradores.</p>
-            {% endif %}
+        <div class="hero-actions">
+            <a class="btn" href="{{ url_for('admin.manage_clps') }}">Voltar aos CLPs</a>
         </div>
     </section>
 
-    <section class="card">
-        <div>
-            <h2>Registradores configurados</h2>
-            <p class="card__description">Conferira rapidamente os registos disponíveis e a sua parametrização principal.</p>
+    <div class="management-tabs" data-management-tabs>
+        <div class="management-tabs__controls" role="tablist">
+            <button class="management-tab active" type="button" data-view-target="overview" role="tab" aria-selected="true">Resumo</button>
+            <button class="management-tab" type="button" data-view-target="create" role="tab" aria-selected="false">Novo registrador</button>
+            <button class="management-tab" type="button" data-view-target="inventory" role="tab" aria-selected="false">Inventário</button>
         </div>
-        {% if registers %}
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>CLP</th>
-                        <th>Nome</th>
-                        <th>Endereço</th>
-                        <th>Tipo</th>
-                        <th>Dados</th>
-                        <th>Unidade</th>
-                        <th>Tag</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for register in registers %}
-                    <tr>
-                        <td>{{ register.plc.name if register.plc else '#' ~ register.plc_id }}</td>
-                        <td>{{ register.name }}</td>
-                        <td>{{ register.address }}</td>
-                        <td>{{ register.register_type }}</td>
-                        <td>{{ register.data_type }}</td>
-                        <td>{{ register.unit or '-' }}</td>
-                        <td>{{ register.tag or '-' }}</td>
-                        <td class="actions">
-                            <form class="inline-form" method="POST" action="{{ url_for('admin.delete_register', register_id=register.id) }}" onsubmit="return confirm('Remover este registrador? Alarmes associados também serão excluídos.');">
-                                {{ csrf_token() }}
-                                <button type="submit" class="btn danger">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+
+        <div class="management-tabs__panels">
+            <section class="management-tab-panel active" data-view="overview" role="tabpanel">
+                <div class="insight-grid">
+                    <article class="insight-card">
+                        <span class="insight-label">Registradores configurados</span>
+                        <span class="insight-value">{{ total_registers }}</span>
+                        <span class="insight-meta">{{ ns.units|length }} unidades distintas</span>
+                    </article>
+                    <article class="insight-card">
+                        <span class="insight-label">Activos</span>
+                        <span class="insight-value">{{ active_registers }}</span>
+                        <span class="insight-meta">{{ (active_registers / total_registers * 100 if total_registers else 0)|round(1) }}% do total</span>
+                    </article>
+                    <article class="insight-card insight-card--critical">
+                        <span class="insight-label">Suspensos</span>
+                        <span class="insight-value">{{ inactive_registers }}</span>
+                        <span class="insight-meta">Avalie endereços e ligações ao CLP</span>
+                    </article>
+                </div>
+                <div class="mini-card-grid">
+                    <article class="mini-card">
+                        <h3>Tipos de registrador</h3>
+                        <p class="mini-card__description">{{ ns.types|join(', ') if ns.types else 'Sem registos.' }}</p>
+                    </article>
+                    <article class="mini-card">
+                        <h3>Boas práticas</h3>
+                        <p class="mini-card__description">Padronize nomes e tags para acelerar a identificação em alarmes, relatórios e dashboards.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="management-tab-panel" data-view="create" role="tabpanel" hidden>
+                <div class="card">
+                    <div>
+                        <h2>Criar registrador</h2>
+                        <p class="card__description">Selecione o CLP e introduza os parâmetros eléctricos e de escala.</p>
+                    </div>
+                    <div class="card__content">
+                        {% if form.plc_id.choices %}
+                        <form method="POST" novalidate>
+                            {{ form.hidden_tag() }}
+                            <div class="form-grid">
+                                <label class="form-field{% if form.plc_id.errors %} has-error{% endif %}">
+                                    <span>CLP</span>
+                                    {{ form.plc_id(class_='input') }}
+                                    {% if form.plc_id.errors %}<small class="input-error">{{ form.plc_id.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.name.errors %} has-error{% endif %}">
+                                    <span>Nome</span>
+                                    {{ form.name(class_='input') }}
+                                    {% if form.name.errors %}<small class="input-error">{{ form.name.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.address.errors %} has-error{% endif %}">
+                                    <span>Endereço</span>
+                                    {{ form.address(class_='input') }}
+                                    {% if form.address.errors %}<small class="input-error">{{ form.address.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.register_type.errors %} has-error{% endif %}">
+                                    <span>Tipo</span>
+                                    {{ form.register_type(class_='input') }}
+                                    {% if form.register_type.errors %}<small class="input-error">{{ form.register_type.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.data_type.errors %} has-error{% endif %}">
+                                    <span>Tipo de dados</span>
+                                    {{ form.data_type(class_='input') }}
+                                    {% if form.data_type.errors %}<small class="input-error">{{ form.data_type.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.length.errors %} has-error{% endif %}">
+                                    <span>Comprimento</span>
+                                    {{ form.length(class_='input') }}
+                                    {% if form.length.errors %}<small class="input-error">{{ form.length.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.unit.errors %} has-error{% endif %}">
+                                    <span>Unidade</span>
+                                    {{ form.unit(class_='input') }}
+                                    {% if form.unit.errors %}<small class="input-error">{{ form.unit.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.tag.errors %} has-error{% endif %}">
+                                    <span>Tag</span>
+                                    {{ form.tag(class_='input') }}
+                                    {% if form.tag.errors %}<small class="input-error">{{ form.tag.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.scale_factor.errors %} has-error{% endif %}">
+                                    <span>Factor de escala</span>
+                                    {{ form.scale_factor(class_='input') }}
+                                    {% if form.scale_factor.errors %}<small class="input-error">{{ form.scale_factor.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if form.offset.errors %} has-error{% endif %}">
+                                    <span>Offset</span>
+                                    {{ form.offset(class_='input') }}
+                                    {% if form.offset.errors %}<small class="input-error">{{ form.offset.errors[0] }}</small>{% endif %}
+                                </label>
+                            </div>
+                            <label class="form-field{% if form.description.errors %} has-error{% endif %}">
+                                <span>Descrição</span>
+                                {{ form.description(class_='input') }}
+                                {% if form.description.errors %}<small class="input-error">{{ form.description.errors[0] }}</small>{% endif %}
+                            </label>
+                            <div class="actions">
+                                {{ form.submit(class_='btn primary') }}
+                            </div>
+                        </form>
+                        {% else %}
+                            <p class="text-muted">Cadastre um CLP para disponibilizar os parâmetros de ligação.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section class="management-tab-panel" data-view="inventory" role="tabpanel" hidden>
+                <div class="card">
+                    <div class="inventory-toolbar">
+                        <h2>Inventário de registradores</h2>
+                        <div class="inventory-actions">
+                            <label class="inventory-search">
+                                <span class="sr-only">Pesquisar</span>
+                                <input type="search" class="input" placeholder="Pesquisar por CLP, nome ou tag" data-table-filter="#registers-table">
+                            </label>
+                            <span class="inventory-caption">{{ total_registers }} itens</span>
+                        </div>
+                    </div>
+
+                    {% if registers %}
+                    <div class="table-responsive">
+                        <table class="table table--interactive" id="registers-table">
+                            <thead>
+                                <tr>
+                                    <th>CLP</th>
+                                    <th>Registrador</th>
+                                    <th>Endereço</th>
+                                    <th>Tipo</th>
+                                    <th>Dados</th>
+                                    <th>Unidade</th>
+                                    <th>Estado</th>
+                                    <th class="table-actions">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for register in registers %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ register.plc.name if register.plc else '#' ~ register.plc_id }}</strong>
+                                        <small class="table-subtitle">Tag {{ register.tag or '—' }}</small>
+                                    </td>
+                                    <td>{{ register.name }}</td>
+                                    <td>{{ register.address }}</td>
+                                    <td>{{ register.register_type }}</td>
+                                    <td>{{ register.data_type }}</td>
+                                    <td>{{ register.unit or '—' }}</td>
+                                    <td>
+                                        {% if register.is_active %}
+                                            <span class="status-indicator status-indicator--online">Activo</span>
+                                        {% else %}
+                                            <span class="status-indicator status-indicator--offline">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="actions">
+                                        {% if register.plc %}
+                                        <a class="btn" href="{{ url_for('admin.edit_register', register_id=register.id, next=url_for('clp_bp.clp', ip=register.plc.ip_address, vlan=register.plc.vlan_id)) }}">Editar</a>
+                                        {% else %}
+                                        <a class="btn" href="{{ url_for('admin.edit_register', register_id=register.id) }}">Editar</a>
+                                        {% endif %}
+                                        <form class="inline-form" method="POST" action="{{ url_for('admin.delete_register', register_id=register.id) }}" onsubmit="return confirm('Remover este registrador? Alarmes associados também serão excluídos.');">
+                                            {{ csrf_token() }}
+                                            <button type="submit" class="btn danger">Eliminar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-muted">Nenhum registrador cadastrado até o momento.</p>
+                    {% endif %}
+                </div>
+            </section>
         </div>
-        {% else %}
-            <p class="text-muted">Nenhum registrador cadastrado até o momento.</p>
-        {% endif %}
-    </section>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/management.js') }}"></script>
 {% endblock %}

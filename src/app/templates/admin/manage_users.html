@@ -1,144 +1,199 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Gerenciar Utilizadores{% endblock %}
+{% block title %}Gestão de utilizadores{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
 {% endblock %}
 
 {% block content %}
+{% set total_users = users|length %}
+{% set active_users = users|selectattr('is_active')|list|length %}
+{% set inactive_users = total_users - active_users %}
+
 <div class="management-container">
-    <section class="page-header">
-        <h1>Gestão de Utilizadores</h1>
-        <p>Crie novas contas, actualize permissões e controle o acesso ao sistema.</p>
+    <section class="page-header management-hero">
+        <div>
+            <p class="eyebrow">Administração</p>
+            <h1>Utilizadores e permissões</h1>
+            <p class="page-lead">Gerencie perfis, acompanhe o ciclo de vida das contas e ajuste rapidamente os níveis de acesso ao sistema.</p>
+        </div>
+        <div class="hero-actions">
+            <a class="btn" href="{{ url_for('admin.manage_email_settings') }}">Configurar notificações</a>
+        </div>
     </section>
 
-    <section class="card">
-        <div>
-            <h2>Criar novo utilizador</h2>
-            <p class="card__description">Defina rapidamente as credenciais iniciais e escolha a responsabilidade de cada membro da equipa.</p>
+    <div class="management-tabs" data-management-tabs>
+        <div class="management-tabs__controls" role="tablist">
+            <button class="management-tab active" type="button" data-view-target="overview" role="tab" aria-selected="true">Resumo</button>
+            <button class="management-tab" type="button" data-view-target="create" role="tab" aria-selected="false">Novo utilizador</button>
+            <button class="management-tab" type="button" data-view-target="directory" role="tab" aria-selected="false">Directório</button>
         </div>
-        <div class="card__content">
-            <form method="POST" novalidate>
-                {{ create_form.hidden_tag() }}
-                <div class="form-grid">
-                    <label>
-                        <span>Nome de utilizador</span>
-                        {{ create_form.username(class_='input') }}
-                    </label>
-                    <label>
-                        <span>Email</span>
-                        {{ create_form.email(class_='input') }}
-                    </label>
-                    <label>
-                        <span>Senha provisória</span>
-                        {{ create_form.password(class_='input') }}
-                    </label>
-                    <label>
-                        <span>Função</span>
-                        {{ create_form.role(class_='input') }}
-                    </label>
+
+        <div class="management-tabs__panels">
+            <section class="management-tab-panel active" data-view="overview" role="tabpanel">
+                <div class="insight-grid">
+                    <article class="insight-card">
+                        <span class="insight-label">Utilizadores registados</span>
+                        <span class="insight-value">{{ total_users }}</span>
+                        <span class="insight-meta">{{ role_definitions|length }} funções disponíveis</span>
+                    </article>
+                    <article class="insight-card">
+                        <span class="insight-label">Contas activas</span>
+                        <span class="insight-value">{{ active_users }}</span>
+                        <span class="insight-meta">{{ (active_users / total_users * 100 if total_users else 0)|round(1) }}% do total</span>
+                    </article>
+                    <article class="insight-card insight-card--critical">
+                        <span class="insight-label">Suspensas</span>
+                        <span class="insight-value">{{ inactive_users }}</span>
+                        <span class="insight-meta">Rever política de acesso</span>
+                    </article>
                 </div>
-                <div class="actions">
-                    {{ create_form.submit(class_='btn primary') }}
+                {% if role_definitions %}
+                <div class="card role-definition-card">
+                    <h2>Funções disponíveis</h2>
+                    <p class="card__description">Distribua responsabilidades com base nas permissões chave de cada função.</p>
+                    <div class="table-responsive">
+                        <table class="table table--compact">
+                            <thead>
+                                <tr>
+                                    <th>Função</th>
+                                    <th>Descrição</th>
+                                    <th>Permissões</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for role in role_definitions %}
+                                <tr>
+                                    <td><strong>{{ role.label }}</strong></td>
+                                    <td>{{ role.description or '—' }}</td>
+                                    <td>
+                                        {% if role.permissions %}
+                                            <ul class="tag-list-inline">
+                                            {% for permission in role.permissions %}
+                                                <li>{{ permission }}</li>
+                                            {% endfor %}
+                                            </ul>
+                                        {% else %}
+                                            <span class="text-muted">Permissões herdadas</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </form>
-        </div>
-    </section>
+                {% endif %}
+            </section>
 
-    {% if role_definitions %}
-    <section class="card">
-        <div>
-            <h2>Funções disponíveis</h2>
-            <p class="card__description">Conheça as responsabilidades principais de cada função e as permissões associadas.</p>
-        </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Função</th>
-                        <th>Descrição</th>
-                        <th>Permissões chave</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for role in role_definitions %}
-                    <tr>
-                        <td><strong>{{ role.label }}</strong></td>
-                        <td>{{ role.description or '—' }}</td>
-                        <td>
-                            {% if role.permissions %}
-                                <ul class="tag-list-inline">
-                                {% for permission in role.permissions %}
-                                    <li>{{ permission }}</li>
-                                {% endfor %}
-                                </ul>
-                            {% else %}
-                                <span class="text-muted">Permissões herdadas</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-    {% endif %}
+            <section class="management-tab-panel" data-view="create" role="tabpanel" hidden>
+                <div class="card">
+                    <div>
+                        <h2>Nova conta</h2>
+                        <p class="card__description">Preencha os dados iniciais e atribua a função apropriada.</p>
+                    </div>
+                    <form method="POST" novalidate>
+                        {{ create_form.hidden_tag() }}
+                        <div class="form-grid">
+                            <label class="form-field{% if create_form.username.errors %} has-error{% endif %}">
+                                <span>Nome de utilizador</span>
+                                {{ create_form.username(class_='input') }}
+                                {% if create_form.username.errors %}<small class="input-error">{{ create_form.username.errors[0] }}</small>{% endif %}
+                            </label>
+                            <label class="form-field{% if create_form.email.errors %} has-error{% endif %}">
+                                <span>Email</span>
+                                {{ create_form.email(class_='input') }}
+                                {% if create_form.email.errors %}<small class="input-error">{{ create_form.email.errors[0] }}</small>{% endif %}
+                            </label>
+                            <label class="form-field{% if create_form.password.errors %} has-error{% endif %}">
+                                <span>Senha provisória</span>
+                                {{ create_form.password(class_='input') }}
+                                {% if create_form.password.errors %}<small class="input-error">{{ create_form.password.errors[0] }}</small>{% endif %}
+                            </label>
+                            <label class="form-field{% if create_form.role.errors %} has-error{% endif %}">
+                                <span>Função</span>
+                                {{ create_form.role(class_='input') }}
+                                {% if create_form.role.errors %}<small class="input-error">{{ create_form.role.errors[0] }}</small>{% endif %}
+                            </label>
+                        </div>
+                        <div class="actions">
+                            {{ create_form.submit(class_='btn primary') }}
+                        </div>
+                    </form>
+                </div>
+            </section>
 
-    <section class="card">
-        <div>
-            <h2>Utilizadores registados</h2>
-            <p class="card__description">Acompanhe o estado das contas e ajuste permissões directamente a partir desta vista.</p>
+            <section class="management-tab-panel" data-view="directory" role="tabpanel" hidden>
+                <div class="card">
+                    <div class="inventory-toolbar">
+                        <h2>Directório de utilizadores</h2>
+                        <div class="inventory-actions">
+                            <label class="inventory-search">
+                                <span class="sr-only">Pesquisar</span>
+                                <input type="search" class="input" placeholder="Pesquisar por nome ou email" data-table-filter="#users-table">
+                            </label>
+                            <span class="inventory-caption">{{ total_users }} contas</span>
+                        </div>
+                    </div>
+
+                    {% if users %}
+                    <div class="table-responsive">
+                        <table class="table table--interactive" id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Utilizador</th>
+                                    <th>Email</th>
+                                    <th>Função</th>
+                                    <th>Estado</th>
+                                    <th>Criado em</th>
+                                    <th class="table-actions">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin.update_user', user_id=user.id) }}" class="inline-form">
+                                            {{ update_forms[user.id].hidden_tag() }}
+                                            {{ update_forms[user.id].role(class_='input small') }}
+                                    </td>
+                                    <td>
+                                            <label class="checkbox">
+                                                {{ update_forms[user.id].is_active() }} Activo
+                                            </label>
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
+                                    <td class="actions">
+                                            {{ update_forms[user.id].submit(class_='btn secondary') }}
+                                        </form>
+                                        {% if user.id != current_user.id %}
+                                        <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn danger" onclick="return confirm('Remover este utilizador?');">Remover</button>
+                                        </form>
+                                        {% else %}
+                                            <span class="badge">Sessão actual</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                        <p class="text-muted">Nenhum utilizador registado ainda.</p>
+                    {% endif %}
+                </div>
+            </section>
         </div>
-        {% if users %}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>Email</th>
-                            <th>Função</th>
-                            <th>Estado</th>
-                            <th>Criado em</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for user in users %}
-                        <tr>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('admin.update_user', user_id=user.id) }}" class="inline-form">
-                                    {{ update_forms[user.id].hidden_tag() }}
-                                    {{ update_forms[user.id].role(class_='input small') }}
-                            </td>
-                            <td>
-                                    <label class="checkbox">
-                                        {{ update_forms[user.id].is_active() }} Activo
-                                    </label>
-                            </td>
-                            <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '-' }}</td>
-                            <td class="actions">
-                                    {{ update_forms[user.id].submit(class_='btn secondary') }}
-                                </form>
-                                {% if user.id != current_user.id %}
-                                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" class="inline-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn danger" onclick="return confirm('Remover este utilizador?');">Remover</button>
-                                </form>
-                                {% else %}
-                                    <span class="badge">Sessão actual</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="text-muted">Nenhum utilizador registado ainda.</p>
-        {% endif %}
-    </section>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='scripts/management.js') }}"></script>
 {% endblock %}
