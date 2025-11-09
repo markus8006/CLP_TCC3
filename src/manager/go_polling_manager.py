@@ -121,28 +121,11 @@ class GoPollingManager:
         if event in {"added", "removed", "updated", "shutdown"}:
             self._resolve_waiters(event, key, payload)
             return
-        if event == "poll":
-            if key is None:
-                return
-            poller_info = self._pollers.get(key)
-            if not poller_info or poller_info.get("stopping"):
-                logger.debug("Evento de polling recebido para chave desconhecida: %s", key)
-                return
-            poller = poller_info["poller"]
-            future = asyncio.run_coroutine_threadsafe(poller.poll_once(sleep=False), self._loop)
-            future.add_done_callback(lambda f, k=key: self._log_poll_result(k, f))
-            return
         if event == "error":
             logger.error("Runtime Go reportou erro: %s", payload.get("message"))
             self._resolve_waiters("error", key, payload)
             return
         logger.warning("Evento desconhecido do runtime Go: %s", payload)
-
-    def _log_poll_result(self, key: str, future: asyncio.Future) -> None:
-        try:
-            future.result()
-        except Exception as exc:  # pragma: no cover - logging defensivo
-            logger.exception("Falha ao processar polling para %s", key)
 
     def _resolve_waiters(self, event: str, key: Optional[str], payload: Dict[str, Any]) -> None:
         with self._pending_lock:

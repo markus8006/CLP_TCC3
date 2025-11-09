@@ -42,7 +42,7 @@ class DataLogRepo(BaseRepo):
         commit: bool = True,
         batch_size: int = 5000,
     ) -> int:
-        """Insere diversos registros e realiza limpeza dos mais antigos."""
+        """Insere diversos registros na tabela ``data_log``."""
 
         records_list = list(records)
         if not records_list:
@@ -59,8 +59,6 @@ class DataLogRepo(BaseRepo):
                 self.session.commit()
             else:
                 self.session.flush()
-
-            self._cleanup_old_records_optimized(records_list)
             return inserted
         except SQLAlchemyError:
             self.session.rollback()
