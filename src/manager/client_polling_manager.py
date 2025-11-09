@@ -175,6 +175,154 @@ class ActivePLCPoller:
     def _key(self) -> str:
         return f"{self.plc_orm.ip_address}|{self.plc_orm.vlan_id or 0}"
 
+    def _call_registers_provider(self):
+        provider = self.registers_provider
+        if asyncio.iscoroutinefunction(provider):
+            return provider()
+        try:
+            if self.context:
+                with self.context.app_context():
+                    return provider()
+            return provider()
+        except RuntimeError:
+            return provider()
+
+    async def _disconnect_adapter(self) -> None:
+        try:
+            await self.adapter.disconnect()
+        except Exception:
+            logger.exception("Falha ao desconectar adapter após erro.")
+
+    async def poll_once(self, *, sleep: bool = True) -> None:
+        try:
+            if not self.adapter.is_connected():
+                connected = await self.adapter.connect()
+                if not connected:
+                    logger.warning(
+                        "Unable to connect to %s -- retrying in %.1fs",
+                        self._key(),
+                        self._backoff,
+                    )
+                    self._mark_offline()
+                    if sleep:
+                        await asyncio.sleep(self._backoff)
+                    self._backoff = min(self._backoff * 2, 30.0)
+                    return
+                self._backoff = 1.0
+                self._mark_online(update_last_seen=True)
+
+            regs_result = self._call_registers_provider()
+            regs = await regs_result if asyncio.iscoroutine(regs_result) else regs_result
+            if not regs:
+                logger.debug("No registers for plc %s", self._key())
+                if sleep:
+                    await asyncio.sleep(1)
+                return
+
+            loop = asyncio.get_event_loop()
+            results_batch = []
+            tasks: List[asyncio.Task] = []
+            task_to_reg: Dict[asyncio.Task, Any] = {}
+
+            max_concurrent_reads = min(16, len(regs))
+            sem = asyncio.Semaphore(max_concurrent_reads)
+
+            async def read_register_concurrent(register):
+                async with sem:
+                    try:
+                        if self._read_is_coroutine:
+                            return await self.adapter.read_register(register)
+                        return await loop.run_in_executor(self._executor, self.adapter.read_register, register)
+                    except Exception as e:
+                        logger.error(
+                            "Erro lendo %s @ %s:%s",
+                            getattr(register, 'id', register),
+                            getattr(register, 'address', ''),
+                            e,
+                        )
+                        return None
+
+            for r in regs:
+                t = asyncio.create_task(read_register_concurrent(r))
+                tasks.append(t)
+                task_to_reg[t] = r
+
+            for fut in asyncio.as_completed(tasks):
+                try:
+                    read_result = await fut
+                except Exception as e:
+                    logger.error("Task de leitura falhou: %s", e)
+                    continue
+
+                reg_for_task = task_to_reg.get(fut)
+                if not read_result:
+                    continue
+
+                if asyncio.iscoroutine(read_result):
+                    try:
+                        read_result = await read_result
+                    except Exception as e:
+                        logger.error("Coroutine read_result falhou ao await: %s", e)
+                        continue
+
+                try:
+                    plc_id = read_result.get('plc_id') or getattr(self.plc_orm, 'id', None)
+                    register_id = read_result.get('register_id')
+                    timestamp = read_result.get('timestamp')
+                    unit = getattr(reg_for_task, 'unit', None)
+                    rec = {
+                        'plc_id': plc_id,
+                        'register_id': register_id,
+                        'timestamp': timestamp,
+                        'raw_value': str(read_result.get('raw_value')),
+                        'value_float': read_result.get('value_float'),
+                        'value_int': read_result.get('value_int', None),
+                        'quality': read_result.get('quality'),
+                        'unit': unit,
+                        'tags': getattr(reg_for_task, 'tags', None),
+                        'is_alarm': False,
+                        '_publish_meta': {
+                            'plc_id': plc_id,
+                            'plc_name': getattr(self.plc_orm, 'name', None),
+                            'protocol': getattr(self.plc_orm, 'protocol', None),
+                            'plc_tags': self._plc_tags,
+                            'register_id': register_id,
+                            'register_name': getattr(reg_for_task, 'name', None),
+                            'register_tag': getattr(reg_for_task, 'tag', None),
+                            'register_address': getattr(reg_for_task, 'address', None),
+                            'poll_rate': getattr(reg_for_task, 'poll_rate', None),
+                            'timestamp': timestamp,
+                            'raw_value': str(read_result.get('raw_value')),
+                            'value_float': read_result.get('value_float'),
+                            'value_int': read_result.get('value_int', None),
+                            'unit': unit,
+                            'quality': read_result.get('quality'),
+                            'is_alarm': False,
+                        },
+                    }
+                    results_batch.append(rec)
+                except Exception as e:
+                    logger.exception("Erro ao montar record de leitura: %s", e)
+                    continue
+
+            if results_batch:
+                await loop.run_in_executor(self._executor, self._process_batch_sync, results_batch)
+                self._touch_last_seen()
+
+            if sleep:
+                await asyncio.sleep(1)
+
+        except asyncio.CancelledError:
+            logger.info("Polling loop for %s was cancelled.", self._key())
+            raise
+        except Exception as e:
+            logger.exception("Unexpected error in poll loop for %s: %s", self._key(), e)
+            await self._disconnect_adapter()
+            self._mark_offline()
+            if sleep:
+                await asyncio.sleep(self._backoff)
+            self._backoff = min(self._backoff * 2, 30.0)
+
     async def start(self):
         self._stop = False
         self._task = asyncio.create_task(self._run_loop())
@@ -183,8 +331,14 @@ class ActivePLCPoller:
         self._stop = True
         if self._task:
             self._task.cancel()
-            await asyncio.sleep(0)
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                logger.exception("Erro ao aguardar encerramento do poller %s", self._key())
             self._task = None
+        await self._disconnect_adapter()
         self._mark_offline()
 
     async def _run_loop(self):
@@ -192,150 +346,14 @@ class ActivePLCPoller:
 
         while not self._stop:
             try:
-                # ----- conexão com PLC -----
-                if not self.adapter.is_connected():
-                    connected = await self.adapter.connect()
-                    if not connected:
-                        logger.warning(f"Unable to connect to {self._key()} -- retrying in {self._backoff:.1f}s")
-                        self._mark_offline()
-                        await asyncio.sleep(self._backoff)
-                        self._backoff = min(self._backoff * 2, 30.0)
-                        continue
-                    self._backoff = 1.0
-                    self._mark_online(update_last_seen=True)
-
-                # ----- obtém registradores -----
-                if asyncio.iscoroutinefunction(self.registers_provider):
-                    regs = await self.registers_provider()
-                else:
-                    regs = self.registers_provider()
-
-                if not regs:
-                    logger.debug(f"No registers for plc {self._key()}")
-                    await asyncio.sleep(1)
-                    continue
-
-                # ===============================
-                # 🔁 Leitura concorrente com fila
-                # ===============================
-                loop = asyncio.get_event_loop()
-                results_batch = []
-                tasks: List[asyncio.Task] = []
-                task_to_reg: Dict[asyncio.Task, Any] = {}
-
-                # controla quantas leituras simultâneas
-                max_concurrent_reads = min(16, len(regs))
-                sem = asyncio.Semaphore(max_concurrent_reads)
-
-                async def read_register_concurrent(register):
-                    async with sem:
-                        try:
-                            # Se adapter.read_register for async, await diretamente
-                            if self._read_is_coroutine:
-                                return await self.adapter.read_register(register)
-                            # Caso contrário, rode no executor (função bloqueante/síncrona)
-                            return await loop.run_in_executor(self._executor, self.adapter.read_register, register)
-                        except Exception as e:
-                            logger.error(f"Erro lendo {getattr(register, 'id', register)} @ {getattr(register, 'address', '')}: {e}")
-                            return None
-
-                # cria todas as tarefas de leitura e mapeia cada uma para seu register
-                for r in regs:
-                    t = asyncio.create_task(read_register_concurrent(r))
-                    tasks.append(t)
-                    task_to_reg[t] = r
-
-                # processa conforme as leituras terminam
-                for fut in asyncio.as_completed(tasks):
-                    # fut é o Task/Future; ao await retornamos o resultado
-                    try:
-                        read_result = await fut
-                    except Exception as e:
-                        # proteção extra: se a task levantou
-                        logger.error(f"Task de leitura falhou: {e}")
-                        continue
-
-                    reg_for_task = task_to_reg.get(fut)  # register associado à tarefa
-                    if not read_result:
-                        # leitura falhou ou retornou None; apenas continue
-                        continue
-
-                    # se por algum motivo read_result for coroutine (defesa extra), await-a
-                    if asyncio.iscoroutine(read_result):
-                        try:
-                            read_result = await read_result
-                        except Exception as e:
-                            logger.error(f"Coroutine read_result falhou ao await: {e}")
-                            continue
-
-                    # agora esperamos um dict-like
-                    try:
-                        plc_id = read_result.get('plc_id') or getattr(self.plc_orm, 'id', None)
-                        register_id = read_result.get('register_id')
-                        timestamp = read_result.get('timestamp')
-                        unit = getattr(reg_for_task, 'unit', None)
-                        rec = {
-                            'plc_id': plc_id,
-                            'register_id': register_id,
-                            'timestamp': timestamp,
-                            'raw_value': str(read_result.get('raw_value')),
-                            'value_float': read_result.get('value_float'),
-                            'value_int': read_result.get('value_int', None),
-                            'quality': read_result.get('quality'),
-                            'unit': unit,
-                            'tags': getattr(reg_for_task, 'tags', None),
-                            'is_alarm': False,
-                            '_publish_meta': {
-                                'plc_id': plc_id,
-                                'plc_name': getattr(self.plc_orm, 'name', None),
-                                'protocol': getattr(self.plc_orm, 'protocol', None),
-                                'plc_tags': self._plc_tags,
-                                'register_id': register_id,
-                                'register_name': getattr(reg_for_task, 'name', None),
-                                'register_tag': getattr(reg_for_task, 'tag', None),
-                                'register_address': getattr(reg_for_task, 'address', None),
-                                'poll_rate': getattr(reg_for_task, 'poll_rate', None),
-                                'timestamp': timestamp,
-                                'raw_value': str(read_result.get('raw_value')),
-                                'value_float': read_result.get('value_float'),
-                                'value_int': read_result.get('value_int', None),
-                                'unit': unit,
-                                'quality': read_result.get('quality'),
-                                'is_alarm': False,
-                            },
-                        }
-                        results_batch.append(rec)
-                    except Exception as e:
-                        logger.exception("Erro ao montar record de leitura: %s", e)
-                        continue
-
-                # processa lote completo (inserção + alarm checks) no executor
-                if results_batch:
-                    await loop.run_in_executor(self._executor, self._process_batch_sync, results_batch)
-                    self._touch_last_seen()
-
-                # intervalo de polling
-                await asyncio.sleep(1)
-
+                await self.poll_once(sleep=True)
             except asyncio.CancelledError:
-                logger.info(f"Polling loop for {self._key()} was cancelled.")
                 break
-            except Exception as e:
-                logger.exception(f"Unexpected error in poll loop for {self._key()}: {e}")
-                try:
-                    await self.adapter.disconnect()
-                except Exception:
-                    logger.exception("Falha ao desconectar adapter após erro.")
-                self._mark_offline()
-                await asyncio.sleep(self._backoff)
-                self._backoff = min(self._backoff * 2, 30.0)
 
-        try:
-            await self.adapter.disconnect()
-        except Exception:
-            logger.exception("Falha ao desconectar adapter no final do loop.")
+        await self._disconnect_adapter()
         self._mark_offline()
         logger.info(f"PLCPoller stopped for {self._key()}")
+
 
 
 # ---------- Simple manager that keeps pollers by key (ip|vlan) ----------
