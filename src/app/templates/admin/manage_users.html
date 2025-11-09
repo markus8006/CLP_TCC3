@@ -127,13 +127,15 @@
             <section class="management-tab-panel" data-view="directory" role="tabpanel" hidden>
                 <div class="card">
                     <div class="inventory-toolbar">
-                        <h2>Directório de utilizadores</h2>
+                        <div class="inventory-header">
+                            <h2>Directório de utilizadores</h2>
+                            <span class="inventory-caption">{{ total_users }} contas</span>
+                        </div>
                         <div class="inventory-actions">
                             <label class="inventory-search">
                                 <span class="sr-only">Pesquisar</span>
                                 <input type="search" class="input" placeholder="Pesquisar por nome ou email" data-table-filter="#users-table">
                             </label>
-                            <span class="inventory-caption">{{ total_users }} contas</span>
                         </div>
                     </div>
 
