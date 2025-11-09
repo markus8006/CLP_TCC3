@@ -81,7 +81,7 @@ class BaseAdapter(ABC):
         return self._simulation_mode
 
     # The alarm repository is lazily instanced above; this helper keeps the
-    # atual lookup isolated.
+    # actual lookup isolated.
     def _verify_alarm(self, register_id: Union[int, str]):
         try:
             return self._alarm_repo.alarm_by_register_id(register_id)

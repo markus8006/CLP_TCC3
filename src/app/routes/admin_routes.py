@@ -138,12 +138,12 @@ def update_user(user_id: int):
             user.role = UserRole(form.role.data)
             user.is_active = form.is_active.data
             db.session.commit()
-            flash("Utilizador atualizado!", "success")
+            flash("Utilizador actualizado!", "success")
         except Exception as exc:
             db.session.rollback()
-            flash(f"Erro ao atualizar utilizador: {exc}", "danger")
+            flash(f"Erro ao actualizar utilizador: {exc}", "danger")
     else:
-        flash("Não foi possível atualizar o utilizador.", "danger")
+        flash("Não foi possível actualizar o utilizador.", "danger")
 
     return redirect(url_for("admin.manage_users"))
 
@@ -155,7 +155,7 @@ def delete_user(user_id: int):
     user = User.query.get_or_404(user_id)
 
     if user.id == current_user.id:
-        flash("Não é possível remover o utilizador autenticado atualmente.", "warning")
+        flash("Não é possível remover o utilizador autenticado actualmente.", "warning")
         return redirect(url_for("admin.manage_users"))
 
     try:
@@ -251,14 +251,14 @@ def edit_clp(plc_id: int):
                 },
                 actor=actor,
             )
-            flash("CLP atualizado com sucesso!", "success")
+            flash("CLP actualizado com sucesso!", "success")
             trigger_polling_refresh(current_app)
         except IntegrityError:
             db.session.rollback()
-            flash("Conflito de IP ou nome ao atualizar o CLP.", "warning")
+            flash("Conflito de IP ou nome ao actualizar o CLP.", "warning")
         except Exception as exc:
             db.session.rollback()
-            flash(f"Erro ao atualizar CLP: {exc}", "danger")
+            flash(f"Erro ao actualizar CLP: {exc}", "danger")
         return redirect(url_for("admin.manage_clps"))
 
     return render_template("clp/edit.html", form=form, plc=plc)
@@ -357,7 +357,7 @@ def manage_polling_control():
             form.enabled.data,
             actor=current_user.username if current_user.is_authenticated else None,
         )
-        flash("Estado do polling atualizado.", "success")
+        flash("Estado do polling actualizado.", "success")
         return redirect(url_for("admin.manage_polling_control"))
 
     return render_template(
@@ -389,7 +389,7 @@ def manage_email_settings():
         }
 
         update_email_settings(payload)
-        flash("Configurações de email atualizadas.", "success")
+        flash("Configurações de email actualizadas.", "success")
         return redirect(url_for("admin.manage_email_settings"))
 
     if request.method == "GET":

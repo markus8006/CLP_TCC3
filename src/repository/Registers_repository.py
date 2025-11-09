@@ -26,7 +26,7 @@ class RegisterRepo(BaseRepo):
         try:
             existing = self.first_by(plc_id=obj.plc_id, address=obj.address)
             if existing:
-                logger.info("Registro %s já existe — atualizando dados.", existing.id)
+                logger.info("Registro %s já existe — actualizando dados.", existing.id)
                 for attr in [
                     "name",
                     "register_type",

@@ -35,7 +35,7 @@ class PLCRepo(BaseRepo):
         return self.delete(plc, commit=commit)
 
     def upsert_by_ip(self, plc_obj: PLC, commit: bool = True) -> PLC:
-        """Insere ou atualiza um PLC com base em ``ip`` + ``vlan_id``."""
+        """Insere ou actualiza um PLC com base em ``ip`` + ``vlan_id``."""
 
         existing = self.get_by_ip(plc_obj.ip_address, getattr(plc_obj, "vlan_id", None))
         if existing:
@@ -59,7 +59,7 @@ class PLCRepo(BaseRepo):
         try:
             existing = self.get_by_ip(obj.ip_address, getattr(obj, "vlan_id", None))
             if existing:
-                logger.info("PLC %s já existe — atualizando dados básicos.", existing.id)
+                logger.info("PLC %s já existe — actualizando dados básicos.", existing.id)
                 for attr in [
                     "name",
                     "description",
@@ -82,7 +82,7 @@ class PLCRepo(BaseRepo):
             raise
 
     def update_tags(self, plc: PLC, tags: Iterable[str], commit: bool = True) -> PLC:
-        """Atualiza a lista de tags normalizada para um CLP."""
+        """Actualiza a lista de tags normalizada para um CLP."""
 
         try:
             plc.set_tags(tags)
@@ -90,7 +90,7 @@ class PLCRepo(BaseRepo):
             return plc
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao atualizar tags do PLC %s", plc.id if plc else "desconhecido")
+            logger.exception("Erro ao actualizar tags do PLC %s", plc.id if plc else "desconhecido")
             raise
 
     def set_active_state(
@@ -103,7 +103,7 @@ class PLCRepo(BaseRepo):
         source: Optional[str] = None,
         commit: bool = True,
     ) -> PLC:
-        """Atualiza o estado operativo do CLP com metadados de auditoria."""
+        """Actualiza o estado operativo do CLP com metadados de auditoria."""
 
         try:
             previous_state = plc.is_active
@@ -126,7 +126,7 @@ class PLCRepo(BaseRepo):
         except SQLAlchemyError:
             self.session.rollback()
             logger.exception(
-                "Erro ao atualizar estado do PLC %s", plc.id if plc else "desconhecido"
+                "Erro ao actualizar estado do PLC %s", plc.id if plc else "desconhecido"
             )
             raise
 

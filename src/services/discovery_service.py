@@ -26,7 +26,7 @@ def is_discovery_enabled(default: bool = False) -> bool:
 
 
 def set_discovery_enabled(enabled: bool, *, actor: Optional[str] = None) -> None:
-    """Atualiza o estado persistido responsável por habilitar a descoberta de rede."""
+    """Actualiza o estado persistido responsável por habilitar a descoberta de rede."""
 
     description = "Estado da descoberta de rede"
     if actor:

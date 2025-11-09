@@ -50,7 +50,7 @@ def test_admin_can_update_email_settings(client, admin_user):
     )
     assert response.status_code == 200
     page = response.get_data(as_text=True)
-    assert "Configurações de email atualizadas." in page
+    assert "Configurações de email actualizadas." in page
     assert "smtp.admin.local" in page
 
     stored = get_stored_email_settings()

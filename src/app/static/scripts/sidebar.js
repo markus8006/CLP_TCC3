@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = themeToggle ? themeToggle.querySelector('.theme-icon') : null;
-    const sidenavBackdrop = document.getElementById('sidenavBackdrop');
     const docEl = document.documentElement;
     const storageKey = 'preferredTheme';
 
@@ -54,80 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const applyNavState = (isOpen) => {
-        if (!sidenav || !mainContent) {
-            return;
-        }
-
-        sidenav.classList.toggle('sidenav-open', isOpen);
-        mainContent.classList.toggle('main-content-shifted', isOpen);
-
-        const shouldLockViewport = isOpen && window.innerWidth <= 992;
-        document.body.classList.toggle('nav-open', shouldLockViewport);
-
-        if (menuBtn) {
-            menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        }
-
-        sidenav.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
-
-        if (sidenavBackdrop) {
-            sidenavBackdrop.hidden = !shouldLockViewport;
-            sidenavBackdrop.classList.toggle('active', shouldLockViewport);
-        }
-    };
-
-    const toggleNav = () => {
-        if (!sidenav) {
-            return;
-        }
-
-        const isOpen = !sidenav.classList.contains('sidenav-open');
-        applyNavState(isOpen);
-    };
-
-    const closeNav = () => applyNavState(false);
-
     if (menuBtn && sidenav && mainContent) {
-        menuBtn.addEventListener('click', toggleNav);
-    }
-
-    if (sidenavBackdrop) {
-        sidenavBackdrop.addEventListener('click', closeNav);
-    }
-
-    if (sidenav) {
-        sidenav.setAttribute('aria-hidden', 'true');
-        sidenav.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                closeNav();
-            }
-        });
-
-        const navLinks = Array.from(sidenav.querySelectorAll('a'));
-        navLinks.forEach((link) => {
-            link.addEventListener('click', () => {
-                if (window.innerWidth <= 992) {
-                    closeNav();
-                }
-            });
+        menuBtn.addEventListener('click', () => {
+            sidenav.classList.toggle('sidenav-open');
+            mainContent.classList.toggle('main-content-shifted');
         });
     }
-
-    window.addEventListener('resize', () => {
-        if (!sidenav) {
-            return;
-        }
-
-        const isOpen = sidenav.classList.contains('sidenav-open');
-        applyNavState(isOpen);
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && sidenav && sidenav.classList.contains('sidenav-open')) {
-            closeNav();
-        }
-    });
-
-    applyNavState(false);
 });

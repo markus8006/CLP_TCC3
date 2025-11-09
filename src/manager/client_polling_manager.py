@@ -103,7 +103,7 @@ class ActivePLCPoller:
                     self.plc_orm.is_online = plc.is_online
                     self.plc_orm.last_seen = plc.last_seen
         except Exception:
-            logger.exception("Falha ao atualizar estado online/offline do PLC %s", self._key())
+            logger.exception("Falha ao actualizar estado online/offline do PLC %s", self._key())
 
     def _mark_online(self, *, update_last_seen: bool = False) -> None:
         was_offline = not self._reported_online
