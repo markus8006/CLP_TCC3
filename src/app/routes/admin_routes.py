@@ -167,16 +167,17 @@ def delete_user(user_id: int):
     user = User.query.get_or_404(user_id)
 
     if user.id == current_user.id:
-        flash("Não é possível remover o utilizador autenticado actualmente.", "warning")
+        flash("Não é possível remover a sua própria conta.", "warning")
         return redirect(url_for("admin.manage_users"))
 
     try:
         db.session.delete(user)
         db.session.commit()
-        flash("Utilizador removido com sucesso.", "info")
+        flash("Utilizador removido com sucesso.", "success")
     except Exception as exc:
         db.session.rollback()
         flash(f"Erro ao remover utilizador: {exc}", "danger")
+
     return redirect(url_for("admin.manage_users"))
 
 
