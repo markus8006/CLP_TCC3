@@ -620,3 +620,11 @@
         justify-content: flex-start;
     }
 }
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}

@@ -66,9 +66,66 @@
         });
     }
 
+    function initStepNavigation(root) {
+        const navigations = root.querySelectorAll('[data-step-nav]');
+        navigations.forEach((nav) => {
+            const form = nav.closest('form');
+            if (!form) {
+                return;
+            }
+            const steps = Array.from(form.querySelectorAll('.form-step[data-step]'));
+            if (!steps.length) {
+                return;
+            }
+
+            let currentIndex = steps.findIndex((step) => step.classList.contains('active'));
+            if (currentIndex === -1) {
+                currentIndex = 0;
+            }
+
+            const prevButton = nav.querySelector('[data-step-action="prev"]');
+            const nextButton = nav.querySelector('[data-step-action="next"]');
+
+            function setActiveStep(index) {
+                steps.forEach((step, stepIndex) => {
+                    step.classList.toggle('active', stepIndex === index);
+                });
+
+                if (prevButton) {
+                    prevButton.disabled = index === 0;
+                }
+
+                if (nextButton) {
+                    nextButton.disabled = index === steps.length - 1;
+                }
+            }
+
+            setActiveStep(currentIndex);
+
+            nav.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-step-action]');
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                const { stepAction } = button.dataset;
+
+                if (stepAction === 'next' && currentIndex < steps.length - 1) {
+                    currentIndex += 1;
+                    setActiveStep(currentIndex);
+                } else if (stepAction === 'prev' && currentIndex > 0) {
+                    currentIndex -= 1;
+                    setActiveStep(currentIndex);
+                }
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const root = document.body || document.documentElement;
         initTabs(root);
         initFilters(root);
+        initStepNavigation(root);
     });
 })();
