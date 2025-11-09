@@ -187,7 +187,7 @@
   async function loadAlarms(showLoading = true) {
     if (showLoading && refreshButton) {
       refreshButton.disabled = true;
-      refreshButton.textContent = 'Actualizando…';
+      refreshButton.textContent = 'Atualizando…';
     }
 
     const headers = {
@@ -215,7 +215,7 @@
       updateSummary(allAlarms);
       renderTable([], 0);
       if (lastUpdatedEl) {
-        lastUpdatedEl.textContent = `Erro ao actualizar: ${error.message}`;
+        lastUpdatedEl.textContent = `Erro ao atualizar: ${error.message}`;
       }
     } finally {
       if (refreshButton) {

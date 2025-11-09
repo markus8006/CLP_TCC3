@@ -103,7 +103,7 @@ class BaseRepo:
             return merged
         except SQLAlchemyError:
             self.session.rollback()
-            logger.exception("Erro ao actualizar %s", self.model.__name__)
+            logger.exception("Erro ao atualizar %s", self.model.__name__)
             raise
 
     def delete(self, obj: Any, commit: bool = True) -> bool:

@@ -53,62 +53,64 @@
   {% endif %}
 {% endwith %}
 
-
-    <!--NavBar-->
-    <button id="menuBtn" aria-label="Abrir menu de navegação">☰</button>
-    <button id="themeToggle" aria-label="Ativar modo escuro">
-        <span class="theme-icon" aria-hidden="true">🌙</span>
-    </button>
-    <div id="mySidenav" class="sidenav">
-        {% if current_user.is_authenticated %}
-        <div class="user-info">
-            <span class="user-name">{{ current_user.username }}</span>
-            <span class="user-role">{{ current_user.role.value|replace('_', ' ')|title }}</span>
-        </div>
-        {% else %}
-        <div class="user-info">
-            <span class="user-name">Visitante</span>
-            <span class="user-role">Sem sessão</span>
-        </div>
-        {% endif %}
-        <nav>
-            <a href="/">Home</a>
+    <div class="app-shell">
+        <!--NavBar-->
+        <button id="menuBtn" aria-label="Abrir menu de navegação">☰</button>
+        <button id="themeToggle" aria-label="Ativar modo escuro">
+            <span class="theme-icon" aria-hidden="true">🌙</span>
+        </button>
+        <div id="sidenavBackdrop" class="sidenav-backdrop" hidden></div>
+        <aside id="mySidenav" class="sidenav" aria-label="Menu de navegação">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
-            <a href="{{ url_for('hmi.hmi_home') }}">Interface HMI</a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.has_permission('engineer') %}
-            <a href="{{ url_for('coleta.control') }}">Coleta IPs</a>
-            <a href="{{ url_for('programming.hub') }}">Programação</a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.has_permission('admin') %}
-            <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
-            <a href="{{ url_for('admin.manage_email_settings') }}">Configurar Email</a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.has_permission('moderator') %}
-            <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>
-            <a href="{{ url_for('admin.manage_registers') }}">Registradores</a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.has_permission('gerente') %}
-            <a href="{{ url_for('admin.manage_polling_control') }}">Controlo de Polling</a>
-            {% endif %}
-            {% if current_user.is_authenticated and current_user.has_permission('alarmdefinition') %}
-            <a href="{{ url_for('admin.manage_alarm_definitions') }}">Alarmes</a>
-            {% endif %}
-            {% if current_user.is_authenticated %}
-            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <div class="user-info">
+                <span class="user-name">{{ current_user.username }}</span>
+                <span class="user-role">{{ current_user.role.value|replace('_', ' ')|title }}</span>
+            </div>
             {% else %}
-            <a href="{{ url_for('auth.login') }}">Login</a>
+            <div class="user-info">
+                <span class="user-name">Visitante</span>
+                <span class="user-role">Sem sessão</span>
+            </div>
             {% endif %}
-        </nav>
+            <nav class="sidenav__links">
+                <a href="/">Home</a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard.dashboard_home') }}">Dashboard</a>
+                <a href="{{ url_for('hmi.hmi_home') }}">Interface HMI</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_permission('engineer') %}
+                <a href="{{ url_for('coleta.control') }}">Coleta IPs</a>
+                <a href="{{ url_for('programming.hub') }}">Programação</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_permission('admin') %}
+                <a href="{{ url_for('admin.manage_users') }}">Gerenciar Usuários</a>
+                <a href="{{ url_for('admin.manage_email_settings') }}">Configurar Email</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_permission('moderator') %}
+                <a href="{{ url_for('admin.manage_clps') }}">Gerenciar CLPs</a>
+                <a href="{{ url_for('admin.manage_registers') }}">Registradores</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_permission('gerente') %}
+                <a href="{{ url_for('admin.manage_polling_control') }}">Controlo de Polling</a>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.has_permission('alarmdefinition') %}
+                <a href="{{ url_for('admin.manage_alarm_definitions') }}">Alarmes</a>
+                {% endif %}
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+                {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                {% endif %}
+            </nav>
 
+        </aside>
+
+
+        <!--Conteudo principal-->
+        <main id="main-content" class="main-content">
+            {% block content %}{% endblock %}
+        </main>
     </div>
-
-
-    <!--Conteudo principal-->
-    <main id="main-content" class="main-content">
-        {% block content %}{% endblock %}
-    </main>
 
 
     <!--Scripts-->

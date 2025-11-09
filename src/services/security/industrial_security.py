@@ -81,7 +81,7 @@ def assess_plc_security(plc) -> SecurityAssessment:
             )
         )
         recommendations.append(
-            "Registe a versão de firmware e mantenha inventário actualizado para acompanhar boletins de segurança do fabricante."
+            "Registe a versão de firmware e mantenha inventário atualizado para acompanhar boletins de segurança do fabricante."
         )
 
     if "critico" in tags or "seguranca" in tags:

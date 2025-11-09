@@ -56,7 +56,7 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
-        # guarda o estado actual (evita recálculo depois do commit)
+        # guarda o estado atual (evita recálculo depois do commit)
         was_first = first_user
 
         # definir papel: primeiro -> ADMIN, senão usar o escolhido no form

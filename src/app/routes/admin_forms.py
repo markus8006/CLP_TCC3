@@ -42,7 +42,7 @@ class UserCreationForm(FlaskForm):
 class UserUpdateForm(FlaskForm):
     role = SelectField("Função", choices=iter_role_choices(), validators=[DataRequired()])
     is_active = BooleanField("Activo")
-    submit = SubmitField("Actualizar")
+    submit = SubmitField("Atualizar")
 
 
 class PLCForm(FlaskForm):

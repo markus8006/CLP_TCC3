@@ -17,7 +17,7 @@ from src.utils.logs import logger
 
 class DiscoveryControlForm(FlaskForm):
     enabled = BooleanField("Ativar descoberta de rede")
-    submit = SubmitField("Actualizar estado")
+    submit = SubmitField("Atualizar estado")
     run_scan = SubmitField("Executar varredura agora")
 
 
@@ -48,7 +48,7 @@ def control():
                 form.enabled.data,
                 actor=actor,
             )
-            flash("Estado da descoberta actualizado.", "success")
+            flash("Estado da descoberta atualizado.", "success")
             return redirect(url_for("coleta.control"))
 
         if form.run_scan.data:
@@ -59,7 +59,7 @@ def control():
                 )
             elif not discovery_service.is_discovery_enabled():
                 flash(
-                    "A descoberta está desativada. Actualize o estado para activar a coleta antes de executar uma varredura.",
+                    "A descoberta está desativada. Atualize o estado para activar a coleta antes de executar uma varredura.",
                     "warning",
                 )
             else:
