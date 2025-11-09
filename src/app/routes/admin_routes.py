@@ -98,7 +98,12 @@ def manage_users():
     update_forms = {
         user.id: UserUpdateForm(
             prefix=f"user-{user.id}",
-            data={"role": user.role.value, "is_active": user.is_active},
+            data={
+                "username": user.username,
+                "email": user.email,
+                "role": user.role.value,
+                "is_active": user.is_active,
+            },
         )
         for user in users
     }
@@ -137,10 +142,15 @@ def update_user(user_id: int):
 
     if form.validate_on_submit():
         try:
+            user.username = form.username.data.strip()
+            user.email = form.email.data.strip()
             user.role = UserRole(form.role.data)
             user.is_active = form.is_active.data
             db.session.commit()
             flash("Utilizador actualizado!", "success")
+        except IntegrityError:
+            db.session.rollback()
+            flash("Nome de utilizador ou email já registado.", "warning")
         except Exception as exc:
             db.session.rollback()
             flash(f"Erro ao actualizar utilizador: {exc}", "danger")
