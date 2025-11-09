@@ -1,4 +1,5 @@
 import logging
+import os
 import threading
 import time
 from dataclasses import dataclass, field
@@ -6,6 +7,7 @@ from typing import Dict, List, Optional
 
 from src.app import create_app
 from src.manager.client_polling_manager import SimpleManager
+from src.manager.go_polling_manager import GoPollingManager, is_go_available
 from src.models import PLC, Register
 from src.models.Alarms import AlarmDefinition
 from src.repository.Alarms_repository import AlarmDefinitionRepo
@@ -528,7 +530,22 @@ if __name__ == "__main__":
     for protocolo, quantidade in resultados.items():
         logger.info("Protocolo %s: %d CLPs ativos.", protocolo, quantidade)
 
-    polling_manager = SimpleManager(app)
+    polling_manager = None
+    if os.getenv("USE_GO_POLLING", "1") != "0":
+        try:
+            if is_go_available():
+                polling_manager = GoPollingManager(app)
+                logger.process("Serviço de polling Go inicializado.")
+            else:
+                logger.warning("Go não encontrado no PATH. Utilizando gestor Python.")
+        except Exception:
+            logger.exception(
+                "Falha ao iniciar runtime de polling em Go; revertendo para implementação Python."
+            )
+
+    if polling_manager is None:
+        polling_manager = SimpleManager(app)
+
     runtime = PollingRuntime(manager=polling_manager)
     with app.app_context():
         runtime.set_enabled(get_polling_enabled())
