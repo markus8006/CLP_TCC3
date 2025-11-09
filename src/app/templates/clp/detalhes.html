@@ -4,6 +4,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/clp/detalhes.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
 
 {% endblock %}
 
@@ -23,6 +24,12 @@
                     data-tab-target="seguranca" aria-controls="tab-seguranca" aria-selected="false">
                 Segurança &amp; Importação
             </button>
+            {% if can_manage %}
+            <button id="tab-gestao-button" class="clp-tab" type="button" role="tab"
+                    data-tab-target="gestao" aria-controls="tab-gestao" aria-selected="false">
+                Gestão
+            </button>
+            {% endif %}
         </div>
 
         <div class="clp-tab-panels">
@@ -203,6 +210,192 @@
                     <div id="register-import-feedback" class="register-feedback" role="status" aria-live="polite"></div>
                 </div>
             </section>
+
+            {% if can_manage %}
+            <section id="tab-gestao" class="clp-tab-panel" data-tab-panel="gestao" role="tabpanel"
+                     aria-labelledby="tab-gestao-button" hidden>
+                <div class="clp-admin-grid">
+                    <div class="card clp-admin-card">
+                        <div>
+                            <h2>Actualizar CLP</h2>
+                            <p class="card__description">Altere parâmetros de identificação, comunicação e contexto operativo directamente deste painel.</p>
+                        </div>
+                        {% if clp_form %}
+                        <form method="POST" action="{{ url_for('admin.edit_clp', plc_id=clp.id) }}" novalidate>
+                            {{ clp_form.hidden_tag() }}
+                            <input type="hidden" name="next" value="{{ url_for('clp_bp.clp', ip=clp.ip_address, vlan=vlan_id) }}">
+                            <div class="form-grid">
+                                <label class="form-field{% if clp_form.name.errors %} has-error{% endif %}">
+                                    <span>Nome</span>
+                                    {{ clp_form.name(class_='input') }}
+                                    {% if clp_form.name.errors %}<small class="input-error">{{ clp_form.name.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.ip_address.errors %} has-error{% endif %}">
+                                    <span>IP</span>
+                                    {{ clp_form.ip_address(class_='input') }}
+                                    {% if clp_form.ip_address.errors %}<small class="input-error">{{ clp_form.ip_address.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.protocol.errors %} has-error{% endif %}">
+                                    <span>Protocolo</span>
+                                    {{ clp_form.protocol(class_='input') }}
+                                    {% if clp_form.protocol.errors %}<small class="input-error">{{ clp_form.protocol.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.port.errors %} has-error{% endif %}">
+                                    <span>Porta</span>
+                                    {{ clp_form.port(class_='input') }}
+                                    {% if clp_form.port.errors %}<small class="input-error">{{ clp_form.port.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.vlan_id.errors %} has-error{% endif %}">
+                                    <span>VLAN</span>
+                                    {{ clp_form.vlan_id(class_='input') }}
+                                    {% if clp_form.vlan_id.errors %}<small class="input-error">{{ clp_form.vlan_id.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.subnet_mask.errors %} has-error{% endif %}">
+                                    <span>Máscara</span>
+                                    {{ clp_form.subnet_mask(class_='input') }}
+                                    {% if clp_form.subnet_mask.errors %}<small class="input-error">{{ clp_form.subnet_mask.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.gateway.errors %} has-error{% endif %}">
+                                    <span>Gateway</span>
+                                    {{ clp_form.gateway(class_='input') }}
+                                    {% if clp_form.gateway.errors %}<small class="input-error">{{ clp_form.gateway.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.unit_id.errors %} has-error{% endif %}">
+                                    <span>Unit ID</span>
+                                    {{ clp_form.unit_id(class_='input') }}
+                                    {% if clp_form.unit_id.errors %}<small class="input-error">{{ clp_form.unit_id.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.manufacturer.errors %} has-error{% endif %}">
+                                    <span>Fabricante</span>
+                                    {{ clp_form.manufacturer(class_='input') }}
+                                    {% if clp_form.manufacturer.errors %}<small class="input-error">{{ clp_form.manufacturer.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.model.errors %} has-error{% endif %}">
+                                    <span>Modelo</span>
+                                    {{ clp_form.model(class_='input') }}
+                                    {% if clp_form.model.errors %}<small class="input-error">{{ clp_form.model.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.firmware_version.errors %} has-error{% endif %}">
+                                    <span>Firmware</span>
+                                    {{ clp_form.firmware_version(class_='input') }}
+                                    {% if clp_form.firmware_version.errors %}<small class="input-error">{{ clp_form.firmware_version.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="form-field{% if clp_form.tags.errors %} has-error{% endif %}">
+                                    <span>Tags</span>
+                                    {{ clp_form.tags(class_='input') }}
+                                    {% if clp_form.tags.errors %}<small class="input-error">{{ clp_form.tags.errors[0] }}</small>{% endif %}
+                                </label>
+                                <label class="checkbox">{{ clp_form.is_active() }} Activo</label>
+                            </div>
+                            <label class="form-field{% if clp_form.description.errors %} has-error{% endif %}">
+                                <span>Descrição</span>
+                                {{ clp_form.description(class_='input', rows=3) }}
+                                {% if clp_form.description.errors %}<small class="input-error">{{ clp_form.description.errors[0] }}</small>{% endif %}
+                            </label>
+                            <div class="actions">
+                                {{ clp_form.submit(class_='btn primary') }}
+                            </div>
+                        </form>
+                        {% else %}
+                        <p class="text-muted">Sem permissões para editar este CLP.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="card clp-admin-card">
+                        <div>
+                            <h2>Registradores associados</h2>
+                            <p class="card__description">Edite endereço, escala e parâmetros operacionais de cada ponto monitorado.</p>
+                        </div>
+                        {% if register_forms %}
+                        <div class="register-admin-list">
+                            {% for register, form in register_forms %}
+                            <details class="register-admin-item">
+                                <summary>
+                                    <span>{{ register.name }} — {{ register.register_type }} @ {{ register.address }}</span>
+                                    <span class="status-indicator {{ 'status-indicator--online' if register.is_active else 'status-indicator--offline' }}">{{ 'Activo' if register.is_active else 'Inactivo' }}</span>
+                                </summary>
+                                <form method="POST" action="{{ url_for('admin.edit_register', register_id=register.id) }}" novalidate>
+                                    {{ form.hidden_tag() }}
+                                    <input type="hidden" name="next" value="{{ url_for('clp_bp.clp', ip=clp.ip_address, vlan=vlan_id) }}">
+                                    <div class="form-grid">
+                                        <label class="form-field{% if form.plc_id.errors %} has-error{% endif %}">
+                                            <span>CLP</span>
+                                            {{ form.plc_id(class_='input') }}
+                                            {% if form.plc_id.errors %}<small class="input-error">{{ form.plc_id.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.name.errors %} has-error{% endif %}">
+                                            <span>Nome</span>
+                                            {{ form.name(class_='input') }}
+                                            {% if form.name.errors %}<small class="input-error">{{ form.name.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.address.errors %} has-error{% endif %}">
+                                            <span>Endereço</span>
+                                            {{ form.address(class_='input') }}
+                                            {% if form.address.errors %}<small class="input-error">{{ form.address.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.register_type.errors %} has-error{% endif %}">
+                                            <span>Tipo</span>
+                                            {{ form.register_type(class_='input') }}
+                                            {% if form.register_type.errors %}<small class="input-error">{{ form.register_type.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.data_type.errors %} has-error{% endif %}">
+                                            <span>Dados</span>
+                                            {{ form.data_type(class_='input') }}
+                                            {% if form.data_type.errors %}<small class="input-error">{{ form.data_type.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.length.errors %} has-error{% endif %}">
+                                            <span>Comprimento</span>
+                                            {{ form.length(class_='input') }}
+                                            {% if form.length.errors %}<small class="input-error">{{ form.length.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.unit.errors %} has-error{% endif %}">
+                                            <span>Unidade</span>
+                                            {{ form.unit(class_='input') }}
+                                            {% if form.unit.errors %}<small class="input-error">{{ form.unit.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.tag.errors %} has-error{% endif %}">
+                                            <span>Tag</span>
+                                            {{ form.tag(class_='input') }}
+                                            {% if form.tag.errors %}<small class="input-error">{{ form.tag.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.scale_factor.errors %} has-error{% endif %}">
+                                            <span>Factor de escala</span>
+                                            {{ form.scale_factor(class_='input') }}
+                                            {% if form.scale_factor.errors %}<small class="input-error">{{ form.scale_factor.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.offset.errors %} has-error{% endif %}">
+                                            <span>Offset</span>
+                                            {{ form.offset(class_='input') }}
+                                            {% if form.offset.errors %}<small class="input-error">{{ form.offset.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field{% if form.poll_rate.errors %} has-error{% endif %}">
+                                            <span>Polling (ms)</span>
+                                            {{ form.poll_rate(class_='input') }}
+                                            {% if form.poll_rate.errors %}<small class="input-error">{{ form.poll_rate.errors[0] }}</small>{% endif %}
+                                        </label>
+                                        <label class="form-field">
+                                            <span>Descrição</span>
+                                            {{ form.description(class_='input') }}
+                                        </label>
+                                    </div>
+                                    <div class="form-grid form-grid--compact">
+                                        <label class="checkbox">{{ form.is_active() }} Activo</label>
+                                        <label class="checkbox">{{ form.log_enabled() }} Histórico</label>
+                                    </div>
+                                    <div class="actions">
+                                        {{ form.submit(class_='btn primary') }}
+                                    </div>
+                                </form>
+                            </details>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                            <p class="text-muted">Não existem registradores associados a este CLP.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+            {% endif %}
         </div>
     </div>
 </div>

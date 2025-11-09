@@ -21,7 +21,7 @@
 }
 
 .page-header h1 {
-    font-size: 2.2rem;
+    font-size: 2.3rem;
     margin: 0;
 }
 
@@ -29,6 +29,48 @@
     margin: 0;
     color: rgba(255, 255, 255, 0.75);
     max-width: 720px;
+}
+
+.management-hero {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.management-hero .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0 0 0.25rem 0;
+}
+
+.page-lead {
+    color: rgba(255, 255, 255, 0.78);
+    margin: 0;
+    max-width: 680px;
+}
+
+.management-alert {
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 203, 107, 0.4);
+    background: rgba(255, 203, 107, 0.12);
+    color: #ffd27f;
+}
+
+.management-alert a {
+    color: #ffe8b5;
+    text-decoration: underline;
 }
 
 .card {
@@ -73,6 +115,24 @@
     gap: 1rem;
 }
 
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.form-field.has-error .input,
+.form-field.has-error select,
+.form-field.has-error textarea {
+    border-color: rgba(255, 107, 129, 0.7);
+    box-shadow: 0 0 0 3px rgba(255, 107, 129, 0.18);
+}
+
+.input-error {
+    color: #ff9da9;
+    font-size: 0.75rem;
+}
+
 .status-panel {
     margin-top: 1rem;
     padding: 1rem 1.25rem;
@@ -91,6 +151,11 @@
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     margin-bottom: 1rem;
+}
+
+.form-grid--compact {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-bottom: 0;
 }
 
 .input,
@@ -148,6 +213,162 @@
     color: #fff;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.management-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.management-tabs__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.management-tab {
+    appearance: none;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    padding: 0.65rem 1.25rem;
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.management-tab:hover,
+.management-tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(132, 0, 255, 0.3);
+}
+
+.management-tab.active {
+    background: linear-gradient(90deg, rgba(132, 0, 255, 0.95), rgba(204, 0, 255, 0.8));
+    box-shadow: 0 12px 28px rgba(132, 0, 255, 0.35);
+}
+
+.management-tabs__panels {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.management-tab-panel {
+    display: none;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.management-tab-panel.active {
+    display: flex;
+}
+
+.insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.insight-card {
+    padding: 1.2rem;
+    border-radius: 16px;
+    background: rgba(12, 0, 26, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.insight-card--critical {
+    border-color: rgba(255, 107, 129, 0.45);
+    background: rgba(80, 0, 18, 0.65);
+}
+
+.insight-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.insight-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.insight-meta {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.mini-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+.mini-card {
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    background: rgba(15, 0, 30, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+}
+
+.mini-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.05rem;
+}
+
+.mini-card__description {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.9rem;
+}
+
+.inventory-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.inventory-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.inventory-search {
+    position: relative;
+    flex: 1;
+}
+
+.inventory-search .input {
+    min-width: 220px;
+}
+
+.inventory-caption {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
 .table-responsive {
     overflow-x: auto;
 }
@@ -172,6 +393,31 @@
     color: rgba(255, 255, 255, 0.65);
 }
 
+.table--compact th,
+.table--compact td {
+    padding: 0.65rem;
+}
+
+.table--interactive tbody tr:hover {
+    background: rgba(132, 0, 255, 0.12);
+}
+
+.table-actions {
+    text-align: right;
+}
+
+.table-subtitle {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.25rem;
+}
+
+.table-meta {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
 .inline-form {
     display: inline-flex;
     gap: 0.5rem;
@@ -183,6 +429,33 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.status-indicator::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.status-indicator--online {
+    color: #65f7c5;
+}
+
+.status-indicator--offline {
+    color: #ff8b94;
 }
 
 .badge {
@@ -283,6 +556,10 @@
     margin: 0;
 }
 
+.role-definition-card h2 {
+    margin-bottom: 0.5rem;
+}
+
 @media (max-width: 768px) {
     .management-container {
         padding-inline: 0.5rem;
@@ -294,5 +571,14 @@
 
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .management-hero {
+        flex-direction: column;
+    }
+
+    .hero-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 }

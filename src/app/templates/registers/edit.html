@@ -1,0 +1,91 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Editar registrador{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/admin/management.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="management-container">
+    <section class="page-header">
+        <h1>Editar registrador</h1>
+        <p>Actualize os parâmetros de aquisição e de escala para o ponto seleccionado.</p>
+    </section>
+
+    <section class="card">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-grid">
+                <label class="form-field{% if form.plc_id.errors %} has-error{% endif %}">
+                    <span>CLP</span>
+                    {{ form.plc_id(class_='input') }}
+                    {% if form.plc_id.errors %}<small class="input-error">{{ form.plc_id.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.name.errors %} has-error{% endif %}">
+                    <span>Nome</span>
+                    {{ form.name(class_='input') }}
+                    {% if form.name.errors %}<small class="input-error">{{ form.name.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.address.errors %} has-error{% endif %}">
+                    <span>Endereço</span>
+                    {{ form.address(class_='input') }}
+                    {% if form.address.errors %}<small class="input-error">{{ form.address.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.register_type.errors %} has-error{% endif %}">
+                    <span>Tipo</span>
+                    {{ form.register_type(class_='input') }}
+                    {% if form.register_type.errors %}<small class="input-error">{{ form.register_type.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.data_type.errors %} has-error{% endif %}">
+                    <span>Tipo de dados</span>
+                    {{ form.data_type(class_='input') }}
+                    {% if form.data_type.errors %}<small class="input-error">{{ form.data_type.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.length.errors %} has-error{% endif %}">
+                    <span>Comprimento</span>
+                    {{ form.length(class_='input') }}
+                    {% if form.length.errors %}<small class="input-error">{{ form.length.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.unit.errors %} has-error{% endif %}">
+                    <span>Unidade</span>
+                    {{ form.unit(class_='input') }}
+                    {% if form.unit.errors %}<small class="input-error">{{ form.unit.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.tag.errors %} has-error{% endif %}">
+                    <span>Tag</span>
+                    {{ form.tag(class_='input') }}
+                    {% if form.tag.errors %}<small class="input-error">{{ form.tag.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.scale_factor.errors %} has-error{% endif %}">
+                    <span>Factor de escala</span>
+                    {{ form.scale_factor(class_='input') }}
+                    {% if form.scale_factor.errors %}<small class="input-error">{{ form.scale_factor.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field{% if form.offset.errors %} has-error{% endif %}">
+                    <span>Offset</span>
+                    {{ form.offset(class_='input') }}
+                    {% if form.offset.errors %}<small class="input-error">{{ form.offset.errors[0] }}</small>{% endif %}
+                </label>
+                <label class="form-field">
+                    <span>Polling</span>
+                    {{ form.poll_rate(class_='input') }}
+                </label>
+                <label class="form-field">
+                    <span>Descrição</span>
+                    {{ form.description(class_='input') }}
+                </label>
+            </div>
+            <div class="form-grid form-grid--compact">
+                <label class="checkbox">{{ form.is_active() }} Activo</label>
+                <label class="checkbox">{{ form.log_enabled() }} Histórico</label>
+            </div>
+            <div class="actions">
+                <input type="hidden" name="next" value="{{ request.args.get('next', url_for('admin.manage_registers')) }}">
+                {{ form.submit(class_='btn primary') }}
+                <a href="{{ request.args.get('next') or url_for('admin.manage_registers') }}" class="btn secondary">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
