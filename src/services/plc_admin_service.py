@@ -88,7 +88,7 @@ def update_plc(
     source: str = "admin_ui",
     session: Optional[Session] = None,
 ) -> PLC:
-    """Actualiza um PLC existente com os dados informados."""
+    """Atualiza um PLC existente com os dados informados."""
 
     repo = _get_repo(session)
     current = repo.session.merge(plc)

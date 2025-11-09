@@ -241,7 +241,7 @@ class AlarmService:
             f"PLC: {plc_name or defn.plc_id}",
             f"Registrador: {register_name or defn.register_id}",
             f"Mensagem: {alarm.message}",
-            f"Valor actual: {alarm.current_value}",
+            f"Valor atual: {alarm.current_value}",
             f"Valor de disparo: {alarm.trigger_value}",
             f"Ocorrido em: {occurred_at}",
         ]
@@ -255,7 +255,7 @@ class AlarmService:
                 ("PLC", plc_name or defn.plc_id),
                 ("Registrador", register_name or defn.register_id),
                 ("Mensagem", alarm.message),
-                ("Valor actual", alarm.current_value),
+                ("Valor atual", alarm.current_value),
                 ("Valor de disparo", alarm.trigger_value),
                 ("Ocorrido em", occurred_at),
             ],
@@ -275,7 +275,7 @@ class AlarmService:
             f"Prioridade: {defn.priority or 'MEDIUM'}",
             f"PLC: {plc_name or defn.plc_id}",
             f"Registrador: {register_name or defn.register_id}",
-            f"Valor actual: {alarm.current_value}",
+            f"Valor atual: {alarm.current_value}",
             f"Limpado em: {cleared_at}",
         ]
 
@@ -285,7 +285,7 @@ class AlarmService:
             rows=[
                 ("PLC", plc_name or defn.plc_id),
                 ("Registrador", register_name or defn.register_id),
-                ("Valor actual", alarm.current_value),
+                ("Valor atual", alarm.current_value),
                 ("Normalizado em", cleared_at),
             ],
             description="O alarme foi normalizado e encontra-se estável.",
