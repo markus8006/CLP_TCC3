@@ -4,7 +4,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
 Flask-Migrate
 email-validator==2.2.0
-psycopg2-binary==2.9.9
+psycopg2-binary
 psutil==5.9.8
 scapy==2.5.0
 Werkzeug==3.0.1
