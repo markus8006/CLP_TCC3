@@ -1,31 +1,60 @@
 version: "3.9"
 
 services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      FLASK_APP: run.py
-      FLASK_ENV: development
-      SECRET_KEY: dev-secret-key-change-in-production
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/scada
-    volumes:
-      - ./:/app
-    depends_on:
-      - db
-
-  db:
+  postgres:
     image: postgres:15
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: scada
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    restart: unless-stopped
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: ${FLASK_ENV:-development}
+      APP_MODE: ${APP_MODE:-full}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/scada
+      POLLER_API_KEY: ${POLLER_API_KEY:-change-me}
+    volumes:
+      - ./:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - >-
+          python -c 'import socket; socket.create_connection(("localhost", 5000), 5).close()'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  poller:
+    build:
+      context: go/polling
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_API_URL: http://backend:5000
+      POLLER_API_KEY: ${POLLER_API_KEY:-change-me}
+      DISCOVERY_INTERVAL: ${POLLING_DISCOVERY_INTERVAL:-15}
 
 volumes:
   postgres_data:

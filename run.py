@@ -1,6 +1,5 @@
 import logging
 import os
-import threading
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -13,7 +12,6 @@ from src.models.Alarms import AlarmDefinition
 from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
-from src.services.client_polling_service import run_async_polling
 from src.services.polling_runtime import PollingRuntime, register_runtime
 from src.services.settings_service import get_polling_enabled
 from src.simulations.runtime import simulation_registry
@@ -564,8 +562,7 @@ if __name__ == "__main__":
             "Publicação MQTT desativada. Defina MQTT_ENABLED=true para habilitar a ponte IT/OT."
         )
 
-    threading.Thread(target=run_async_polling, args=(app, runtime), daemon=True).start()
-    logger.info("Serviço de polling iniciado em background.")
+    logger.info("Runtime de polling registrado — aguardando ingestão externa de dados.")
 
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
     logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)

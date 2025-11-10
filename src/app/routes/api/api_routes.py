@@ -1,19 +1,22 @@
 import asyncio
+import hmac
 from datetime import datetime, timedelta, timezone
 
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_login import current_user, login_required
 from sqlalchemy import case, func
 from sqlalchemy.orm import selectinload
 
-from src.app.extensions import db
+from src.app.extensions import csrf, db
 from src.models.Alarms import Alarm, AlarmDefinition
 from src.models.Data import DataLog
 from src.models.ManualControl import ManualCommand
 from src.models.PLCs import PLC
 from src.models.Registers import Register
 from src.repository.FactoryLayout_repository import FactoryLayoutRepository
-from src.repository.PLC_repository import Plcrepo
+from src.repository.PLC_repository import PLCRepo, Plcrepo
+from src.repository.Registers_repository import RegisterRepo
+from src.repository.Data_repository import DataLogRepo
 from src.runtime.script_engine import ScriptEngine
 from src.services.register_import_service import RegisterImportExportService
 from src.services.address_mapping import AddressMappingEngine
@@ -21,6 +24,7 @@ from src.services.tag_discovery_service import discover_tags as discover_tags_as
 from src.services.tag_simulation_service import get_simulated_tags
 from src.services.manual_control_service import ManualControlService
 from src.services.historian_sync_service import HistorianSyncService
+from src.services.Alarms_service import AlarmService
 from src.utils.role.roles import role_required
 from src.utils.tags import normalize_tag
 
@@ -43,6 +47,151 @@ register_service = RegisterImportExportService()
 script_engine = ScriptEngine()
 manual_control_service = ManualControlService()
 historian_sync_service = HistorianSyncService()
+
+
+def _parse_timestamp(raw_ts):
+    if raw_ts is None:
+        return None
+    if isinstance(raw_ts, datetime):
+        return raw_ts
+    if isinstance(raw_ts, (int, float)):
+        return datetime.fromtimestamp(raw_ts, tz=timezone.utc)
+    if isinstance(raw_ts, str):
+        normalized = raw_ts.strip()
+        if not normalized:
+            return None
+        if normalized.endswith("Z"):
+            normalized = normalized[:-1] + "+00:00"
+        try:
+            ts = datetime.fromisoformat(normalized)
+        except ValueError as exc:
+            raise ValueError(f"timestamp inválido: {raw_ts}") from exc
+        return ts
+    raise ValueError(f"timestamp inválido: {raw_ts}")
+
+
+@api_bp.route("/v1/internal/poller-data", methods=["POST"])
+@csrf.exempt
+def ingest_poller_data():
+    secret = (current_app.config.get("POLLER_API_KEY") or "").strip()
+    if not secret:
+        current_app.logger.error("POLLER_API_KEY não configurada para ingestão interna.")
+        return jsonify({"message": "Ingestão interna indisponível"}), 503
+
+    provided = request.headers.get("X-API-KEY") or request.headers.get("X-Internal-Token")
+    if not provided or not hmac.compare_digest(provided, secret):
+        return jsonify({"message": "Não autorizado"}), 401
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"message": "JSON inválido"}), 400
+
+    try:
+        plc_id = int(payload.get("plc_id"))
+        register_id = int(payload.get("register_id"))
+    except (TypeError, ValueError):
+        return jsonify({"message": "plc_id e register_id são obrigatórios"}), 400
+
+    status = (payload.get("status") or "online").strip().lower()
+
+    try:
+        timestamp = _parse_timestamp(payload.get("timestamp")) or datetime.now(timezone.utc)
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 400
+
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    else:
+        timestamp = timestamp.astimezone(timezone.utc)
+
+    raw_value = payload.get("raw_value")
+    value = payload.get("value")
+    if raw_value is None:
+        raw_value = value
+
+    value_float = payload.get("value_float")
+    if value_float is None and value is not None:
+        try:
+            value_float = float(value)
+        except (TypeError, ValueError):
+            value_float = None
+
+    value_int = payload.get("value_int")
+    if value_int is None and isinstance(value, int):
+        value_int = value
+
+    quality = payload.get("quality")
+    unit = payload.get("unit")
+    tags = payload.get("tags")
+    error_message = payload.get("error")
+
+    session = db.session
+    plc_repo = PLCRepo(session=session)
+    register_repo = RegisterRepo(session=session)
+    data_repo = DataLogRepo(session=session)
+    alarm_service = AlarmService(session=session)
+
+    plc = plc_repo.get(plc_id)
+    if not plc:
+        return jsonify({"message": f"PLC {plc_id} não encontrado"}), 404
+
+    register = register_repo.get(register_id)
+    if not register or register.plc_id != plc.id:
+        return jsonify({"message": f"Registrador {register_id} não encontrado"}), 404
+
+    try:
+        is_alarm = alarm_service.check_and_handle(plc_id, register_id, value_float)
+    except Exception:
+        current_app.logger.exception(
+            "Erro ao avaliar alarmes para plc=%s reg=%s", plc_id, register_id
+        )
+        is_alarm = False
+
+    data_entry = DataLog(
+        plc_id=plc_id,
+        register_id=register_id,
+        timestamp=timestamp,
+        raw_value=str(raw_value) if raw_value is not None else None,
+        value_float=value_float,
+        value_int=value_int,
+        quality=quality,
+        unit=unit,
+        tags=tags,
+        is_alarm=is_alarm,
+    )
+
+    try:
+        data_repo.add(data_entry, commit=False)
+
+        register.last_value = None if raw_value is None else str(raw_value)
+        register.last_read = timestamp
+        if status == "online":
+            register.error_count = 0
+            register.last_error = None
+        else:
+            register.error_count = (register.error_count or 0) + 1
+            register.last_error = error_message or status
+
+        is_online = status == "online"
+        if plc.is_online != is_online:
+            plc.is_online = is_online
+            plc.status_changed_at = timestamp
+        if is_online:
+            plc.last_seen = timestamp
+        elif status in {"offline", "error"}:
+            plc.last_seen = None
+
+        session.commit()
+    except Exception:
+        session.rollback()
+        current_app.logger.exception(
+            "Falha ao processar dados do poller para plc=%s reg=%s",
+            plc_id,
+            register_id,
+        )
+        return jsonify({"message": "Erro ao processar dados"}), 500
+
+    return jsonify({"message": "Dados registrados", "is_alarm": is_alarm}), 201
 
 
 def _stringify(value):
