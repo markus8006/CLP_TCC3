@@ -2,7 +2,7 @@
 
 
 import os
-from flask import Flask, Blueprint
+from flask import Flask
 from src.utils.logs import logger
 from src.app.extensions import db, migrate, login_manager, csrf
 from src.app.config import config
@@ -19,6 +19,10 @@ def create_app(config_name='development'):
     logger.process("Configurando app")
     app.config.from_object(config[config_name])
     logger.warning(f"USANDO DB: {app.config['SQLALCHEMY_DATABASE_URI']}")
+
+    app_mode = os.environ.get("APP_MODE", app.config.get("APP_MODE", "full"))
+    app.config["APP_MODE"] = app_mode.lower()
+    app.config.setdefault("POLLER_API_KEY", os.environ.get("POLLER_API_KEY", ""))
     logger.info("app configurado")
 
     
@@ -82,20 +86,30 @@ def create_app(config_name='development'):
     return app
 
 def register_blueprints(app):
-    """Registra todos os blueprints"""
+    """Registra blueprints conforme o modo configurado."""
+
+    from src.app.routes.api.api_routes import api_bp
+
+    app.register_blueprint(api_bp, url_prefix='/api')
+    logger.info("API registrada (sempre ativa)")
+
+    app_mode = (app.config.get("APP_MODE") or "full").lower()
+    if app_mode != "full":
+        logger.info(
+            "APP_MODE=%s — blueprints do frontend não serão registados.",
+            app_mode,
+        )
+        return
+
     from src.app.routes.main_route import main as main_bp
     from src.app.routes.clps_routes.detalhes_clp import clp_bp
     from src.app.routes.admin_routes import admin_bp
     from src.app.routes.login_routes.auth_routes import auth_bp
-    from src.app.routes.api.api_routes import api_bp
     from src.app.routes.coleta_routes import coleta_bp
     from src.app.routes.dashboard_routes import dashboard_bp
     from src.app.routes.programming_routes import programming_bp
     from src.app.routes.hmi_routes import hmi_bp
-#   from app.web.alarm_views import alarm_bp
-#     from app.web.polling_control import polling_bp
-#     from app.api import api_bp
-    
+
     app.register_blueprint(main_bp)
     app.register_blueprint(clp_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -104,9 +118,7 @@ def register_blueprints(app):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(programming_bp, url_prefix='/programacao')
     app.register_blueprint(hmi_bp, url_prefix='/hmi')
-    logger.info("INICIANDO API")
-    app.register_blueprint(api_bp, url_prefix='/api')
-    logger.info("FIM API")
+    logger.info("Blueprints do frontend registados (APP_MODE=full)")
 #     app.register_blueprint(alarm_bp, url_prefix='/alarms')
 #     app.register_blueprint(polling_bp, url_prefix='/polling')
 #     app.register_blueprint(api_bp, url_prefix='/api')

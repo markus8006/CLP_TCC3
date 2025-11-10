@@ -55,6 +55,12 @@ class DataLogRepo(BaseRepo):
                 self.session.bulk_insert_mappings(self.model, batch)
                 inserted += len(batch)
 
+            # Limpa registos antigos antes de finalizar a transação.
+            try:
+                self._cleanup_old_records_optimized(records_list)
+            except Exception:
+                logger.exception("Falha ao executar limpeza otimizada de data_log")
+
             if commit:
                 self.session.commit()
             else:

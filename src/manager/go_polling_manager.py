@@ -118,6 +118,9 @@ class GoPollingManager:
             self._ready.set()
             self._resolve_waiters("ready", None, payload)
             return
+        if event == "poll":
+            self._loop.call_soon_threadsafe(self._schedule_poll, key)
+            return
         if event in {"added", "removed", "updated", "shutdown"}:
             self._resolve_waiters(event, key, payload)
             return
@@ -132,6 +135,17 @@ class GoPollingManager:
             waiters = self._pending.pop((event, key), [])
         for loop, fut in waiters:
             loop.call_soon_threadsafe(fut.set_result, payload)
+
+    def _schedule_poll(self, key: Optional[str]) -> None:
+        if not key:
+            return
+        info = self._pollers.get(key)
+        if not info:
+            return
+        poller = info.get("poller")
+        if poller is None:
+            return
+        asyncio.create_task(poller.poll_once(sleep=False))
 
     async def _wait_for(self, event: str, key: Optional[str]) -> Dict[str, Any]:
         loop = asyncio.get_running_loop()
