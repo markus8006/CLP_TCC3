@@ -1,10 +1,11 @@
-document.addEventListener('DOMContentLoaded', () => {
+const initializeSidebar = () => {
     const menuBtn = document.getElementById('menuBtn');
     const sidenav = document.getElementById('mySidenav');
     const mainContent = document.getElementById('main-content');
     const themeToggle = document.getElementById('themeToggle');
     const themeIcon = themeToggle ? themeToggle.querySelector('.theme-icon') : null;
     const docEl = document.documentElement;
+    const bodyEl = document.body;
     const storageKey = 'preferredTheme';
 
     const safeGetItem = (key) => {
@@ -26,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyTheme = (theme) => {
         const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
         docEl.setAttribute('data-theme', normalizedTheme);
+        if (bodyEl) {
+            bodyEl.setAttribute('data-theme', normalizedTheme);
+        }
         safeSetItem(storageKey, normalizedTheme);
 
         if (themeIcon) {
@@ -59,4 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
             mainContent.classList.toggle('main-content-shifted');
         });
     }
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSidebar, { once: true });
+} else {
+    initializeSidebar();
+}
