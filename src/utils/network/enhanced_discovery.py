@@ -137,77 +137,163 @@ def get_all_network_interfaces() -> List[NetworkInterface]:
     interfaces: List[NetworkInterface] = []
     try:
         if netifaces:
-            for iface_name in netifaces.interfaces():
-                try:
-                    addrs = netifaces.ifaddresses(iface_name)
-                    if netifaces.AF_INET not in addrs:
-                        continue
-
-                    ipv4_info = addrs[netifaces.AF_INET][0]
-                    ip = ipv4_info.get("addr")
-                    netmask = ipv4_info.get("netmask")
-                    if not ip or not netmask:
-                        continue
-
-                    if ip.startswith("127.") or ip == "0.0.0.0":
-                        continue
-
-                    try:
-                        network_obj = ipaddress.ip_network(f"{ip}/{netmask}", strict=False)
-                        network = str(network_obj)
-                    except ValueError:
-                        continue
-
-                    mac = None
-                    if netifaces.AF_LINK in addrs:
-                        mac = addrs[netifaces.AF_LINK][0].get("addr")
-
-                    is_physical = not any(
-                        marker in iface_name.lower()
-                        for marker in ["virt", "docker", "br-", "veth", "lo", "tun", "tap"]
-                    )
-                    interface_type = _determine_interface_type(iface_name)
-
-                    is_up = True
-                    try:
-                        stats = psutil.net_if_stats().get(iface_name)
-                        if stats:
-                            is_up = stats.isup
-                    except Exception:
-                        pass
-
-                    interfaces.append(
-                        NetworkInterface(
-                            name=iface_name,
-                            ip=ip,
-                            netmask=netmask,
-                            network=network,
-                            broadcast=ipv4_info.get("broadcast"),
-                            mac=mac,
-                            is_up=is_up,
-                            is_physical=is_physical,
-                            interface_type=interface_type,
-                            mtu=None,
-                        )
-                    )
-
-                    logger.debug(
-                        "Interface detectada: %s - %s/%s (%s)",
-                        iface_name,
-                        ip,
-                        netmask,
-                        network,
-                    )
-                except Exception as exc:  # pragma: no cover - defensivo
-                    logger.debug("Erro processando interface %s: %s", iface_name, exc)
-                    continue
-        else:
-            interfaces = _fallback_interface_detection()
+            interfaces.extend(_netifaces_interface_detection())
+        if not interfaces:
+            interfaces.extend(_psutil_interface_detection())
+        if not interfaces:
+            interfaces.extend(_fallback_interface_detection())
     except Exception as exc:  # pragma: no cover - defensivo
         logger.error("Erro na detecção de interfaces: %s", exc)
         interfaces = _fallback_interface_detection()
 
     logger.info("Total de interfaces detectadas: %d", len(interfaces))
+    return interfaces
+
+
+def _netifaces_interface_detection() -> List[NetworkInterface]:
+    interfaces: List[NetworkInterface] = []
+
+    if not netifaces:
+        return interfaces
+
+    for iface_name in netifaces.interfaces():
+        try:
+            addrs = netifaces.ifaddresses(iface_name)
+            if netifaces.AF_INET not in addrs:
+                continue
+
+            ipv4_info = addrs[netifaces.AF_INET][0]
+            ip = ipv4_info.get("addr")
+            netmask = ipv4_info.get("netmask")
+            if not ip or not netmask:
+                continue
+
+            if ip.startswith("127.") or ip == "0.0.0.0":
+                continue
+
+            try:
+                network_obj = ipaddress.ip_network(f"{ip}/{netmask}", strict=False)
+                network = str(network_obj)
+            except ValueError:
+                continue
+
+            mac = None
+            if netifaces.AF_LINK in addrs:
+                mac = addrs[netifaces.AF_LINK][0].get("addr")
+
+            is_physical = not any(
+                marker in iface_name.lower()
+                for marker in ["virt", "docker", "br-", "veth", "lo", "tun", "tap"]
+            )
+            interface_type = _determine_interface_type(iface_name)
+
+            is_up = True
+            try:
+                stats = psutil.net_if_stats().get(iface_name)
+                if stats:
+                    is_up = stats.isup
+            except Exception:
+                pass
+
+            interfaces.append(
+                NetworkInterface(
+                    name=iface_name,
+                    ip=ip,
+                    netmask=netmask,
+                    network=network,
+                    broadcast=ipv4_info.get("broadcast"),
+                    mac=mac,
+                    is_up=is_up,
+                    is_physical=is_physical,
+                    interface_type=interface_type,
+                    mtu=None,
+                )
+            )
+
+            logger.debug(
+                "Interface detectada: %s - %s/%s (%s)",
+                iface_name,
+                ip,
+                netmask,
+                network,
+            )
+        except Exception as exc:  # pragma: no cover - defensivo
+            logger.debug("Erro processando interface %s: %s", iface_name, exc)
+            continue
+
+    return interfaces
+
+
+def _psutil_interface_detection() -> List[NetworkInterface]:
+    interfaces: List[NetworkInterface] = []
+
+    try:
+        addrs = psutil.net_if_addrs()
+    except Exception:
+        return interfaces
+
+    stats = {}
+    try:
+        stats = psutil.net_if_stats()
+    except Exception:  # pragma: no cover - defensivo
+        stats = {}
+
+    for iface_name, iface_addrs in addrs.items():
+        ipv4_info = next((addr for addr in iface_addrs if addr.family == socket.AF_INET), None)
+        if not ipv4_info:
+            continue
+
+        ip = ipv4_info.address
+        netmask = ipv4_info.netmask or "255.255.255.0"
+
+        if not ip or ip.startswith("127.") or ip == "0.0.0.0":
+            continue
+
+        try:
+            network_obj = ipaddress.ip_network(f"{ip}/{netmask}", strict=False)
+            network = str(network_obj)
+        except ValueError:
+            continue
+
+        mac_addr = None
+        link_info = next(
+            (addr for addr in iface_addrs if addr.family == psutil.AF_LINK),
+            None,
+        )
+        if link_info:
+            mac_addr = link_info.address
+
+        iface_stats = stats.get(iface_name)
+        is_up = iface_stats.isup if iface_stats else True
+
+        is_physical = not any(
+            marker in iface_name.lower()
+            for marker in ["virt", "docker", "br-", "veth", "lo", "tun", "tap"]
+        )
+
+        interfaces.append(
+            NetworkInterface(
+                name=iface_name,
+                ip=ip,
+                netmask=netmask,
+                network=network,
+                broadcast=getattr(ipv4_info, "broadcast", None),
+                mac=mac_addr,
+                is_up=is_up,
+                is_physical=is_physical,
+                interface_type=_determine_interface_type(iface_name),
+                mtu=iface_stats.mtu if iface_stats else None,
+            )
+        )
+
+        logger.debug(
+            "Interface detectada via psutil: %s - %s/%s (%s)",
+            iface_name,
+            ip,
+            netmask,
+            network,
+        )
+
     return interfaces
 
 
