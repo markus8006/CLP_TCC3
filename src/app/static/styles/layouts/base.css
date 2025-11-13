@@ -1,11 +1,11 @@
 /* --- Layout Geral e Variáveis de Tema --- */
 :root {
     --primary-color: #0056b3;
-    --secondary-color: #0069d9;
+    --secondary-color: #006cdf;
     --body-bg: linear-gradient(135deg, #f5f7fa 0%, #e4ecff 100%);
     --surface-bg: #ffffff;
     --sidebar-bg: linear-gradient(160deg, #ffffff 40%, #dce6ff 100%);
-    --text-color: #1f2933;
+    --text-color: #040118;
     --text-muted: #52606d;
     --border-color: rgba(15, 23, 42, 0.12);
     --menu-btn-bg: rgba(0, 86, 179, 0.1);
@@ -16,12 +16,12 @@
     --nav-hover-text: #0056b3;
     --button-bg: #0056b3;
     --button-hover-bg: #004a99;
-    --button-text-color: #ffffff;
+    --button-text-color: #000000;
     --input-bg: #ffffff;
     --input-border: rgba(15, 23, 42, 0.2);
     --focus-ring: rgba(0, 105, 217, 0.35);
     --shadow-color: rgba(15, 23, 42, 0.1);
-    --light-dark-bg: #ffffff;
+    --light-dark-bg: #ebf1ff;
 }
 
 html[data-theme="dark"] {

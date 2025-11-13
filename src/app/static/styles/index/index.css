@@ -19,7 +19,6 @@
 
 .page-intro p {
     max-width: 520px;
-    color: rgba(255, 255, 255, 0.78);
     line-height: 1.5;
 }
 
@@ -68,18 +67,17 @@
 
 .btn.primary {
     background: linear-gradient(135deg, #8400ff, #cc00ff);
-    color: #fff;
     box-shadow: 0 12px 24px rgba(132, 0, 255, 0.3);
 }
 
 .btn.secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    background: rgba(0, 0, 0, 0.836);
+
 }
 
 .btn.tertiary {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: var(--secundary-color);
+
 }
 
 .btn:hover {
@@ -104,7 +102,6 @@
     padding: 0.4rem 0.85rem;
     border-radius: 999px;
     border: 1px solid rgba(132, 0, 255, 0.35);
-    color: rgba(255, 255, 255, 0.85);
     font-size: 0.85rem;
     background: rgba(132, 0, 255, 0.08);
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
