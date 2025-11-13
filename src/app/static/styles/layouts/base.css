@@ -25,11 +25,12 @@
 }
 
 html[data-theme="dark"] {
+    --sidebar-bg: linear-gradient(160deg, #111 40%, #6e0096 100%);
     --primary-color: #a855f7;
     --secondary-color: #c084fc;
     --body-bg: #111827;
     --surface-bg: #1f2933;
-    --sidebar-bg: linear-gradient(160deg, #1f2933 40%, #111827 100%);
+    --sidebar-bg: linear-gradient(160deg, #1f2933 40%, #111827 100%);;
     --text-color: #f5f5f7;
     --text-muted: #adb5bd;
     --border-color: rgba(168, 85, 247, 0.25);
@@ -47,7 +48,6 @@ html[data-theme="dark"] {
     --focus-ring: rgba(168, 85, 247, 0.35);
     --shadow-color: rgba(17, 24, 39, 0.45);
     --light-dark-bg: #1f2933;
-}
 
 body {
     margin: 0;
