@@ -48,6 +48,32 @@ html[data-theme="dark"] {
     --focus-ring: rgba(168, 85, 247, 0.35);
     --shadow-color: rgba(17, 24, 39, 0.45);
     --light-dark-bg: #1f2933;
+}
+
+html[data-theme="light"] {
+    --primary-color: #5b21b6;
+    --secondary-color: #7c3aed;
+    --body-bg: #f5f7fa;
+    --surface-bg: #ffffff;
+    --sidebar-bg: linear-gradient(160deg, #ffffff 35%, #ede9fe 100%);
+    --text-color: #1f2933;
+    --text-muted: #4b5563;
+    --border-color: rgba(124, 58, 237, 0.25);
+    --menu-btn-bg: rgba(124, 58, 237, 0.1);
+    --menu-btn-color: #5b21b6;
+    --menu-btn-hover-bg: #7c3aed;
+    --menu-btn-hover-color: #ffffff;
+    --nav-hover-bg: rgba(124, 58, 237, 0.12);
+    --nav-hover-text: #5b21b6;
+    --button-bg: #5b21b6;
+    --button-hover-bg: #7c3aed;
+    --button-text-color: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: rgba(124, 58, 237, 0.35);
+    --focus-ring: rgba(124, 58, 237, 0.2);
+    --shadow-color: rgba(15, 23, 42, 0.08);
+    --light-dark-bg: #e5e7eb;
+}
 
 body {
     margin: 0;
