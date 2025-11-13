@@ -1,27 +1,27 @@
 /* --- Layout Geral e Variáveis de Tema --- */
 :root {
-        --primary-color: #a855f7;
-            --secondary-color: #c084fc;
-            --body-bg: #111827;
-            --surface-bg: #1f2933;
-            --sidebar-bg: linear-gradient(160deg, #1f2933 40%, #111827 100%);
-            --text-color: #f5f5f7;
-            --text-muted: #adb5bd;
-            --border-color: rgba(168, 85, 247, 0.25);
-            --menu-btn-bg: rgba(168, 85, 247, 0.1);
-            --menu-btn-color: #c084fc;
-            --menu-btn-hover-bg: #a855f7;
-            --menu-btn-hover-color: #ffffff;
-            --nav-hover-bg: rgba(168, 85, 247, 0.15);
-            --nav-hover-text: #c084fc;
-            --button-bg: #8400ff;
-            --button-hover-bg: #a855f7;
-            --button-text-color: #f5f5f7;
-            --input-bg: #1f2933;
-        --input-border: rgba(168, 85, 247, 0.25);
-        --focus-ring: rgba(168, 85, 247, 0.35);
-        --shadow-color: rgba(17, 24, 39, 0.45);
-        --light-dark-bg: #1f2933;
+    --primary-color: #0056b3;
+    --secondary-color: #0069d9;
+    --body-bg: linear-gradient(135deg, #f5f7fa 0%, #e4ecff 100%);
+    --surface-bg: #ffffff;
+    --sidebar-bg: linear-gradient(160deg, #ffffff 40%, #dce6ff 100%);
+    --text-color: #1f2933;
+    --text-muted: #52606d;
+    --border-color: rgba(15, 23, 42, 0.12);
+    --menu-btn-bg: rgba(0, 86, 179, 0.1);
+    --menu-btn-color: #0056b3;
+    --menu-btn-hover-bg: #0056b3;
+    --menu-btn-hover-color: #ffffff;
+    --nav-hover-bg: rgba(0, 86, 179, 0.08);
+    --nav-hover-text: #0056b3;
+    --button-bg: #0056b3;
+    --button-hover-bg: #004a99;
+    --button-text-color: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: rgba(15, 23, 42, 0.2);
+    --focus-ring: rgba(0, 105, 217, 0.35);
+    --shadow-color: rgba(15, 23, 42, 0.1);
+    --light-dark-bg: #ffffff;
 }
 
 html[data-theme="dark"] {
@@ -29,8 +29,9 @@ html[data-theme="dark"] {
     --primary-color: #a855f7;
     --secondary-color: #c084fc;
     --body-bg: #111827;
+     --body-bg: linear-gradient(135deg, #111827 0%, #111827 100%);
     --surface-bg: #1f2933;
-    --sidebar-bg: linear-gradient(160deg, #1f2933 40%, #111827 100%);;
+    --sidebar-bg: linear-gradient(160deg, #1f2933 40%, #111827 100%);
     --text-color: #f5f5f7;
     --text-muted: #adb5bd;
     --border-color: rgba(168, 85, 247, 0.25);
@@ -47,32 +48,7 @@ html[data-theme="dark"] {
     --input-border: rgba(168, 85, 247, 0.25);
     --focus-ring: rgba(168, 85, 247, 0.35);
     --shadow-color: rgba(17, 24, 39, 0.45);
-    --light-dark-bg: #1f2933;
-}
-
-html[data-theme="light"] {
-    --primary-color: #5b21b6;
-    --secondary-color: #7c3aed;
-    --body-bg: #f5f7fa;
-    --surface-bg: #ffffff;
-    --sidebar-bg: linear-gradient(160deg, #ffffff 35%, #ede9fe 100%);
-    --text-color: #1f2933;
-    --text-muted: #4b5563;
-    --border-color: rgba(124, 58, 237, 0.25);
-    --menu-btn-bg: rgba(124, 58, 237, 0.1);
-    --menu-btn-color: #5b21b6;
-    --menu-btn-hover-bg: #7c3aed;
-    --menu-btn-hover-color: #ffffff;
-    --nav-hover-bg: rgba(124, 58, 237, 0.12);
-    --nav-hover-text: #5b21b6;
-    --button-bg: #5b21b6;
-    --button-hover-bg: #7c3aed;
-    --button-text-color: #ffffff;
-    --input-bg: #ffffff;
-    --input-border: rgba(124, 58, 237, 0.35);
-    --focus-ring: rgba(124, 58, 237, 0.2);
-    --shadow-color: rgba(15, 23, 42, 0.08);
-    --light-dark-bg: #e5e7eb;
+    --light-dark-bg: linear-gradient(135deg, #111827 0%, #111827 100%);
 }
 
 body {
