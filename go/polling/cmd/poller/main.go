@@ -11,11 +11,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type command struct {
@@ -117,6 +120,10 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if err := loadDotEnv(); err != nil {
+		log.Printf("warning: failed to load .env file: %v", err)
+	}
+
 	cfg := loadConfig()
 	client := &backendClient{cfg: cfg}
 	w := newWriter()
@@ -169,6 +176,28 @@ func loadConfig() serviceConfig {
 		apiKey:     apiKey,
 		httpClient: &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+func loadDotEnv() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	for {
+		envPath := filepath.Join(wd, ".env")
+		if _, err := os.Stat(envPath); err == nil {
+			return godotenv.Load(envPath)
+		}
+
+		parent := filepath.Dir(wd)
+		if parent == wd {
+			break
+		}
+		wd = parent
+	}
+
+	return fmt.Errorf(".env file not found")
 }
 
 func newManager(ctx context.Context, backend *backendClient, w *writer) *manager {
