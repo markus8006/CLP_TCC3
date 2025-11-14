@@ -117,6 +117,8 @@ type manager struct {
 }
 
 func main() {
+
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -167,6 +169,7 @@ func loadConfig() serviceConfig {
 	}
 
 	apiKey := strings.TrimSpace(os.Getenv("POLLER_API_KEY"))
+	fmt.Println("API key lida:", os.Getenv("POLLER_API_KEY"))
 	if apiKey == "" {
 		log.Printf("warning: POLLER_API_KEY não configurada; requests de ingestão serão rejeitados")
 	}
