@@ -57,9 +57,9 @@ def register_runtime(app: Flask, runtime: PollingRuntime) -> None:
     except RuntimeError:
         return
 
-    enabled = settings.features.enable_polling and not (
-        settings.demo.enabled and settings.demo.disable_polling
-    )
+    enabled = settings.features.enable_polling
+    if not enabled and settings.demo.enabled and settings.demo.disable_polling:
+        enabled = True
     runtime.set_enabled(enabled)
     if not enabled:
         runtime.notify()
