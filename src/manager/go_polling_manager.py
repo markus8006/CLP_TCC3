@@ -11,6 +11,11 @@ from src.manager.client_polling_manager import ActivePLCPoller
 from src.models.PLCs import PLC
 from src.utils.logs import logger
 from src.app.settings import AppSettings, get_app_settings
+from src.services.poller_ingest_service import (
+    PollerIngestError,
+    PollerIngestProcessingError,
+    process_poller_payload,
+)
 
 
 def is_go_available() -> bool:
@@ -37,15 +42,22 @@ class GoPollingManager:
         self._poller_factory = poller_factory
         self._pollers: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
-        self._pending: Dict[Tuple[str, Optional[str]], List[Tuple[asyncio.AbstractEventLoop, asyncio.Future]]] = {}
+        self._pending: Dict[
+            Tuple[str, Optional[str]],
+            List[Tuple[asyncio.AbstractEventLoop, asyncio.Future]],
+        ] = {}
         self._pending_lock = threading.Lock()
         self._writer_lock = threading.Lock()
         self._ready = threading.Event()
         self._closed = False
 
         base_dir = Path(__file__).resolve().parents[2]
-        default_bin = "go_polling_service.exe" if os.name == "nt" else "go_polling_service"
-        self._binary_path = Path(binary_path) if binary_path else base_dir / "bin" / default_bin
+        default_bin = (
+            "go_polling_service.exe" if os.name == "nt" else "go_polling_service"
+        )
+        self._binary_path = (
+            Path(binary_path) if binary_path else base_dir / "bin" / default_bin
+        )
         self._binary_path.parent.mkdir(parents=True, exist_ok=True)
         self._go_command = go_command
 
@@ -81,7 +93,9 @@ class GoPollingManager:
 
     def _build_binary(self) -> None:
         if not is_go_available():
-            raise RuntimeError("Go toolchain is not available to build polling runtime.")
+            raise RuntimeError(
+                "Go toolchain is not available to build polling runtime."
+            )
 
         source_dir = Path(__file__).resolve().parents[2] / "go" / "polling"
         cmd = ["go", "build", "-o", str(self._binary_path), "./cmd/poller"]
@@ -124,6 +138,32 @@ class GoPollingManager:
         if event == "poll":
             self._loop.call_soon_threadsafe(self._schedule_poll, key)
             return
+        if event == "measurement":
+            measurement = payload.get("measurement")
+            if not isinstance(measurement, dict):
+                logger.error(
+                    "Evento measurement inválido recebido do runtime Go: %s", payload
+                )
+                return
+            app_logger = getattr(self.flask_app, "logger", logger)
+            try:
+                with self.flask_app.app_context():
+                    process_poller_payload(measurement, logger=app_logger)
+            except PollerIngestProcessingError as exc:
+                ctx = exc.context or {}
+                app_logger.exception(
+                    "Falha ao processar medição do poller %s (plc=%s reg=%s)",
+                    key,
+                    ctx.get("plc_id", measurement.get("plc_id")),
+                    ctx.get("register_id", measurement.get("register_id")),
+                )
+            except PollerIngestError as exc:
+                app_logger.error(
+                    "Erro ao processar medição do poller %s: %s",
+                    key,
+                    exc,
+                )
+            return
         if event in {"added", "removed", "updated", "shutdown"}:
             self._resolve_waiters(event, key, payload)
             return
@@ -133,7 +173,9 @@ class GoPollingManager:
             return
         logger.warning("Evento desconhecido do runtime Go: %s", payload)
 
-    def _resolve_waiters(self, event: str, key: Optional[str], payload: Dict[str, Any]) -> None:
+    def _resolve_waiters(
+        self, event: str, key: Optional[str], payload: Dict[str, Any]
+    ) -> None:
         with self._pending_lock:
             waiters = self._pending.pop((event, key), [])
         for loop, fut in waiters:
