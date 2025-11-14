@@ -62,9 +62,17 @@ class ActivePLCPoller:
         self._stop = False
         self._backoff = 1.0
         self.context = flask_app
-        self._polling_allowed = self._settings.features.enable_polling and not (
+
+        demo_blocks_polling = (
             self._settings.demo.enabled and self._settings.demo.disable_polling
         )
+        feature_allows_polling = self._settings.features.enable_polling
+        if not feature_allows_polling and not demo_blocks_polling:
+            self._polling_allowed = False
+        elif demo_blocks_polling and not self.adapter.in_simulation():
+            self._polling_allowed = False
+        else:
+            self._polling_allowed = True
 
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
@@ -207,6 +215,12 @@ class ActivePLCPoller:
 
     async def poll_once(self, *, sleep: bool = True) -> None:
         try:
+            if not self._polling_allowed:
+                self._mark_offline()
+                if sleep:
+                    await asyncio.sleep(1)
+                return
+
             if not self.adapter.is_connected():
                 connected = await self.adapter.connect()
                 if not connected:
