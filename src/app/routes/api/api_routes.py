@@ -1,5 +1,4 @@
 import asyncio
-import hmac
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, current_app, jsonify, make_response, request
@@ -26,6 +25,12 @@ from src.services.tag_simulation_service import get_simulated_tags
 from src.services.manual_control_service import ManualControlService
 from src.services.historian_sync_service import HistorianSyncService
 from src.services.Alarms_service import AlarmService
+from src.services.poller_ingest_service import (
+    PollerIngestError,
+    PollerIngestProcessingError,
+    process_poller_payload,
+    verify_internal_token,
+)
 from src.utils.role.roles import role_required
 from src.utils.tags import normalize_tag
 
@@ -36,6 +41,7 @@ def api_role_required(min_role):
     """Decorator configurado para respostas JSON."""
 
     return role_required(min_role, format="json")
+
 
 STATUS_LABELS = {
     "online": "Online",
@@ -50,37 +56,20 @@ manual_control_service = ManualControlService()
 historian_sync_service = HistorianSyncService()
 
 
-def _parse_timestamp(raw_ts):
-    if raw_ts is None:
-        return None
-    if isinstance(raw_ts, datetime):
-        return raw_ts
-    if isinstance(raw_ts, (int, float)):
-        return datetime.fromtimestamp(raw_ts, tz=timezone.utc)
-    if isinstance(raw_ts, str):
-        normalized = raw_ts.strip()
-        if not normalized:
-            return None
-        if normalized.endswith("Z"):
-            normalized = normalized[:-1] + "+00:00"
-        try:
-            ts = datetime.fromisoformat(normalized)
-        except ValueError as exc:
-            raise ValueError(f"timestamp inválido: {raw_ts}") from exc
-        return ts
-    raise ValueError(f"timestamp inválido: {raw_ts}")
-
-
 @api_bp.route("/v1/internal/poller-data", methods=["POST"])
 @csrf.exempt
 def ingest_poller_data():
     secret = (get_app_settings().secrets.poller_api_key or "").strip()
     if not secret:
-        current_app.logger.error("POLLER_API_KEY não configurada para ingestão interna.")
+        current_app.logger.error(
+            "POLLER_API_KEY não configurada para ingestão interna."
+        )
         return jsonify({"message": "Ingestão interna indisponível"}), 503
 
-    provided = request.headers.get("X-API-KEY") or request.headers.get("X-Internal-Token")
-    if not provided or not hmac.compare_digest(provided, secret):
+    provided = request.headers.get("X-API-KEY") or request.headers.get(
+        "X-Internal-Token"
+    )
+    if not verify_internal_token(provided, secret):
         return jsonify({"message": "Não autorizado"}), 401
 
     payload = request.get_json(silent=True)
@@ -88,111 +77,22 @@ def ingest_poller_data():
         return jsonify({"message": "JSON inválido"}), 400
 
     try:
-        plc_id = int(payload.get("plc_id"))
-        register_id = int(payload.get("register_id"))
-    except (TypeError, ValueError):
-        return jsonify({"message": "plc_id e register_id são obrigatórios"}), 400
-
-    status = (payload.get("status") or "online").strip().lower()
-
-    try:
-        timestamp = _parse_timestamp(payload.get("timestamp")) or datetime.now(timezone.utc)
-    except ValueError as exc:
-        return jsonify({"message": str(exc)}), 400
-
-    if timestamp.tzinfo is None:
-        timestamp = timestamp.replace(tzinfo=timezone.utc)
-    else:
-        timestamp = timestamp.astimezone(timezone.utc)
-
-    raw_value = payload.get("raw_value")
-    value = payload.get("value")
-    if raw_value is None:
-        raw_value = value
-
-    value_float = payload.get("value_float")
-    if value_float is None and value is not None:
-        try:
-            value_float = float(value)
-        except (TypeError, ValueError):
-            value_float = None
-
-    value_int = payload.get("value_int")
-    if value_int is None and isinstance(value, int):
-        value_int = value
-
-    quality = payload.get("quality")
-    unit = payload.get("unit")
-    tags = payload.get("tags")
-    error_message = payload.get("error")
-
-    session = db.session
-    plc_repo = PLCRepo(session=session)
-    register_repo = RegisterRepo(session=session)
-    data_repo = DataLogRepo(session=session)
-    alarm_service = AlarmService(session=session)
-
-    plc = plc_repo.get(plc_id)
-    if not plc:
-        return jsonify({"message": f"PLC {plc_id} não encontrado"}), 404
-
-    register = register_repo.get(register_id)
-    if not register or register.plc_id != plc.id:
-        return jsonify({"message": f"Registrador {register_id} não encontrado"}), 404
-
-    try:
-        is_alarm = alarm_service.check_and_handle(plc_id, register_id, value_float)
-    except Exception:
-        current_app.logger.exception(
-            "Erro ao avaliar alarmes para plc=%s reg=%s", plc_id, register_id
-        )
-        is_alarm = False
-
-    data_entry = DataLog(
-        plc_id=plc_id,
-        register_id=register_id,
-        timestamp=timestamp,
-        raw_value=str(raw_value) if raw_value is not None else None,
-        value_float=value_float,
-        value_int=value_int,
-        quality=quality,
-        unit=unit,
-        tags=tags,
-        is_alarm=is_alarm,
-    )
-
-    try:
-        data_repo.add(data_entry, commit=False)
-
-        register.last_value = None if raw_value is None else str(raw_value)
-        register.last_read = timestamp
-        if status == "online":
-            register.error_count = 0
-            register.last_error = None
-        else:
-            register.error_count = (register.error_count or 0) + 1
-            register.last_error = error_message or status
-
-        is_online = status == "online"
-        if plc.is_online != is_online:
-            plc.is_online = is_online
-            plc.status_changed_at = timestamp
-        if is_online:
-            plc.last_seen = timestamp
-        elif status in {"offline", "error"}:
-            plc.last_seen = None
-
-        session.commit()
-    except Exception:
-        session.rollback()
+        result = process_poller_payload(payload, logger=current_app.logger)
+    except PollerIngestProcessingError as exc:
+        context = exc.context or {}
         current_app.logger.exception(
             "Falha ao processar dados do poller para plc=%s reg=%s",
-            plc_id,
-            register_id,
+            context.get("plc_id", payload.get("plc_id")),
+            context.get("register_id", payload.get("register_id")),
         )
-        return jsonify({"message": "Erro ao processar dados"}), 500
+        return jsonify({"message": str(exc)}), exc.status_code
+    except PollerIngestError as exc:
+        return jsonify({"message": str(exc)}), exc.status_code
 
-    return jsonify({"message": "Dados registrados", "is_alarm": is_alarm}), 201
+    return (
+        jsonify({"message": "Dados registrados", "is_alarm": result.get("is_alarm")}),
+        201,
+    )
 
 
 def _stringify(value):
@@ -360,12 +260,9 @@ def get_data_optimized(ip):
     query = (
         db.session.query(PLC)
         .options(
-            selectinload(PLC.registers)
-            .selectinload(Register.datalogs),
-            selectinload(PLC.registers)
-            .selectinload(Register.alarms),
-            selectinload(PLC.registers)
-            .selectinload(Register.alarm_definitions)
+            selectinload(PLC.registers).selectinload(Register.datalogs),
+            selectinload(PLC.registers).selectinload(Register.alarms),
+            selectinload(PLC.registers).selectinload(Register.alarm_definitions),
         )
         .filter(PLC.ip_address == ip, PLC.is_active == True)
     )
@@ -394,44 +291,54 @@ def get_data_optimized(ip):
         }
 
         # 1️⃣ Últimos 30 DataLogs (ordenados por timestamp desc)
-        sorted_logs = sorted(register.datalogs, key=lambda d: d.timestamp or 0, reverse=True)[:30]
-        result["data"].extend([
-            {
-                "id": d.id,
-                "register_id": d.register_id,
-                "timestamp": d.timestamp.isoformat() if d.timestamp else None,
-                "value_float": d.value_float,
-                "quality": d.quality,
-            }
-            for d in sorted_logs
-        ])
+        sorted_logs = sorted(
+            register.datalogs, key=lambda d: d.timestamp or 0, reverse=True
+        )[:30]
+        result["data"].extend(
+            [
+                {
+                    "id": d.id,
+                    "register_id": d.register_id,
+                    "timestamp": d.timestamp.isoformat() if d.timestamp else None,
+                    "value_float": d.value_float,
+                    "quality": d.quality,
+                }
+                for d in sorted_logs
+            ]
+        )
 
         # 2️⃣ Alarmes ativos
-        result["alarms"].extend([
-            {
-                "id": a.id,
-                "plc_id": a.plc_id,
-                "register_id": a.register_id,
-                "state": a.state,
-                "priority": a.priority,
-                "message": a.message,
-            }
-            for a in register.alarms if a.state == "ACTIVE"
-        ])
+        result["alarms"].extend(
+            [
+                {
+                    "id": a.id,
+                    "plc_id": a.plc_id,
+                    "register_id": a.register_id,
+                    "state": a.state,
+                    "priority": a.priority,
+                    "message": a.message,
+                }
+                for a in register.alarms
+                if a.state == "ACTIVE"
+            ]
+        )
 
         # 3️⃣ Definições de alarmes ativas
-        result["definitions_alarms"].extend([
-            {
-                "id": ad.id,
-                "register_id": register.id,
-                "name": ad.name,
-                "condition_type": ad.condition_type,
-                "threshold_low": ad.threshold_low,
-                "threshold_high": ad.threshold_high,
-                "setpoint": ad.setpoint,
-            }
-            for ad in register.alarm_definitions if ad.is_active
-        ])
+        result["definitions_alarms"].extend(
+            [
+                {
+                    "id": ad.id,
+                    "register_id": register.id,
+                    "name": ad.name,
+                    "condition_type": ad.condition_type,
+                    "threshold_low": ad.threshold_low,
+                    "threshold_high": ad.threshold_high,
+                    "setpoint": ad.setpoint,
+                }
+                for ad in register.alarm_definitions
+                if ad.is_active
+            ]
+        )
 
     return jsonify(result), 200
 
@@ -454,7 +361,10 @@ def dashboard_summary():
         "offline_clps": int(totals_row[2] or 0),
         "inactive_clps": int(totals_row[3] or 0),
         "total_registers": db.session.query(func.count(Register.id)).scalar() or 0,
-        "active_alarms": db.session.query(func.count(Alarm.id)).filter(Alarm.state == "ACTIVE").scalar() or 0,
+        "active_alarms": db.session.query(func.count(Alarm.id))
+        .filter(Alarm.state == "ACTIVE")
+        .scalar()
+        or 0,
         "active_vlans": (
             db.session.query(func.count(func.distinct(PLC.vlan_id)))
             .filter(PLC.vlan_id.isnot(None))
@@ -482,7 +392,10 @@ def dashboard_summary():
         .order_by("day")
     )
     log_volume = [
-        {"date": day.isoformat() if hasattr(day, "isoformat") else str(day), "count": count}
+        {
+            "date": day.isoformat() if hasattr(day, "isoformat") else str(day),
+            "count": count,
+        }
         for day, count in log_volume_query
     ]
 
@@ -492,7 +405,8 @@ def dashboard_summary():
         .group_by(Alarm.priority)
     )
     alarms_by_priority = {
-        (priority or "Sem prioridade"): count for priority, count in alarms_by_priority_query
+        (priority or "Sem prioridade"): count
+        for priority, count in alarms_by_priority_query
     }
 
     offline_clps = (
@@ -604,7 +518,9 @@ def dashboard_layout():
     }
     alarm_by_register = {
         register_id: count
-        for register_id, count in db.session.query(Alarm.register_id, func.count(Alarm.id))
+        for register_id, count in db.session.query(
+            Alarm.register_id, func.count(Alarm.id)
+        )
         .filter(Alarm.state == "ACTIVE", Alarm.register_id.isnot(None))
         .group_by(Alarm.register_id)
     }
@@ -683,11 +599,15 @@ def dashboard_layout():
             }
         )
 
-        vlan_counts = vlan_status_counts.setdefault(vlan_key, {"online": 0, "offline": 0, "alarm": 0, "inactive": 0})
+        vlan_counts = vlan_status_counts.setdefault(
+            vlan_key, {"online": 0, "offline": 0, "alarm": 0, "inactive": 0}
+        )
         vlan_counts[status] += 1
 
         if (vlan_key, plc_node_id) not in connection_set:
-            connections.append({"source": vlan_key, "target": plc_node_id, "type": "network"})
+            connections.append(
+                {"source": vlan_key, "target": plc_node_id, "type": "network"}
+            )
             connection_set.add((vlan_key, plc_node_id))
 
         register_slots = registers_position_tracker.setdefault(plc.id, 0)
@@ -786,7 +706,9 @@ def update_dashboard_layout():
 
     if not isinstance(nodes, list) or not isinstance(connections, list):
         return (
-            jsonify({"message": "Estrutura inválida. Esperado 'nodes' e 'connections'."}),
+            jsonify(
+                {"message": "Estrutura inválida. Esperado 'nodes' e 'connections'."}
+            ),
             400,
         )
 
@@ -856,7 +778,9 @@ def dashboard_plc_details(plc_id: int):
     if register_ids:
         alarm_by_register = {
             register_id: count
-            for register_id, count in db.session.query(Alarm.register_id, func.count(Alarm.id))
+            for register_id, count in db.session.query(
+                Alarm.register_id, func.count(Alarm.id)
+            )
             .filter(Alarm.state == "ACTIVE", Alarm.register_id.in_(register_ids))
             .group_by(Alarm.register_id)
         }
@@ -900,7 +824,9 @@ def dashboard_plc_details(plc_id: int):
                 "data_type": register.data_type,
                 "unit": register.unit,
                 "last_value": register.last_value,
-                "last_read": register.last_read.isoformat() if register.last_read else None,
+                "last_read": (
+                    register.last_read.isoformat() if register.last_read else None
+                ),
                 "description": register.description,
                 "normalized_address": register.normalized_address,
             }
@@ -984,7 +910,10 @@ def add_tag(ip):
 
     current_tags = plc.tags_as_list()
     if tag in current_tags:
-        return jsonify({"tag": tag, "tags": current_tags, "message": "Tag já associada."}), 200
+        return (
+            jsonify({"tag": tag, "tags": current_tags, "message": "Tag já associada."}),
+            200,
+        )
 
     current_tags.append(tag)
     Plcrepo.update_tags(plc, current_tags)
@@ -1059,7 +988,9 @@ def discover_and_store(plc_id: int):
                 or "desconhecido"
             )
             unit = _stringify(entry.get("unit")) or _stringify(entry.get("units"))
-            description = _stringify(entry.get("description")) or _stringify(entry.get("comment"))
+            description = _stringify(entry.get("description")) or _stringify(
+                entry.get("comment")
+            )
             register_type = _stringify(entry.get("register_type")) or "analogue"
             length = entry.get("length")
 
@@ -1117,7 +1048,10 @@ def discover_and_store(plc_id: int):
         db.session.commit()
     except Exception as exc:  # pragma: no cover - commit/flush errors
         db.session.rollback()
-        return jsonify({"message": f"Falha ao guardar os dados descobertos: {exc}"}), 500
+        return (
+            jsonify({"message": f"Falha ao guardar os dados descobertos: {exc}"}),
+            500,
+        )
 
     total_registers = Register.query.filter_by(plc_id=plc.id).count()
     message = (
@@ -1142,7 +1076,9 @@ def discover_and_store(plc_id: int):
 @api_bp.route("/registers/import", methods=["POST"])
 @login_required
 def import_registers():
-    clp_id = request.form.get("clp_id", type=int) or request.args.get("clp_id", type=int)
+    clp_id = request.form.get("clp_id", type=int) or request.args.get(
+        "clp_id", type=int
+    )
     if not clp_id:
         return jsonify({"message": "Informe o clp_id."}), 400
 
@@ -1159,7 +1095,9 @@ def import_registers():
     except Exception as exc:  # pragma: no cover - parsing externo
         return jsonify({"message": f"Não foi possível ler o ficheiro: {exc}"}), 400
 
-    created, errors = register_service.import_dataframe(frame, plc=plc, protocol=plc.protocol)
+    created, errors = register_service.import_dataframe(
+        frame, plc=plc, protocol=plc.protocol
+    )
     return jsonify({"created": created, "errors": errors}), 201
 
 
@@ -1242,7 +1180,9 @@ def list_plc_scripts(plc_id: int):
                     "name": script.name,
                     "language": script.language,
                     "content": script.content,
-                    "updated_at": script.updated_at.isoformat() if script.updated_at else None,
+                    "updated_at": (
+                        script.updated_at.isoformat() if script.updated_at else None
+                    ),
                 }
                 for script in scripts
             ],
@@ -1280,7 +1220,9 @@ def save_plc_script(plc_id: int):
                 "name": script.name,
                 "language": script.language,
                 "content": script.content,
-                "updated_at": script.updated_at.isoformat() if script.updated_at else None,
+                "updated_at": (
+                    script.updated_at.isoformat() if script.updated_at else None
+                ),
             }
         ),
         201,
@@ -1312,7 +1254,9 @@ def hmi_overview():
 
     alarm_by_register = {
         register_id: count
-        for register_id, count in db.session.query(Alarm.register_id, func.count(Alarm.id))
+        for register_id, count in db.session.query(
+            Alarm.register_id, func.count(Alarm.id)
+        )
         .filter(Alarm.state == "ACTIVE", Alarm.register_id.isnot(None))
         .group_by(Alarm.register_id)
     }
@@ -1350,7 +1294,9 @@ def hmi_overview():
                     "last_value": register.last_value,
                     "unit": register.unit,
                     "status": status,
-                    "last_read": register.last_read.isoformat() if register.last_read else None,
+                    "last_read": (
+                        register.last_read.isoformat() if register.last_read else None
+                    ),
                 }
             )
             register_options.append(
@@ -1434,13 +1380,9 @@ def hmi_active_alarms():
                 "message": alarm.message,
                 "plc": alarm.plc.name if alarm.plc else None,
                 "register": alarm.register.name if alarm.register else None,
-                "triggered_at": triggered_at.isoformat()
-                if triggered_at
-                else None,
+                "triggered_at": triggered_at.isoformat() if triggered_at else None,
                 "age_seconds": (
-                    (now - triggered_at).total_seconds()
-                    if triggered_at
-                    else None
+                    (now - triggered_at).total_seconds() if triggered_at else None
                 ),
             }
         )

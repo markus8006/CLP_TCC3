@@ -28,9 +28,10 @@ type command struct {
 }
 
 type event struct {
-	Event   string `json:"event"`
-	Key     string `json:"key,omitempty"`
-	Message string `json:"message,omitempty"`
+	Event   string              `json:"event"`
+	Key     string              `json:"key,omitempty"`
+	Message string              `json:"message,omitempty"`
+	Data    *measurementPayload `json:"measurement,omitempty"`
 }
 
 type writer struct {
@@ -84,6 +85,7 @@ type measurementPayload struct {
 	Status     string    `json:"status"`
 	Value      *float64  `json:"value,omitempty"`
 	ValueFloat *float64  `json:"value_float,omitempty"`
+	RawValue   any       `json:"raw_value,omitempty"`
 	Quality    string    `json:"quality,omitempty"`
 	Unit       string    `json:"unit,omitempty"`
 	Timestamp  time.Time `json:"timestamp"`
@@ -117,7 +119,6 @@ type manager struct {
 }
 
 func main() {
-
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -419,11 +420,13 @@ func (p *poller) pollOnce() {
 			}
 			payload.Value = &value
 			payload.ValueFloat = &value
+			payload.RawValue = value
 		}
 
-		ctx, cancel := context.WithTimeout(p.ctx, 5*time.Second)
-		p.backend.sendMeasurement(ctx, payload)
-		cancel()
+		if p.writer != nil {
+			// Envia a medição via IPC para ser processada pelo serviço Python.
+			p.writer.send(event{Event: "measurement", Key: p.key, Data: &payload})
+		}
 	}
 }
 
