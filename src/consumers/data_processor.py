@@ -22,6 +22,7 @@ except Exception:  # pragma: no cover - fallback quando Redis não está dispon�
     aioredis = None  # type: ignore
 
 from src.app import create_app
+from src.app.settings import get_app_settings
 from src.repository.Data_repository import DataRepo
 from src.repository.PLC_repository import Plcrepo
 from src.services.Alarms_service import AlarmService
@@ -108,12 +109,16 @@ class PLCDataProcessor:
         self._subscriber = RedisSubscriber(topic=topic, url=redis_url or os.getenv(REDIS_URL_ENV))
 
         self._app = create_app()
+        self._settings = get_app_settings(self._app)
         self._app_ctx = self._app.app_context()
         self._app_ctx.push()
 
         self._alarm_service = AlarmService()
         self._mqtt = get_mqtt_publisher()
         self._plc_cache: Dict[str, Optional[int]] = {}
+        self._allow_persistence = self._settings.features.enable_polling and not (
+            self._settings.demo.enabled and self._settings.demo.read_only
+        )
 
     async def start(self) -> None:
         await self._subscriber.connect()
@@ -244,6 +249,13 @@ class PLCDataProcessor:
                 return
             batch = self._batch
             self._batch = []
+
+        if not self._allow_persistence:
+            logger.debug(
+                "Persistência de DataLog desativada; descartando %d registros",
+                len(batch),
+            )
+            return
 
         try:
             DataRepo.bulk_insert(batch)

@@ -1,67 +1,68 @@
 #src/app/__init__.py
 
 
+from __future__ import annotations
+
 import os
+from pathlib import Path
+
 from flask import Flask
+
+from src.app.extensions import csrf, db, login_manager, migrate
+from src.app.settings import get_app_settings, load_settings, store_settings
 from src.utils.logs import logger
-from src.app.extensions import db, migrate, login_manager, csrf
-from src.app.config import config
 
 
+def _ensure_directories(database_uri: str, *, log_dir: Path, backup_dir: Path) -> None:
+    """Create filesystem paths required by the application when appropriate."""
 
-def create_app(config_name='development'):
-    
-    logger.process("Criando app")
-    app = Flask(__name__)
-    logger.info("app criado")
-
-    # Configuração
-    logger.process("Configurando app")
-    app.config.from_object(config[config_name])
-    logger.warning(f"USANDO DB: {app.config['SQLALCHEMY_DATABASE_URI']}")
-
-    app_mode = os.environ.get("APP_MODE", app.config.get("APP_MODE", "full"))
-    app.config["APP_MODE"] = app_mode.lower()
-    app.config.setdefault("POLLER_API_KEY", os.environ.get("POLLER_API_KEY", ""))
-    logger.info("app configurado")
-
-    
-
-    # Criar diretórios somente se fizer sentido (evita erro com sqlite:///:memory:)
-    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
     try:
-        # extrai caminho pra sqlite file (caso exista)
-        if db_uri.startswith("sqlite:///"):
-            path = db_uri.replace("sqlite:///", "")
-            # se for :memory: ou vazio, não cria diretório
+        if database_uri.startswith("sqlite:///"):
+            path = database_uri.replace("sqlite:///", "")
             if path and path != ":memory:":
                 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
         else:
-            # para outros DBs, apenas criar logs/backups
-            os.makedirs(app.config.get('LOG_DIR', './logs'), exist_ok=True)
-            os.makedirs(app.config.get('BACKUP_DIR', './backups'), exist_ok=True)
+            os.makedirs(log_dir, exist_ok=True)
+            os.makedirs(backup_dir, exist_ok=True)
     except Exception:
-        # não explodir em ambiente de teste
         logger.exception("Erro ao criar diretórios (ignorando em ambiente de teste)")
 
-    # Inicializar extensões
+
+def create_app(config_name: str | None = None) -> Flask:
+
+    logger.process("Criando app")
+    settings = load_settings(config_name)
+    app = Flask(__name__)
+    app.config.update(settings.as_flask_config())
+    app.debug = settings.debug
+    app.testing = settings.testing
+    store_settings(app, settings)
+    logger.info("app criado")
+
+    logger.process("Configurando app")
+    logger.warning(f"USANDO DB: {settings.database.url}")
+    logger.info("app configurado")
+
+    _ensure_directories(
+        settings.database.url,
+        log_dir=Path(settings.log_dir),
+        backup_dir=Path(settings.backup_dir),
+    )
+
     logger.process("Iniciando extensões")
     db.init_app(app)
     try:
         migrate.init_app(app, db)
     except Exception:
-        # em testes não precisamos do migrate rodando; se falhar, ignoramos
         logger.debug("Migrate init falhou (ok em testes).")
     login_manager.init_app(app)
     csrf.init_app(app)
     logger.info("extensões iniciadas")
 
-    # Importar modelos (necessário para migrations e para registrar classes com SQLAlchemy)
     try:
-        # se você mantém tudo em src.models.*
         from src.models import (
-            AlarmDefinition,
             Alarm,
+            AlarmDefinition,
             AuditLog,
             DataLog,
             FactoryLayout,
@@ -73,19 +74,22 @@ def create_app(config_name='development'):
             User,
             UserRole,
         )
+
         with app.app_context():
             db.create_all()
             logger.info("Registrando blueprints")
             register_blueprints(app)
         logger.info("db criado")
-    except Exception as e:
-        logger.debug(f"Import models failed (ok for tests if models imported elsewhere). {e}")
-
-
+    except Exception as exc:
+        logger.debug(
+            "Import models failed (ok for tests if models imported elsewhere). %s",
+            exc,
+        )
 
     return app
 
-def register_blueprints(app):
+
+def register_blueprints(app: Flask) -> None:
     """Registra blueprints conforme o modo configurado."""
 
     from src.app.routes.api.api_routes import api_bp
@@ -93,7 +97,8 @@ def register_blueprints(app):
     app.register_blueprint(api_bp, url_prefix='/api')
     logger.info("API registrada (sempre ativa)")
 
-    app_mode = (app.config.get("APP_MODE") or "full").lower()
+    settings = get_app_settings(app)
+    app_mode = (settings.features.app_mode or "full").lower()
     if app_mode != "full":
         logger.info(
             "APP_MODE=%s — blueprints do frontend não serão registados.",

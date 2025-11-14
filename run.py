@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from src.app import create_app
+from src.app.settings import get_app_settings
 from src.manager.client_polling_manager import SimpleManager
 from src.manager.go_polling_manager import GoPollingManager, is_go_available
 from src.models import PLC, Register
@@ -374,6 +375,7 @@ PROTOCOL_CONFIGS: Dict[str, ProtocolConfig] = {
 # FUNÇÕES DE SUPORTE
 # ===========================================================
 app = create_app()
+SETTINGS = get_app_settings(app)
 AlarmRepo = AlarmDefinitionRepo()
 
 
@@ -503,6 +505,10 @@ def setup_single_plc(protocol_key: str, index: int) -> bool:
 
 
 def setup_all_plcs() -> Dict[str, int]:
+    if not SETTINGS.features.enable_seed_scripts:
+        logger.info("Seed de CLPs desativado pelas configurações da aplicação")
+        return {key: 0 for key in PROTOCOL_CONFIGS}
+
     simulation_registry.clear()
     resultados = {key: 0 for key in PROTOCOL_CONFIGS}
     for key in PROTOCOL_CONFIGS:

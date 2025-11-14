@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.manager.client_polling_manager import ActivePLCPoller
 from src.models.PLCs import PLC
 from src.utils.logs import logger
+from src.app.settings import AppSettings, get_app_settings
 
 
 def is_go_available() -> bool:
@@ -29,8 +30,10 @@ class GoPollingManager:
         build_binary: bool = True,
         poller_factory=ActivePLCPoller,
         go_command: Optional[List[str]] = None,
+        settings: Optional[AppSettings] = None,
     ) -> None:
         self.flask_app = flask_app
+        self._settings = settings or get_app_settings(flask_app)
         self._poller_factory = poller_factory
         self._pollers: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
@@ -176,7 +179,19 @@ class GoPollingManager:
                 self._send_command({"cmd": "update", "key": key, "interval": interval})
                 await self._wait_for("updated", key)
                 return self._pollers[key]["poller"]
-            poller = self._poller_factory(plc_orm, registers_provider, flask_app=self.flask_app)
+            try:
+                poller = self._poller_factory(
+                    plc_orm,
+                    registers_provider,
+                    flask_app=self.flask_app,
+                    settings=self._settings,
+                )
+            except TypeError:
+                poller = self._poller_factory(
+                    plc_orm,
+                    registers_provider,
+                    flask_app=self.flask_app,
+                )
             self._pollers[key] = {"poller": poller, "plc": plc_orm, "stopping": False}
         interval = getattr(plc_orm, "polling_interval", 1000)
         self._send_command({"cmd": "add", "key": key, "interval": interval})

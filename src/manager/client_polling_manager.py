@@ -13,6 +13,7 @@ import os
 import inspect
 from datetime import datetime, timezone
 from src.services.mqtt_service import get_mqtt_publisher
+from src.app.settings import AppSettings, get_app_settings
 
 # número máximo de threads
 max_workers = min(32, (os.cpu_count() or 4) * 4)
@@ -32,27 +33,38 @@ def wait_for_port(host: str, port: int, timeout: float = 8.0, interval: float = 
 
 # ---------- Active client (async) que mantém uma conexão por PLC ----------
 class ActivePLCPoller:
-    def __init__(self, plc_orm: PLC, registers_provider: Any, flask_app):
+    def __init__(
+        self,
+        plc_orm: PLC,
+        registers_provider: Any,
+        flask_app,
+        *,
+        settings: Optional[AppSettings] = None,
+    ):
         """
         plc_orm: PLC SQLAlchemy object
         registers_provider: callable (sync or async) -> list of register dicts/objects
         """
         self.plc_orm = plc_orm
         self.registers_provider = registers_provider
+        self._settings = settings or get_app_settings(flask_app)
         protocol = getattr(plc_orm, 'protocol', 'modbus')
         try:
-            self.adapter = get_adapter(protocol, plc_orm)
+            self.adapter = get_adapter(protocol, plc_orm, settings=self._settings)
         except ValueError:
             logger.warning(
                 "Protocolo %s não suportado para o PLC %s; usando Modbus como fallback",
                 protocol,
                 getattr(plc_orm, 'id', '<desconhecido>'),
             )
-            self.adapter = get_adapter('modbus', plc_orm)
+            self.adapter = get_adapter('modbus', plc_orm, settings=self._settings)
         self._task: Optional[asyncio.Task] = None
         self._stop = False
         self._backoff = 1.0
         self.context = flask_app
+        self._polling_allowed = self._settings.features.enable_polling and not (
+            self._settings.demo.enabled and self._settings.demo.disable_polling
+        )
 
         self.alarm_service = AlarmService()
         self.datalog_repo = DataRepo
@@ -324,6 +336,12 @@ class ActivePLCPoller:
             self._backoff = min(self._backoff * 2, 30.0)
 
     async def start(self):
+        if not self._polling_allowed:
+            logger.info(
+                "Polling desativado pelas configurações; ignorando PLC %s",
+                self._key(),
+            )
+            return
         self._stop = False
         self._task = asyncio.create_task(self._run_loop())
 
@@ -358,10 +376,11 @@ class ActivePLCPoller:
 
 # ---------- Simple manager that keeps pollers by key (ip|vlan) ----------
 class SimpleManager:
-    def __init__(self, flask_app):
+    def __init__(self, flask_app, *, settings: Optional[AppSettings] = None):
         self._pollers: Dict[str, ActivePLCPoller] = {}
         self._lock = asyncio.Lock()
         self.flask_app = flask_app
+        self._settings = settings or get_app_settings(flask_app)
 
     @staticmethod
     def make_key(ip: str, vlan: Optional[int]) -> str:
@@ -373,7 +392,19 @@ class SimpleManager:
             if key in self._pollers:
                 logger.info(f"PLC already managed: {key}")
                 return self._pollers[key]
-            poller = ActivePLCPoller(plc_orm, registers_provider, flask_app=self.flask_app)
+            try:
+                poller = ActivePLCPoller(
+                    plc_orm,
+                    registers_provider,
+                    flask_app=self.flask_app,
+                    settings=self._settings,
+                )
+            except TypeError:
+                poller = ActivePLCPoller(
+                    plc_orm,
+                    registers_provider,
+                    flask_app=self.flask_app,
+                )
             self._pollers[key] = poller
             await poller.start()
             logger.info(f"Added plc poller {key}")

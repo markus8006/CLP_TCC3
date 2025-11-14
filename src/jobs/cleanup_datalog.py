@@ -13,6 +13,7 @@ from typing import Optional
 from sqlalchemy import text
 
 from src.app import create_app, db
+from src.app.settings import load_settings
 from src.utils.logs import logger
 
 
@@ -35,7 +36,15 @@ WHERE id IN (
 def cleanup_data_log(*, max_records_per_register: int = 30) -> int:
     """Remove registros antigos da ``data_log`` mantendo o limite desejado."""
 
-    app = create_app()
+    settings = load_settings()
+    if settings.demo.enabled and settings.demo.read_only:
+        logger.info("Modo demo em leitura; limpeza global de DataLog ignorada")
+        return 0
+
+    try:
+        app = create_app(settings.environment)
+    except TypeError:
+        app = create_app()
     with app.app_context():
         start = datetime.utcnow()
         logger.info(

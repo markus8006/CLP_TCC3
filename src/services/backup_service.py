@@ -6,17 +6,27 @@ import os
 from datetime import datetime
 import time
 
+from src.app.settings import get_app_settings
+from src.utils.logs import logger
+
+
 class BackupManager:
     """Gerenciador de backup automático"""
-    
+
     def __init__(self, app):
         self.app = app
-        self.backup_dir = app.config.get('BACKUP_DIR', './backups')
-        self.retention_days = app.config.get('BACKUP_RETENTION_DAYS', 30)
-        
+        self._settings = get_app_settings(app)
+        self.backup_dir = str(self._settings.backup_dir)
+        self.retention_days = self._settings.backup_retention_days
+        self.scheduler_thread = None
+
+        if not self._settings.features.enable_backups:
+            logger.info("Rotina de backup desativada pelas configurações da aplicação")
+            return
+
         # Criar diretório de backup se não existir
         os.makedirs(self.backup_dir, exist_ok=True)
-        
+
         # Agendar backups
         schedule.every().day.at("02:00").do(self.full_backup)
         schedule.every().hour.do(self.incremental_backup)

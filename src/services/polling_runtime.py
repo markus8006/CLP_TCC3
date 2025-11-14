@@ -10,6 +10,7 @@ from typing import Optional, TYPE_CHECKING
 from flask import Flask
 
 from src.services.client_polling_service import StateCache
+from src.app.settings import get_app_settings
 
 if TYPE_CHECKING:  # pragma: no cover - apenas para linting
     from src.manager.client_polling_manager import SimpleManager
@@ -50,6 +51,18 @@ class PollingRuntime:
 
 def register_runtime(app: Flask, runtime: PollingRuntime) -> None:
     app.extensions["polling_runtime"] = runtime
+
+    try:
+        settings = get_app_settings(app)
+    except RuntimeError:
+        return
+
+    enabled = settings.features.enable_polling and not (
+        settings.demo.enabled and settings.demo.disable_polling
+    )
+    runtime.set_enabled(enabled)
+    if not enabled:
+        runtime.notify()
 
 
 def get_runtime(app: Flask) -> Optional[PollingRuntime]:
