@@ -187,7 +187,7 @@ func loadDotEnv() error {
 	for {
 		envPath := filepath.Join(wd, ".env")
 		if _, err := os.Stat(envPath); err == nil {
-			return godotenv.Load(envPath)
+			return godotenv.Overload(envPath)
 		}
 
 		parent := filepath.Dir(wd)
