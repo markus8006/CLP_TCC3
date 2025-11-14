@@ -12,9 +12,13 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union, TYPE_CHECKING
 
 from src.repository.Alarms_repository import AlarmDefinitionRepo
+from src.app.settings import load_settings
+
+if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
+    from src.app.settings import AppSettings
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +32,20 @@ class BaseAdapter(ABC):
     keep the adapters small and consistent across protocols.
     """
 
-    def __init__(self, orm: Any):
+    def __init__(self, orm: Any, *, settings: Optional["AppSettings"] = None):
         self.orm = orm
+        self._settings = settings or load_settings()
         self._alarm_repo = AlarmDefinitionRepo()
         self._connected: bool = False
         self._lock = asyncio.Lock()
 
         raw_protocol = str(getattr(orm, "protocol", "")).lower()
         self.protocol_name = raw_protocol.split("-", 1)[0] if raw_protocol else ""
-        self._simulation_mode = bool(getattr(orm, "use_simulation", False) or raw_protocol.endswith("-sim"))
+        self._simulation_mode = bool(
+            getattr(orm, "use_simulation", False) or raw_protocol.endswith("-sim")
+        )
+        if self._settings.demo.enabled and self._settings.demo.disable_polling:
+            self._simulation_mode = True
 
     # ------------------------------------------------------------------
     # Abstract API

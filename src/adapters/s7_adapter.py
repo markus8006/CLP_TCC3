@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, TYPE_CHECKING
 
 try:  # pragma: no cover - dependência opcional
     import snap7
@@ -31,11 +31,16 @@ _M_ADDRESS_RE = re.compile(
 )
 
 
+
+if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
+    from src.app.settings import AppSettings
+
+
 class S7Adapter(BaseAdapter):
     """Adapter para CLPs S7 com suporte a modo simulado para testes."""
 
-    def __init__(self, orm: Any):
-        super().__init__(orm)
+    def __init__(self, orm: Any, *, settings: Optional["AppSettings"] = None):
+        super().__init__(orm, settings=settings)
         self.ip_address = getattr(orm, "ip_address", None)
         self.port = getattr(orm, "port", 102)
         self.rack_slot = getattr(orm, "rack_slot", "0,2")

@@ -8,54 +8,68 @@ from src.services.email_settings_service import (
     update_email_settings,
 )
 from src.services.email_service import send_email
+from src.app.settings import get_app_settings, store_settings
 
 
 @pytest.mark.usefixtures("db")
 class TestEmailSettingsService:
     def test_defaults_are_returned_when_no_customisation(self, app):
-        app.config.update(
-            {
-                "MAIL_SERVER": "smtp.default.local",
-                "MAIL_PORT": 1026,
-                "MAIL_USERNAME": "default@example.com",
-                "MAIL_PASSWORD": "default-pass",
-                "MAIL_DEFAULT_SENDER": "alarms@default.com",
-                "MAIL_USE_TLS": True,
-                "MAIL_USE_SSL": False,
-                "MAIL_SUPPRESS_SEND": False,
+        original_settings = get_app_settings(app)
+        default_mail = original_settings.mail.model_copy(
+            update={
+                "server": "smtp.default.local",
+                "port": 1026,
+                "username": "default@example.com",
+                "password": "default-pass",
+                "default_sender": "alarms@default.com",
+                "use_tls": True,
+                "use_ssl": False,
+                "suppress_send": False,
             }
         )
+        store_settings(app, original_settings.model_copy(update={"mail": default_mail}))
 
-        settings = get_email_settings()
-        assert settings["MAIL_SERVER"] == "smtp.default.local"
-        assert settings["MAIL_PORT"] == 1026
-        assert settings["MAIL_USE_TLS"] is True
-        assert settings["MAIL_SUPPRESS_SEND"] is False
+        try:
+            settings = get_email_settings()
+            assert settings["MAIL_SERVER"] == "smtp.default.local"
+            assert settings["MAIL_PORT"] == 1026
+            assert settings["MAIL_USE_TLS"] is True
+            assert settings["MAIL_SUPPRESS_SEND"] is False
 
-        stored = get_stored_email_settings()
-        assert all(value is None for value in stored.values())
+            stored = get_stored_email_settings()
+            assert all(value is None for value in stored.values())
 
-        update_email_settings({
-            "MAIL_SERVER": "smtp.persisted.local",
-            "MAIL_PORT": 2525,
-            "MAIL_USE_TLS": False,
-        })
+            update_email_settings({
+                "MAIL_SERVER": "smtp.persisted.local",
+                "MAIL_PORT": 2525,
+                "MAIL_USE_TLS": False,
+            })
 
-        settings = get_email_settings()
-        assert settings["MAIL_SERVER"] == "smtp.persisted.local"
-        assert settings["MAIL_PORT"] == 2525
-        assert settings["MAIL_USE_TLS"] is False
+            settings = get_email_settings()
+            assert settings["MAIL_SERVER"] == "smtp.persisted.local"
+            assert settings["MAIL_PORT"] == 2525
+            assert settings["MAIL_USE_TLS"] is False
 
-        stored = get_stored_email_settings()
-        assert stored["MAIL_SERVER"] == "smtp.persisted.local"
-        assert stored["MAIL_PORT"] == 2525
+            stored = get_stored_email_settings()
+            assert stored["MAIL_SERVER"] == "smtp.persisted.local"
+            assert stored["MAIL_PORT"] == 2525
 
-        update_email_settings({"MAIL_SERVER": None})
-        assert get_stored_email_settings()["MAIL_SERVER"] is None
-        assert get_email_settings()["MAIL_SERVER"] == "smtp.default.local"
+            update_email_settings({"MAIL_SERVER": None})
+            assert get_stored_email_settings()["MAIL_SERVER"] is None
+            assert get_email_settings()["MAIL_SERVER"] == "smtp.default.local"
+        finally:
+            store_settings(app, original_settings)
 
     def test_send_email_uses_persisted_configuration(self, app, monkeypatch):
-        app.config.update({"MAIL_SUPPRESS_SEND": False})
+        original_settings = get_app_settings(app)
+        store_settings(
+            app,
+            original_settings.model_copy(
+                update={
+                    "mail": original_settings.mail.model_copy(update={"suppress_send": False})
+                }
+            ),
+        )
 
         update_email_settings(
             {
@@ -100,25 +114,36 @@ class TestEmailSettingsService:
         monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
         monkeypatch.setattr(smtplib, "SMTP_SSL", DummySMTP)
 
-        result = send_email("Teste", "Corpo", ["dest@example.com"])
+        try:
+            result = send_email("Teste", "Corpo", ["dest@example.com"])
 
-        assert result is True
-        smtp_instance = DummySMTP.last
-        assert smtp_instance is not None
-        assert smtp_instance.host == "smtp.example.com"
-        assert smtp_instance.port == 2525
-        assert smtp_instance.started_tls is True
-        assert smtp_instance.login_args == ("alerts@example.com", "secret")
-        assert smtp_instance.messages
+            assert result is True
+            smtp_instance = DummySMTP.last
+            assert smtp_instance is not None
+            assert smtp_instance.host == "smtp.example.com"
+            assert smtp_instance.port == 2525
+            assert smtp_instance.started_tls is True
+            assert smtp_instance.login_args == ("alerts@example.com", "secret")
+            assert smtp_instance.messages
 
-        message = smtp_instance.messages[-1]
-        assert message["From"] == "alerts@example.com"
-        assert message["To"] == "dest@example.com"
-        assert "Teste" in message["Subject"]
-        assert message.get_content().strip() == "Corpo"
+            message = smtp_instance.messages[-1]
+            assert message["From"] == "alerts@example.com"
+            assert message["To"] == "dest@example.com"
+            assert "Teste" in message["Subject"]
+            assert message.get_content().strip() == "Corpo"
+        finally:
+            store_settings(app, original_settings)
 
     def test_send_email_honours_suppress_flag(self, app, monkeypatch):
-        app.config.update({"MAIL_SUPPRESS_SEND": False})
+        original_settings = get_app_settings(app)
+        store_settings(
+            app,
+            original_settings.model_copy(
+                update={
+                    "mail": original_settings.mail.model_copy(update={"suppress_send": False})
+                }
+            ),
+        )
         update_email_settings({"MAIL_SUPPRESS_SEND": True})
 
         called = {"smtp": False}
@@ -130,7 +155,10 @@ class TestEmailSettingsService:
         monkeypatch.setattr(smtplib, "SMTP", _fail)
         monkeypatch.setattr(smtplib, "SMTP_SSL", _fail)
 
-        result = send_email("Teste", "Corpo", ["dest@example.com"])
+        try:
+            result = send_email("Teste", "Corpo", ["dest@example.com"])
 
-        assert result is True
-        assert called["smtp"] is False
+            assert result is True
+            assert called["smtp"] is False
+        finally:
+            store_settings(app, original_settings)

@@ -10,6 +10,7 @@ Uso:
 
 from src.models.Data import DataLog
 from src.app import create_app, db
+from src.app.settings import load_settings
 from src.utils.logs import logger
 from datetime import datetime
 
@@ -21,7 +22,15 @@ def cleanup_old_datalogs(keep_per_register=30, batch_delete_size=1000):
         keep_per_register: Número de registros a manter por combinação
         batch_delete_size: Tamanho do batch para deletar (evitar timeouts)
     """
-    app = create_app()
+    settings = load_settings()
+    if settings.demo.enabled and settings.demo.read_only:
+        logger.info("Modo demo em leitura; limpeza de DataLog ignorada")
+        return 0
+
+    try:
+        app = create_app(settings.environment)
+    except TypeError:
+        app = create_app()
     with app.app_context():
         start_time = datetime.now()
         total_deleted = 0

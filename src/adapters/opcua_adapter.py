@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 try:  # pragma: no cover - opcional
     from asyncua import Client as OpcUaClient
@@ -16,11 +16,15 @@ from src.simulations.runtime import simulation_registry
 logger = logging.getLogger(__name__)
 
 
+if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
+    from src.app.settings import AppSettings
+
+
 class OpcUaAdapter(BaseAdapter):
     """Adapter OPC UA que funciona tanto em modo real quanto simulado."""
 
-    def __init__(self, orm: Any):
-        super().__init__(orm)
+    def __init__(self, orm: Any, *, settings: Optional["AppSettings"] = None):
+        super().__init__(orm, settings=settings)
         self.endpoint = getattr(
             orm,
             "endpoint",

@@ -8,6 +8,7 @@ from sqlalchemy import case, func
 from sqlalchemy.orm import selectinload
 
 from src.app.extensions import csrf, db
+from src.app.settings import get_app_settings
 from src.models.Alarms import Alarm, AlarmDefinition
 from src.models.Data import DataLog
 from src.models.ManualControl import ManualCommand
@@ -73,7 +74,7 @@ def _parse_timestamp(raw_ts):
 @api_bp.route("/v1/internal/poller-data", methods=["POST"])
 @csrf.exempt
 def ingest_poller_data():
-    secret = (current_app.config.get("POLLER_API_KEY") or "").strip()
+    secret = (get_app_settings().secrets.poller_api_key or "").strip()
     if not secret:
         current_app.logger.error("POLLER_API_KEY não configurada para ingestão interna.")
         return jsonify({"message": "Ingestão interna indisponível"}), 503

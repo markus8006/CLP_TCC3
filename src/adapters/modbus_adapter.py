@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, TYPE_CHECKING
 
 try:  # pragma: no cover - optional dependency
     from pymodbus.client import AsyncModbusTcpClient
@@ -17,11 +17,15 @@ from src.simulations.runtime import simulation_registry
 logger = logging.getLogger(__name__)
 
 
+if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
+    from src.app.settings import AppSettings
+
+
 class ModbusAdapter(BaseAdapter):
     """Async Modbus TCP adapter built on top of :mod:`pymodbus`."""
 
-    def __init__(self, orm: Any):
-        super().__init__(orm)
+    def __init__(self, orm: Any, *, settings: Optional["AppSettings"] = None):
+        super().__init__(orm, settings=settings)
         self.ip_address = getattr(self.orm, "ip_address", None)
         self.port = getattr(self.orm, "port", 502)
         timeout_ms = getattr(self.orm, "timeout", 3000) or 3000

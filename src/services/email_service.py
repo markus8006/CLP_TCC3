@@ -6,10 +6,11 @@ import smtplib
 from email.message import EmailMessage
 from typing import Iterable, Optional, Sequence
 
-from flask import current_app, has_app_context
+from flask import has_app_context
 
 from src.utils.logs import logger
 from src.services.email_settings_service import get_email_settings
+from src.app.settings import get_app_settings
 
 
 def _normalise_recipients(recipients: Iterable[str]) -> Sequence[str]:
@@ -46,33 +47,40 @@ def send_email(
 
     config = get_email_settings()
 
-    if config.get("MAIL_SUPPRESS_SEND"):
+    settings = get_app_settings()
+    if not settings.features.enable_email:
+        logger.info("Envio de email desativado pelas configurações da aplicação")
+        return False
+
+    suppress_send = config.get("MAIL_SUPPRESS_SEND")
+    if suppress_send is None:
+        suppress_send = settings.mail.suppress_send
+
+    if suppress_send:
         logger.info("Envio de email suprimido (MAIL_SUPPRESS_SEND=True)")
         return True
 
     message = EmailMessage()
     message["Subject"] = subject
-    message["From"] = config.get("MAIL_DEFAULT_SENDER") or current_app.config.get(
-        "MAIL_DEFAULT_SENDER", "alarms@example.com"
-    )
+    message["From"] = config.get("MAIL_DEFAULT_SENDER") or settings.mail.default_sender
     message["To"] = ", ".join(normalised)
     message.set_content(body)
     if html_body:
         message.add_alternative(html_body, subtype="html")
 
-    server = config.get("MAIL_SERVER") or current_app.config.get("MAIL_SERVER", "localhost")
-    port = int(config.get("MAIL_PORT") or current_app.config.get("MAIL_PORT", 25))
-    username = config.get("MAIL_USERNAME") or current_app.config.get("MAIL_USERNAME")
-    password = config.get("MAIL_PASSWORD") or current_app.config.get("MAIL_PASSWORD")
+    server = config.get("MAIL_SERVER") or settings.mail.server
+    port = int(config.get("MAIL_PORT") or settings.mail.port)
+    username = config.get("MAIL_USERNAME") or settings.mail.username
+    password = config.get("MAIL_PASSWORD") or settings.mail.password
     use_tls = bool(
         config.get("MAIL_USE_TLS")
         if config.get("MAIL_USE_TLS") is not None
-        else current_app.config.get("MAIL_USE_TLS", False)
+        else settings.mail.use_tls
     )
     use_ssl = bool(
         config.get("MAIL_USE_SSL")
         if config.get("MAIL_USE_SSL") is not None
-        else current_app.config.get("MAIL_USE_SSL", False)
+        else settings.mail.use_ssl
     )
 
     try:

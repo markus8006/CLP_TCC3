@@ -1,11 +1,13 @@
 from src.app.extensions import db, login_manager
+from src.app.settings import get_app_settings
 from src.models.Users import User, UserRole
 
 
 def test_app_uses_testing_config(app):
-    assert app.config["TESTING"] is True
-    assert app.config["SQLALCHEMY_DATABASE_URI"] == "sqlite:///:memory:"
-    assert app.config["WTF_CSRF_ENABLED"] is False
+    settings = get_app_settings(app)
+    assert settings.testing is True
+    assert settings.database.url == "sqlite:///:memory:"
+    assert settings.wtf_csrf_enabled is False
 
 
 def test_blueprints_are_registered(app):

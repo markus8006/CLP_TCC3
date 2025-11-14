@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Type
+from typing import Any, Callable, Dict, Type, Optional, TYPE_CHECKING
 
 from src.adapters.base_adapters import BaseAdapter
 from src.adapters.modbus_adapter import ModbusAdapter
 from src.adapters.opcua_adapter import OpcUaAdapter
 from src.adapters.s7_adapter import S7Adapter
+
+if TYPE_CHECKING:  # pragma: no cover - apenas para tipagem
+    from src.app.settings import AppSettings
 
 AdaptersMap = Dict[str, Type[BaseAdapter]]
 
@@ -27,7 +30,13 @@ def _default_adapters() -> AdaptersMap:
     }
 
 
-def get_adapter(protocol: str, orm: Any, *, registry_factory: Callable[[], AdaptersMap] = _default_adapters) -> BaseAdapter:
+def get_adapter(
+    protocol: str,
+    orm: Any,
+    *,
+    registry_factory: Callable[[], AdaptersMap] = _default_adapters,
+    settings: Optional["AppSettings"] = None,
+) -> BaseAdapter:
     """Retorna uma instância de adapter para o protocolo solicitado."""
 
     if not protocol:
@@ -38,4 +47,4 @@ def get_adapter(protocol: str, orm: Any, *, registry_factory: Callable[[], Adapt
     if adapter_cls is None:
         supported = ", ".join(sorted(registry))
         raise ValueError(f"Protocolo {protocol!r} não suportado. Opções: {supported}")
-    return adapter_cls(orm)
+    return adapter_cls(orm, settings=settings)

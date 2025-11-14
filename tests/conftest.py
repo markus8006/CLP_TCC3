@@ -22,16 +22,6 @@ def app():
     """Cria a aplicação Flask em modo testing (session scope)."""
     app = create_app('testing')
 
-    # Forçar configurações específicas para teste
-    app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-        "WTF_CSRF_ENABLED": False,
-        "LOGIN_DISABLED": False,
-        "SECRET_KEY": "test-secret-key",
-    })
-
     # criar contexto da app
     ctx = app.app_context()
     ctx.push()
