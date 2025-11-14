@@ -17,6 +17,7 @@ from pydantic import AliasChoices, BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent.parent
 DEFAULT_DEV_DB_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/scada"
 DEFAULT_PROD_DB_URL = (
     "postgresql+psycopg2://postgres:postgres@localhost:5432/scada_prod"
@@ -132,7 +133,9 @@ class AppSettings(BaseSettings):
     """Typed application configuration backed by environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_nested_delimiter="__", extra="ignore"
+        env_file=PROJECT_ROOT / ".env",
+        env_nested_delimiter="__",
+        extra="ignore",
     )
 
     environment: Literal["development", "production", "testing"] = Field(
