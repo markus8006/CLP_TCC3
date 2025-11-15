@@ -18,7 +18,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-type pollingServer struct{}
+type pollingServer struct {
+	pb.UnimplementedPollingServiceServer
+}
 
 type pollingConfig struct {
 	PLCs []plcDescriptor `json:"plcs"`
