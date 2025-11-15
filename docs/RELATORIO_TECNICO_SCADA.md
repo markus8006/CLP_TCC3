@@ -28,9 +28,9 @@ A heterogeneidade de protocolos de comunicação permanece sendo o obstáculo n�
 
 O projeto Synapse foi concebido para alcançar objetivos estratégicos diretamente alinhados com o cenário descrito:
 
-1. **Centralizar a supervisão multi-protocolo**: habilitar leitura contínua de registradores em CLPs Modbus TCP, Siemens S7 e servidores OPC UA, com suporte nativo a simulação.【F:run.py†L32-L130】【F:src/adapters/factory.py†L1-L25】
+1. **Centralizar a supervisão multi-protocolo**: habilitar leitura contínua de registradores em CLPs Modbus TCP, Siemens S7 e servidores OPC UA, com suporte nativo a simulação, agora orquestrados por um serviço Go exposto via gRPC e configurado dinamicamente a partir do Python.【F:run.py†L1-L209】【F:go/polling/cmd/poller/main.go†L1-L165】
 2. **Detectar e gerenciar alarmes operacionais em tempo real**: avaliar leituras contra setpoints, faixas e histerese (*deadband*), gerando eventos de disparo e normalização com notificação automática.【F:src/services/Alarms_service.py†L16-L137】【F:run.py†L131-L205】
-3. **Garantir operação resiliente e escalável**: orquestrar *pollers* assíncronos capazes de reconectar, balancear leituras simultâneas e persistir dados históricos para auditoria.【F:src/manager/client_polling_manager.py†L24-L203】
+3. **Garantir operação resiliente e escalável**: manter um loop de polling contínuo e tolerante a falhas através do `PollingService`, que publica medições por *streaming* gRPC para o orquestrador Python, com atualização dinâmica de configuração.【F:go/polling/cmd/poller/main.go†L67-L165】【F:src/manager/go_polling_manager.py†L21-L140】
 4. **Facilitar implantação e ensaios**: provisionar CLPs simulados, registradores e alarmes de forma automatizada, acelerando provas de conceito e validações sem hardware físico.【F:run.py†L107-L209】【F:src/simulations/runtime.py†L1-L122】
 
 ## 3. Arquitetura Técnica e Alinhamento Estratégico com a Indústria 4.0
@@ -41,11 +41,11 @@ A aplicação Flask, inicializada por `create_app`, atua como contêiner central
 
 ### 3.2 Orquestração de Polling (Motor de Resiliência)
 
-O `ActivePLCPoller` é o núcleo da resiliência do sistema. Ele gerencia o ciclo de vida da conexão com cada CLP, aplica *backoff* exponencial para reconexões automáticas e marca estados on-line/off-line no banco.【F:src/manager/client_polling_manager.py†L24-L203】 Para controlar a carga, utiliza `ThreadPoolExecutor` com semáforos, evitando que dispositivos lentos bloqueiem o fluxo de aquisição.【F:src/manager/client_polling_manager.py†L9-L63】 O `SimpleManager` e o `PollingRuntime` orquestram o ciclo desses pollers, permitindo habilitar ou desabilitar CLPs dinamicamente.【F:src/manager/client_polling_manager.py†L205-L271】【F:src/services/polling_runtime.py†L1-L120】
+A resiliência passa a ser provida por um serviço Go dedicado (`PollingService`) que mantém o estado da configuração em memória, realiza leituras periódicas (ticker de 2s) e publica medições por *streaming* gRPC.【F:go/polling/cmd/poller/main.go†L67-L165】 O cliente Python (`GoPollingManager`) gere o ciclo de vida do processo Go como *subprocess*, estabelece o canal gRPC, aplica atualizações de configuração e encaminha o stream para a fila de ingestão.【F:src/manager/go_polling_manager.py†L21-L140】 O `PollingRuntime` mantém o estado compartilhado (fila, *threads* e sinalizadores) para integração com a aplicação Flask.【F:src/services/polling_runtime.py†L1-L68】
 
-### 3.3 Adapters Multi-Protocolo (Camada de Abstração OT)
+### 3.3 Pipeline de Ingestão e Normalização
 
-A camada de adaptadores resolve o desafio de heterogeneidade de protocolos. Todos os drivers (Modbus, S7, OPC UA) herdam de `BaseAdapter`, que padroniza métodos como `connect`, `disconnect` e `read_register` e converte valores para formatos unificados.【F:src/adapters/base_adapters.py†L1-L101】【F:src/adapters/modbus_adapter.py†L1-L103】【F:src/adapters/s7_adapter.py†L1-L86】【F:src/adapters/opcua_adapter.py†L1-L69】 A fábrica `get_adapter` mantém o `ActivePLCPoller` agnóstico ao protocolo subjacente, permitindo tratamento uniforme das fontes de dados.【F:src/adapters/factory.py†L1-L25】
+O `run.py` centraliza a construção da configuração (função `build_go_poller_config`), serializando CLPs e registradores activos para o formato esperado pelo `PollingService`.【F:run.py†L210-L308】 Cada evento recebido via gRPC é processado pela `process_poller_payload`, que persiste as leituras, actualiza estados on-line/off-line e aciona a lógica de alarmes.【F:run.py†L309-L360】【F:src/services/poller_ingest_service.py†L1-L160】 Esse desenho substitui completamente os adaptadores Python legados, simplificando a manutenção e eliminando a dependência de `stdin/stdout` entre processos.
 
 ### 3.4 Gestão de Alarmes e Notificações (Camada de Resposta)
 
@@ -71,8 +71,8 @@ O suporte simultâneo a Modbus TCP, Siemens S7 e OPC UA posiciona o Synapse como
 ## 4. Fluxo Operacional
 
 1. **Provisionamento automático**: `setup_all_plcs` gera CLPs por protocolo, cria registradores, associa alarmes e pré-carrega valores simulados, garantindo ambiente funcional imediato.【F:run.py†L131-L209】
-2. **Início do polling**: `run_async_polling` registra o `PollingRuntime`, identifica CLPs ativos e injeta cada um no `SimpleManager`, iniciando a coleta contínua.【F:src/services/client_polling_service.py†L1-L24】
-3. **Monitoramento e alarmes**: cada leitura passa pelo `AlarmService`, que avalia condições, dispara notificações e atualiza estados on-line/off-line no banco, habilitando dashboards em tempo real.【F:src/manager/client_polling_manager.py†L90-L203】【F:src/services/Alarms_service.py†L88-L219】
+2. **Início do polling**: `run.py` instancia o `GoPollingManager`, publica a configuração inicial via gRPC (`UpdateConfig`) e inicia o consumo contínuo do `StreamData`, registrando o runtime para controle operacional.【F:run.py†L309-L360】【F:src/manager/go_polling_manager.py†L21-L140】
+3. **Monitoramento e alarmes**: cada leitura recebida via gRPC é processada por `process_poller_payload`, que valida os dados, persiste no histórico e aciona a avaliação de alarmes pelo `AlarmService`.【F:run.py†L309-L360】【F:src/services/poller_ingest_service.py†L1-L160】【F:src/services/Alarms_service.py†L88-L219】
 4. **Interação operacional**: usuários acessam a interface Flask para visualizar estados, históricos e administrar definições de CLP/alarme na camada `src/app`.【F:src/app/__init__.py†L1-L71】
 
 ## 5. Configurações Relevantes e Pontos de Otimização
@@ -80,7 +80,7 @@ O suporte simultâneo a Modbus TCP, Siemens S7 e OPC UA posiciona o Synapse como
 - **Número padrão de CLPs simulados**: `CLPS_POR_PROTOCOLO = 5`, ajustável conforme demandas de teste.【F:run.py†L22-L24】
 - **Tempos de polling e timeout**: definidos em `ProtocolConfig`, incluindo `polling_interval` (ms) e `timeout` (ms) para leituras resilientes.【F:run.py†L32-L130】
 - **Template de registradores**: `RegisterTemplate` consolida endereço, tipo, unidade e alarme associado, garantindo consistência na replicação de pontos.【F:run.py†L26-L130】
-- **Gerenciamento de threads**: o `ActivePLCPoller` usa `ThreadPoolExecutor` com `max_workers` proporcional aos núcleos disponíveis, equilibrando desempenho e consumo de recursos.【F:src/manager/client_polling_manager.py†L9-L63】
+- **Consumo assíncrono do stream**: a *thread* `go-poller-consumer` processa o stream gRPC em tempo real, garantindo persistência e avaliação de alarmes sem bloquear o loop principal do Flask.【F:run.py†L309-L360】
 - **Simulações**: o `simulation_registry` permite `set_static_value`, `next_value` e `clear` para testes determinísticos sem hardware real.【F:src/simulations/runtime.py†L17-L109】
 
 ## 6. Análise de Impacto e Geração de Valor

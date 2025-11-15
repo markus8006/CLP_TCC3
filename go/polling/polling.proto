@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package polling;
+
+option go_package = "./polling";
+
+service PollingService {
+  rpc UpdateConfig (ConfigPayload) returns (StatusResponse);
+  rpc StreamData (Empty) returns (stream DataPayload);
+}
+
+message ConfigPayload {
+  string json_config = 1;
+}
+
+message DataPayload {
+  string json_data = 1;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message Empty {}
