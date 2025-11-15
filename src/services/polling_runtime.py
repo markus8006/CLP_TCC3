@@ -1,29 +1,26 @@
-"""Estruturas utilitárias para coordenar o serviço de polling assíncrono."""
-
 from __future__ import annotations
 
 import asyncio
 import threading
 from dataclasses import dataclass, field
-from typing import Optional, TYPE_CHECKING
+from queue import Queue
+from typing import Optional
 
 from flask import Flask
 
-from src.services.client_polling_service import StateCache
 from src.app.settings import get_app_settings
-
-if TYPE_CHECKING:  # pragma: no cover - apenas para linting
-    from src.manager.client_polling_manager import SimpleManager
 
 
 @dataclass
 class PollingRuntime:
-    """Guarda o estado partilhado do serviço de polling."""
+    """Guarda o estado partilhado do serviço de polling baseado em Go."""
 
-    manager: "SimpleManager"
+    manager: "GoPollingManager"
+    data_queue: Queue[str]
     loop: Optional[asyncio.AbstractEventLoop] = None
     trigger: Optional[asyncio.Event] = None
-    cache: StateCache = field(default_factory=dict)
+    consumer_thread: Optional[threading.Thread] = None
+    consumer_stop_event: threading.Event = field(default_factory=threading.Event)
     _enabled: bool = True
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -40,7 +37,6 @@ class PollingRuntime:
             try:
                 self.loop.call_soon_threadsafe(self.trigger.set)
             except RuntimeError:
-                # Loop pode ter sido encerrado — ignore silenciosamente
                 pass
 
     def ensure_trigger(self) -> asyncio.Event:

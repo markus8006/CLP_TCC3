@@ -209,8 +209,7 @@ tests/
 │   └── test_utils.py
 ├── integration/        # Testes de integração
 │   ├── test_api.py
-│   ├── test_polling.py
-│   └── test_adapters.py
+│   └── test_polling.py
 └── e2e/               # Testes end-to-end
     └── test_workflows.py
 ```
@@ -450,68 +449,19 @@ def metrics():
     return generate_latest()
 ```
 
-## 🔌 Criando Novos Adapters
+## 🔌 PollingService gRPC
 
-### Interface Base
-```python
-from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict
+### Estendendo o contrato `.proto`
+- Edite `go/polling/polling.proto` para adicionar novos campos às mensagens `ConfigPayload` ou `DataPayload`. Mantenha compatibilidade retroativa incrementando apenas novos `field numbers` e executando `protoc` para regenerar os artefatos Go/Python.【F:go/polling/polling.proto†L1-L33】
+- Gere os *stubs* Go: `protoc --go_out=. --go-grpc_out=. polling.proto` dentro de `go/polling`. Para Python utilize `python -m grpc_tools.protoc -I=go/polling --python_out=src/grpc_generated --grpc_python_out=src/grpc_generated polling.proto`.
 
-class BaseAdapter(ABC):
-    """Interface base para adapters de protocolo"""
-    
-    @abstractmethod
-    def connect(self, host: str, port: int, **kwargs) -> bool:
-        """Conecta ao dispositivo"""
-        pass
-        
-    @abstractmethod
-    def disconnect(self) -> bool:
-        """Desconecta do dispositivo"""
-        pass
-        
-    @abstractmethod
-    def read_register(self, address: str, register_type: str, data_type: str) -> Optional[Any]:
-        """Lê registrador"""
-        pass
-```
+### Ajustando o servidor Go
+- Centralize a lógica em `PollingService.UpdateConfig` e `PollingService.StreamData`. Use `sync.RWMutex` para proteger o estado global e trate erros com `log.Printf` para evitar *crashes* em produção.【F:go/polling/cmd/poller/main.go†L67-L165】
+- Funções utilitárias como `pollAllPLCs` e `readRegister` podem ser especializadas conforme o protocolo. Introduza novos pacotes Go se necessário, lembrando de actualizar `go.mod` com as dependências.
 
-### Implementação de Exemplo
-```python
-from app.adapters.base_adapter import BaseAdapter
-import some_protocol_library
-
-class NewProtocolAdapter(BaseAdapter):
-    """Adapter para novo protocolo"""
-    
-    def __init__(self):
-        super().__init__()
-        self.client = None
-    
-    def connect(self, host: str, port: int, **kwargs) -> bool:
-        """Implementa conexão específica do protocolo"""
-        try:
-            self.client = some_protocol_library.Client(host, port)
-            self.client.connect()
-            self.connected = True
-            return True
-        except Exception as e:
-            self.logger.error(f"Erro ao conectar: {e}")
-            return False
-    
-    def read_register(self, address: str, register_type: str, data_type: str) -> Optional[Any]:
-        """Implementa leitura específica do protocolo"""
-        if not self.connected:
-            return None
-            
-        try:
-            # Lógica específica do protocolo
-            raw_value = self.client.read(address)
-            return self._convert_data_type(raw_value, data_type)
-        except Exception as e:
-            self.logger.error(f"Erro ao ler {address}: {e}")
-            return None
-```
+### Actualizando o cliente Python
+- `GoPollingManager` encapsula a abertura do canal gRPC e a publicação de configurações. Ajuste o método `update_config` sempre que a estrutura JSON mudar para garantir a compatibilidade com o servidor.【F:src/manager/go_polling_manager.py†L93-L123】
+- A *thread* `go-poller-consumer` em `run.py` é responsável por desserializar `json_data` e encaminhar para `process_poller_payload`. Adapte-a se novos eventos ou formatos forem introduzidos pelo serviço Go.【F:run.py†L309-L360】
 
 ## 📦 Build e Deploy
 

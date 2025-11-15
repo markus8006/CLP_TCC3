@@ -63,7 +63,7 @@ python run.py
 
 ### 🔌 Para Integradores
 - **[Documentação da API](README.md#documentação-da-api)** - Endpoints REST
-- **[Adapters de Protocolo](DEVELOPMENT.md#criando-novos-adapters)** - Como criar novos adapters
+- **[Contrato gRPC do Poller](DEVELOPMENT.md#pollingservice-grpc)** - Como estender o serviço Go
 - **[Exemplos de Integração](README.md#exemplos-de-integração)** - Python, JavaScript, curl
 
 ---
@@ -106,7 +106,8 @@ app/
 │   └── backup_service.py     # Backup automático
 ├── api/            # API REST
 ├── web/            # Interface web
-├── adapters/       # Drivers de comunicação
+├── grpc_generated/ # Artefatos gRPC Python
+├── manager/        # Cliente gRPC e gestão do poller Go
 └── utils/          # Utilitários
 ```
 
@@ -125,7 +126,7 @@ app/
 - [Arquitetura e Padrões](DEVELOPMENT.md#arquitetura-do-sistema)
 - [Setup de Desenvolvimento](DEVELOPMENT.md#setup-de-desenvolvimento)
 - [Criando Testes](DEVELOPMENT.md#testes)
-- [Novos Adapters](DEVELOPMENT.md#criando-novos-adapters)
+- [Extensões do Poller Go](DEVELOPMENT.md#pollingservice-grpc)
 
 ### 🚀 Produção
 - [Deploy Completo](DEPLOYMENT.md#deploy-em-produção)

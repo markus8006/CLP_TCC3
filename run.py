@@ -1,12 +1,14 @@
+import json
 import logging
 import os
+import threading
 import time
 from dataclasses import dataclass, field
+from queue import Empty, Queue
 from typing import Dict, List, Optional
 
 from src.app import create_app
 from src.app.settings import get_app_settings
-from src.manager.client_polling_manager import SimpleManager
 from src.manager.go_polling_manager import GoPollingManager, is_go_available
 from src.models import PLC, Register
 from src.models.Alarms import AlarmDefinition
@@ -14,12 +16,17 @@ from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
 from src.services.polling_runtime import PollingRuntime, register_runtime
+from src.services.poller_ingest_service import (
+    PollerIngestError,
+    PollerIngestProcessingError,
+    process_poller_payload,
+)
 from src.services.settings_service import get_polling_enabled
 from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
 from src.services.mqtt_service import get_mqtt_publisher
 
-#cop
+# cop
 
 # ===========================================================
 # CONFIGURAÇÕES
@@ -387,13 +394,17 @@ def ip_from_index(index: int, *, first_octet: int = 127) -> str:
     return f"{first_octet}.{second}.{third}.{fourth}"
 
 
-def _format_field(value: Optional[object], context: Dict[str, object]) -> Optional[object]:
+def _format_field(
+    value: Optional[object], context: Dict[str, object]
+) -> Optional[object]:
     if isinstance(value, str):
         return value.format(**context)
     return value
 
 
-def ensure_register(plc: PLC, template: RegisterTemplate, context: Dict[str, object]) -> Optional[Register]:
+def ensure_register(
+    plc: PLC, template: RegisterTemplate, context: Dict[str, object]
+) -> Optional[Register]:
     address = str(_format_field(template.address, context))
     register = RegRepo.first_by(plc_id=plc.id, address=address)
 
@@ -422,8 +433,15 @@ def ensure_register(plc: PLC, template: RegisterTemplate, context: Dict[str, obj
     return RegRepo.add(new_register, commit=True)
 
 
-def ensure_alarm(plc: PLC, register: Register, alarm_template: Dict[str, object], context: Dict[str, object]) -> Optional[AlarmDefinition]:
-    formatted = {key: _format_field(value, context) for key, value in alarm_template.items()}
+def ensure_alarm(
+    plc: PLC,
+    register: Register,
+    alarm_template: Dict[str, object],
+    context: Dict[str, object],
+) -> Optional[AlarmDefinition]:
+    formatted = {
+        key: _format_field(value, context) for key, value in alarm_template.items()
+    }
     name = formatted.pop("name", f"Alarm {register.name}")
     existing = AlarmRepo.first_by(plc_id=plc.id, register_id=register.id, name=name)
     payload = {k: v for k, v in formatted.items() if v is not None}
@@ -433,8 +451,88 @@ def ensure_alarm(plc: PLC, register: Register, alarm_template: Dict[str, object]
                 setattr(existing, attr, value)
         AlarmRepo.update(existing, commit=True)
         return existing
-    alarm = AlarmDefinition(plc_id=plc.id, register_id=register.id, name=name, **payload)
+    alarm = AlarmDefinition(
+        plc_id=plc.id, register_id=register.id, name=name, **payload
+    )
     return AlarmRepo.add(alarm, commit=True)
+
+
+# ===========================================================
+# CONFIGURAÇÃO DO POLLER GO
+# ===========================================================
+def build_go_poller_config() -> Dict[str, object]:
+    with app.app_context():
+        plcs = []
+        for plc in Plcrepo.list_all():
+            if not plc.is_active:
+                continue
+            registers = []
+            for register in RegRepo.list_by_plc(plc.id):
+                if not register.is_active:
+                    continue
+                registers.append(
+                    {
+                        "id": register.id,
+                        "name": register.name,
+                        "address": register.address,
+                        "poll_rate": register.poll_rate or plc.polling_interval,
+                        "unit": register.unit or "",
+                    }
+                )
+            plcs.append(
+                {
+                    "id": plc.id,
+                    "name": plc.name,
+                    "ip_address": plc.ip_address,
+                    "vlan_id": plc.vlan_id,
+                    "protocol": plc.protocol,
+                    "polling_interval": plc.polling_interval or 1000,
+                    "registers": registers,
+                }
+            )
+    return {"plcs": plcs}
+
+
+def start_stream_consumer(
+    app, data_queue: Queue[str]
+) -> tuple[threading.Thread, threading.Event]:
+    stop_event = threading.Event()
+
+    def _worker() -> None:
+        while not stop_event.is_set():
+            try:
+                raw_payload = data_queue.get(timeout=0.5)
+            except Empty:
+                continue
+            if raw_payload is None:
+                break
+            try:
+                payload = json.loads(raw_payload)
+            except json.JSONDecodeError:
+                logger.error(
+                    "Payload JSON inválido recebido do poller Go: %s", raw_payload
+                )
+                continue
+
+            app_logger = getattr(app, "logger", logger)
+            try:
+                with app.app_context():
+                    process_poller_payload(payload, logger=app_logger)
+            except PollerIngestProcessingError as exc:
+                ctx = exc.context or {}
+                app_logger.exception(
+                    "Falha ao processar medição do poller Go (plc=%s reg=%s)",
+                    ctx.get("plc_id", payload.get("plc_id")),
+                    ctx.get("register_id", payload.get("register_id")),
+                )
+            except PollerIngestError as exc:
+                app_logger.error("Erro ao ingerir dados do poller Go: %s", exc)
+            except Exception:
+                app_logger.exception("Erro inesperado ao consumir stream do poller Go.")
+
+    worker = threading.Thread(target=_worker, name="go-poller-consumer", daemon=True)
+    worker.start()
+    return worker, stop_event
 
 
 # ===========================================================
@@ -447,7 +545,9 @@ def setup_single_plc(protocol_key: str, index: int) -> bool:
     context = {"plc_name": plc_name, "index": index}
     with app.app_context():
         try:
-            existing_plc = Plcrepo.first_by(ip_address=plc_ip) or Plcrepo.first_by(name=plc_name)
+            existing_plc = Plcrepo.first_by(ip_address=plc_ip) or Plcrepo.first_by(
+                name=plc_name
+            )
             if not existing_plc:
                 plc = PLC(
                     name=plc_name,
@@ -497,7 +597,12 @@ def setup_single_plc(protocol_key: str, index: int) -> bool:
                 if template.alarm:
                     ensure_alarm(existing_plc, reg, template.alarm, context)
 
-            logger.info("[%s] CLP configurado (%s) com %d registradores.", plc_name, protocol_key, len(registers))
+            logger.info(
+                "[%s] CLP configurado (%s) com %d registradores.",
+                plc_name,
+                protocol_key,
+                len(registers),
+            )
             return True
         except Exception as e:
             logger.exception("[%s] Falha na configuração do CLP: %s", plc_name, e)
@@ -523,34 +628,44 @@ def setup_all_plcs() -> Dict[str, int]:
 # ===========================================================
 if __name__ == "__main__":
     total_esperado = CLPS_POR_PROTOCOLO * len(PROTOCOL_CONFIGS)
-    logger.process(f"Iniciando configuração de {CLPS_POR_PROTOCOLO} CLPs para cada protocolo: {', '.join(PROTOCOL_CONFIGS)}")
+    logger.process(
+        f"Iniciando configuração de {CLPS_POR_PROTOCOLO} CLPs para cada protocolo: {', '.join(PROTOCOL_CONFIGS)}"
+    )
 
     inicio = time.time()
     resultados = setup_all_plcs()
     elapsed = time.time() - inicio
 
     total_criado = sum(resultados.values())
-    logger.process(f"{total_criado}/{total_esperado} CLPs configurados em {elapsed:.2f}s.")
+    logger.process(
+        f"{total_criado}/{total_esperado} CLPs configurados em {elapsed:.2f}s."
+    )
     for protocolo, quantidade in resultados.items():
         logger.info("Protocolo %s: %d CLPs ativos.", protocolo, quantidade)
 
-    polling_manager = None
-    if os.getenv("USE_GO_POLLING", "1") != "0":
-        try:
-            if is_go_available():
-                polling_manager = GoPollingManager(app)
-                logger.process("Serviço de polling Go inicializado.")
-            else:
-                logger.warning("Go não encontrado no PATH. Utilizando gestor Python.")
-        except Exception:
-            logger.exception(
-                "Falha ao iniciar runtime de polling em Go; revertendo para implementação Python."
-            )
+    if not is_go_available():
+        raise RuntimeError(
+            "Go toolchain não disponível; o poller Go é obrigatório nesta versão."
+        )
 
-    if polling_manager is None:
-        polling_manager = SimpleManager(app)
+    data_queue: Queue[str] = Queue()
+    initial_config = build_go_poller_config()
+    polling_manager = GoPollingManager(data_queue)
+    try:
+        polling_manager.start(initial_config)
+    except Exception:
+        logger.exception("Falha ao iniciar o serviço de polling Go via gRPC.")
+        raise
+    logger.process("Serviço de polling Go inicializado (gRPC).")
 
-    runtime = PollingRuntime(manager=polling_manager)
+    consumer_thread, consumer_stop = start_stream_consumer(app, data_queue)
+
+    runtime = PollingRuntime(
+        manager=polling_manager,
+        data_queue=data_queue,
+        consumer_thread=consumer_thread,
+        consumer_stop_event=consumer_stop,
+    )
     with app.app_context():
         runtime.set_enabled(get_polling_enabled())
     register_runtime(app, runtime)
