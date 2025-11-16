@@ -3,6 +3,7 @@ package drivers
 import (
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 )
@@ -52,17 +53,24 @@ func (d *simulatedDriver) ReadTags(tags []TagConfig) (map[string]interface{}, er
 }
 
 func NewDriverForProtocol(protocol string, cfg SessionConfig) (PollingDriver, error) {
-	switch protocol {
-	case "modbus":
+	normalized := strings.ToLower(protocol)
+	switch normalized {
+	case "modbus", "modbus-sim", "modbus_tcp", "modbus-tcp":
 		return newSimulatedDriver("modbus", cfg), nil
-	case "s7":
+	case "s7", "s7-sim":
 		return newSimulatedDriver("s7", cfg), nil
-	case "opcua":
+	case "opcua", "opcua-sim":
 		return newSimulatedDriver("opcua", cfg), nil
-	case "ethernetip", "cip":
+	case "ethernetip", "ethernetip-sim", "ethernet-ip", "cip":
 		return newSimulatedDriver("ethernetip", cfg), nil
-	case "beckhoff", "ads":
+	case "beckhoff", "beckhoff-sim", "ads", "ads-sim":
 		return newSimulatedDriver("beckhoff", cfg), nil
+	case "profinet", "profinet-sim":
+		return newSimulatedDriver("profinet", cfg), nil
+	case "dnp3", "dnp3-sim":
+		return newSimulatedDriver("dnp3", cfg), nil
+	case "iec104", "iec104-sim":
+		return newSimulatedDriver("iec104", cfg), nil
 	default:
 		return nil, fmt.Errorf("driver não suportado: %s", protocol)
 	}

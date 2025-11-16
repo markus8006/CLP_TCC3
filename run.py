@@ -378,6 +378,30 @@ PROTOCOL_CONFIGS: Dict[str, ProtocolConfig] = {
     ),
 }
 
+PROTOCOL_ALIAS_MAP = {
+    "s7": "s7",
+    "s7-sim": "s7",
+    "opcua": "opcua",
+    "opcua-sim": "opcua",
+    "modbus": "modbus",
+    "modbus-sim": "modbus",
+    "modbus-tcp": "modbus",
+    "ethernetip": "ethernetip",
+    "ethernetip-sim": "ethernetip",
+    "ethernet-ip": "ethernetip",
+    "cip": "ethernetip",
+    "beckhoff": "beckhoff",
+    "beckhoff-sim": "beckhoff",
+    "ads": "beckhoff",
+    "ads-sim": "beckhoff",
+    "profinet": "profinet",
+    "profinet-sim": "profinet",
+    "dnp3": "dnp3",
+    "dnp3-sim": "dnp3",
+    "iec104": "iec104",
+    "iec104-sim": "iec104",
+}
+
 # ===========================================================
 # FUNÇÕES DE SUPORTE
 # ===========================================================
@@ -460,37 +484,86 @@ def ensure_alarm(
 # ===========================================================
 # CONFIGURAÇÃO DO POLLER GO
 # ===========================================================
+def _normalize_driver_protocol(protocol: Optional[str]) -> Optional[str]:
+    if not protocol:
+        return None
+    normalized = protocol.strip().lower()
+    if not normalized:
+        return None
+    return PROTOCOL_ALIAS_MAP.get(normalized, normalized.split("-")[0])
+
+
+def _build_connection_payload(plc: PLC) -> Dict[str, object]:
+    payload = {
+        "ip_address": plc.ip_address,
+        "port": plc.port,
+        "unit_id": plc.unit_id,
+        "rack_slot": plc.rack_slot,
+        "vlan_id": plc.vlan_id,
+    }
+    return {key: value for key, value in payload.items() if value not in (None, "")}
+
+
+def _build_tag_payload(plc: PLC, register: Register) -> Dict[str, object]:
+    tag_name = register.tag or register.name or f"register_{register.id}"
+    metadata = {
+        "unit": register.unit,
+        "register_type": register.register_type,
+        "poll_rate": register.poll_rate or plc.polling_interval,
+    }
+    metadata = {k: v for k, v in metadata.items() if v not in (None, "")}
+    payload = {
+        "id": register.id,
+        "name": tag_name,
+        "address": register.address,
+        "data_type": (register.data_type or "").upper(),
+    }
+    if metadata:
+        payload["metadata"] = metadata
+    return payload
+
+
 def build_go_poller_config() -> Dict[str, object]:
     with app.app_context():
-        plcs = []
+        sessions = []
         for plc in Plcrepo.list_all():
             if not plc.is_active:
                 continue
-            registers = []
+
+            driver_protocol = _normalize_driver_protocol(plc.protocol)
+            if not driver_protocol:
+                logger.warning(
+                    "[go-polling] Ignorando PLC %s devido a protocolo inválido: %s",
+                    plc.name,
+                    plc.protocol,
+                )
+                continue
+
+            tags = []
             for register in RegRepo.list_by_plc(plc.id):
                 if not register.is_active:
                     continue
-                registers.append(
-                    {
-                        "id": register.id,
-                        "name": register.name,
-                        "address": register.address,
-                        "poll_rate": register.poll_rate or plc.polling_interval,
-                        "unit": register.unit or "",
-                    }
+                tags.append(_build_tag_payload(plc, register))
+
+            if not tags:
+                logger.debug(
+                    "[go-polling] PLC %s ignorado pois não possui registradores ativos.",
+                    plc.name,
                 )
-            plcs.append(
+                continue
+
+            sessions.append(
                 {
                     "id": plc.id,
+                    "plc_id": plc.id,
                     "name": plc.name,
-                    "ip_address": plc.ip_address,
-                    "vlan_id": plc.vlan_id,
-                    "protocol": plc.protocol,
-                    "polling_interval": plc.polling_interval or 1000,
-                    "registers": registers,
+                    "protocol": driver_protocol,
+                    "interval_ms": plc.polling_interval or SETTINGS.polling_default_interval_ms,
+                    "connection": _build_connection_payload(plc),
+                    "tags": tags,
                 }
             )
-    return {"plcs": plcs}
+    return {"sessions": sessions}
 
 
 def start_stream_consumer(
