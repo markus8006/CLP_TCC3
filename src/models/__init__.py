@@ -10,6 +10,7 @@ from src.models.ManualControl import ManualCommand
 from src.models.Security_event import SecurityEvent
 from src.models.Users import User, UserRole
 from src.models.Settings import SystemSetting
+from src.models.tag_model import TagArrayInfo, UniversalTag
 
 __all__ = [
     "AlarmDefinition",
@@ -26,4 +27,6 @@ __all__ = [
     "User",
     "UserRole",
     "SystemSetting",
+    "UniversalTag",
+    "TagArrayInfo",
 ]
