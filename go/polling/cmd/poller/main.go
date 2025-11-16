@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"clp/polling/internal/drivers"
 	pb "clp/polling/polling"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -20,47 +21,18 @@ import (
 
 type pollingServer struct {
 	pb.UnimplementedPollingServiceServer
+	mu       sync.RWMutex
+	sessions []sessionRuntime
+}
+
+type sessionRuntime struct {
+	config drivers.SessionConfig
+	driver drivers.PollingDriver
 }
 
 type pollingConfig struct {
-	PLCs []plcDescriptor `json:"plcs"`
+	Sessions []drivers.SessionConfig `json:"sessions"`
 }
-
-type plcDescriptor struct {
-	ID              int                  `json:"id"`
-	Name            string               `json:"name"`
-	IPAddress       string               `json:"ip_address"`
-	VlanID          *int                 `json:"vlan_id"`
-	Protocol        string               `json:"protocol"`
-	PollingInterval int                  `json:"polling_interval"`
-	Registers       []registerDescriptor `json:"registers"`
-}
-
-type registerDescriptor struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Address  string `json:"address"`
-	PollRate int    `json:"poll_rate"`
-	Unit     string `json:"unit"`
-}
-
-type measurementPayload struct {
-	PLCID      int       `json:"plc_id"`
-	RegisterID int       `json:"register_id"`
-	Status     string    `json:"status"`
-	Value      *float64  `json:"value,omitempty"`
-	ValueFloat *float64  `json:"value_float,omitempty"`
-	RawValue   any       `json:"raw_value,omitempty"`
-	Quality    string    `json:"quality,omitempty"`
-	Unit       string    `json:"unit,omitempty"`
-	Timestamp  time.Time `json:"timestamp"`
-	Error      string    `json:"error,omitempty"`
-}
-
-var (
-	configMu      sync.RWMutex
-	currentConfig pollingConfig
-)
 
 func main() {
 	if err := loadDotEnv(); err != nil {
@@ -73,7 +45,8 @@ func main() {
 	}
 
 	server := grpc.NewServer()
-	pb.RegisterPollingServiceServer(server, &pollingServer{})
+	pollingSrv := &pollingServer{}
+	pb.RegisterPollingServiceServer(server, pollingSrv)
 
 	go func() {
 		log.Printf("gRPC polling server listening on %s", lis.Addr())
@@ -87,6 +60,7 @@ func main() {
 	<-sigs
 	log.Print("shutdown signal received, stopping gRPC server")
 	server.GracefulStop()
+	pollingSrv.shutdown()
 }
 
 func (s *pollingServer) UpdateConfig(ctx context.Context, req *pb.ConfigPayload) (*pb.StatusResponse, error) {
@@ -96,16 +70,33 @@ func (s *pollingServer) UpdateConfig(ctx context.Context, req *pb.ConfigPayload)
 		return &pb.StatusResponse{Success: false, Message: fmt.Sprintf("invalid config: %v", err)}, nil
 	}
 
-	configMu.Lock()
-	currentConfig = cfg
-	configMu.Unlock()
+	runtimes := make([]sessionRuntime, 0, len(cfg.Sessions))
+	for _, session := range cfg.Sessions {
+		driver, err := drivers.NewDriverForProtocol(session.Protocol, session)
+		if err != nil {
+			return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+		}
+		if err := driver.Connect(); err != nil {
+			return &pb.StatusResponse{Success: false, Message: err.Error()}, nil
+		}
+		runtimes = append(runtimes, sessionRuntime{config: session, driver: driver})
+	}
 
-	log.Printf("configuration updated: %d PLCs registered", len(cfg.PLCs))
+	s.mu.Lock()
+	old := s.sessions
+	s.sessions = runtimes
+	s.mu.Unlock()
+
+	for _, runtime := range old {
+		_ = runtime.driver.Disconnect()
+	}
+
+	log.Printf("configuration updated: %d sessions active", len(runtimes))
 	return &pb.StatusResponse{Success: true, Message: "configuration updated"}, nil
 }
 
 func (s *pollingServer) StreamData(req *pb.Empty, stream pb.PollingService_StreamDataServer) error {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -113,12 +104,8 @@ func (s *pollingServer) StreamData(req *pb.Empty, stream pb.PollingService_Strea
 		case <-stream.Context().Done():
 			return stream.Context().Err()
 		case <-ticker.C:
-			configMu.RLock()
-			cfg := currentConfig
-			configMu.RUnlock()
-
-			measurements := pollAllPLCs(stream.Context(), cfg)
-			for _, measurement := range measurements {
+			payloads := s.collectMeasurements()
+			for _, measurement := range payloads {
 				data, err := json.Marshal(measurement)
 				if err != nil {
 					log.Printf("failed to marshal measurement: %v", err)
@@ -132,53 +119,118 @@ func (s *pollingServer) StreamData(req *pb.Empty, stream pb.PollingService_Strea
 	}
 }
 
-func pollAllPLCs(ctx context.Context, cfg pollingConfig) []measurementPayload {
-	results := make([]measurementPayload, 0)
-	for _, plc := range cfg.PLCs {
-		if len(plc.Registers) == 0 {
-			continue
+func (s *pollingServer) collectMeasurements() []measurementPayload {
+	sessions := s.snapshotSessions()
+	var output []measurementPayload
+	for _, runtime := range sessions {
+		output = append(output, pollSession(runtime)...)
+	}
+	return output
+}
+
+func (s *pollingServer) snapshotSessions() []sessionRuntime {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	cloned := make([]sessionRuntime, len(s.sessions))
+	copy(cloned, s.sessions)
+	return cloned
+}
+
+func (s *pollingServer) shutdown() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, runtime := range s.sessions {
+		_ = runtime.driver.Disconnect()
+	}
+	s.sessions = nil
+}
+
+type measurementPayload struct {
+	PLCID      int         `json:"plc_id"`
+	RegisterID int         `json:"register_id"`
+	Protocol   string      `json:"protocol"`
+	Status     string      `json:"status"`
+	Quality    string      `json:"quality"`
+	Timestamp  time.Time   `json:"timestamp"`
+	Tag        string      `json:"tag"`
+	Address    string      `json:"address"`
+	RawValue   interface{} `json:"raw_value,omitempty"`
+	ValueFloat *float64    `json:"value_float,omitempty"`
+	ValueInt   *int        `json:"value_int,omitempty"`
+	Error      string      `json:"error,omitempty"`
+}
+
+func pollSession(runtime sessionRuntime) []measurementPayload {
+	values, err := runtime.driver.ReadTags(runtime.config.Tags)
+	timestamp := time.Now().UTC()
+
+	results := make([]measurementPayload, 0, len(runtime.config.Tags))
+	if err != nil {
+		for _, tag := range runtime.config.Tags {
+			results = append(results, measurementPayload{
+				PLCID:      runtime.config.PLCID,
+				RegisterID: tag.ID,
+				Protocol:   runtime.config.Protocol,
+				Status:     "error",
+				Quality:    "BAD",
+				Timestamp:  timestamp,
+				Tag:        tag.Name,
+				Address:    tag.Address,
+				Error:      err.Error(),
+			})
 		}
-		for _, reg := range plc.Registers {
-			select {
-			case <-ctx.Done():
-				return results
-			default:
-			}
+		return results
+	}
 
-			measurementTime := time.Now().UTC()
-			value, err := readRegister(plc, reg)
-			payload := measurementPayload{
-				PLCID:      plc.ID,
-				RegisterID: reg.ID,
-				Timestamp:  measurementTime,
-			}
-
-			if err != nil {
-				payload.Status = "offline"
-				payload.Error = err.Error()
-				log.Printf("failed to poll PLC %s (%d) register %s (%d): %v", plc.Name, plc.ID, reg.Name, reg.ID, err)
-			} else {
-				payload.Status = "online"
-				payload.Quality = "GOOD"
-				if reg.Unit != "" {
-					payload.Unit = reg.Unit
+	for _, tag := range runtime.config.Tags {
+		value, ok := values[tag.Name]
+		payload := measurementPayload{
+			PLCID:      runtime.config.PLCID,
+			RegisterID: tag.ID,
+			Protocol:   runtime.config.Protocol,
+			Status:     "online",
+			Quality:    "GOOD",
+			Timestamp:  timestamp,
+			Tag:        tag.Name,
+			Address:    tag.Address,
+		}
+		if ok {
+			payload.RawValue = value
+			switch typed := value.(type) {
+			case float64:
+				payload.ValueFloat = floatPtr(typed)
+			case int:
+				payload.ValueInt = intPtr(typed)
+				payload.ValueFloat = floatPtr(float64(typed))
+			case int32:
+				payload.ValueInt = intPtr(int(typed))
+				payload.ValueFloat = floatPtr(float64(typed))
+			case bool:
+				if typed {
+					payload.ValueInt = intPtr(1)
+					payload.ValueFloat = floatPtr(1)
+				} else {
+					payload.ValueInt = intPtr(0)
+					payload.ValueFloat = floatPtr(0)
 				}
-				payload.Value = &value
-				payload.ValueFloat = &value
-				payload.RawValue = value
 			}
-
-			results = append(results, payload)
+		} else {
+			payload.Status = "offline"
+			payload.Quality = "BAD"
 		}
+		results = append(results, payload)
 	}
 	return results
 }
 
-func readRegister(plc plcDescriptor, reg registerDescriptor) (float64, error) {
-	_ = plc
-	_ = reg
-	simulated := float64(time.Now().UnixNano()%100_000) / 1000.0
-	return simulated, nil
+func floatPtr(value float64) *float64 {
+	v := value
+	return &v
+}
+
+func intPtr(value int) *int {
+	v := value
+	return &v
 }
 
 func loadDotEnv() error {
@@ -199,6 +251,5 @@ func loadDotEnv() error {
 		}
 		wd = parent
 	}
-
-	return fmt.Errorf(".env file not found")
+	return fmt.Errorf(".env not found")
 }
