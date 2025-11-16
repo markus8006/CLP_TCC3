@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import shutil
 import signal
@@ -137,10 +138,39 @@ class GoPollingManager:
                 )
                 time.sleep(1.0)
 
+    @staticmethod
+    def _classify_stderr_line(line: str) -> int:
+        """Return an appropriate logging level for a stderr line.
+
+        The Go poller writes all log messages to stderr. Without classification
+        every message is treated as an error which makes the runtime logs noisy
+        and misleading. We downgrade informational lines while still bubbling up
+        real error indicators.
+        """
+
+        normalized = line.strip().lower()
+        if not normalized:
+            return logging.DEBUG
+
+        error_markers = ("error", "panic", "fatal", "stack trace", "exception")
+        warning_markers = ("warn", "warning")
+
+        if any(marker in normalized for marker in error_markers):
+            return logging.ERROR
+        if any(marker in normalized for marker in warning_markers):
+            return logging.WARNING
+        return logging.INFO
+
     def _read_stderr(self) -> None:
         assert self._process is not None and self._process.stderr is not None
-        for line in self._process.stderr:
-            logger.error("[go-polling] %s", line.rstrip())
+        for raw_line in self._process.stderr:
+            line = raw_line.rstrip()
+            if not line:
+                continue
+
+            level = self._classify_stderr_line(line)
+            logger.log(level, "[go-polling] %s", line)
+
             if self._stop_event.is_set():
                 break
 
