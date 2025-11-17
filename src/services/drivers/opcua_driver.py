@@ -30,7 +30,8 @@ class OPCUADriver:
         try:
             for reg in registros:
                 base = abs(hash((getattr(self.plc, "id", 0), reg.address))) % 75
-                resultados[reg.address] = base + random.random()
+                noise = random.gauss(0, 2)
+                resultados[reg.address] = max(0.0, base + noise)
         except Exception:
             logger.exception("[POLLING] Erro ao ler registradores OPC UA")
         return resultados
