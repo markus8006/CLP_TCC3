@@ -74,6 +74,30 @@ def _log_exception(logger, message: str, *args: Any) -> None:
         pass
 
 
+def _offline_grace_period_seconds(plc) -> float:
+    """Calculates how long a PLC can stay silent before being marked offline."""
+
+    polling_interval_ms = max(getattr(plc, "polling_interval", 1000) or 1000, 250)
+    timeout_ms = max(getattr(plc, "timeout", 5000) or 5000, 500)
+
+    # Allow at least three missed polling windows (interval + timeout) before
+    # declaring the device offline. This reduces flapping caused by sporadic
+    # communication glitches while still reacting quickly to real disconnects.
+    grace_ms = max(3 * polling_interval_ms, polling_interval_ms + timeout_ms)
+    return grace_ms / 1000.0
+
+
+def _should_mark_offline(plc, status: str, timestamp: datetime) -> bool:
+    if status not in {"offline", "error"}:
+        return False
+
+    if plc.last_seen is None:
+        return True
+
+    delta_seconds = (timestamp - plc.last_seen).total_seconds()
+    return delta_seconds >= _offline_grace_period_seconds(plc)
+
+
 def process_poller_payload(
     payload: Dict[str, Any], *, session=None, logger=None
 ) -> Dict[str, Any]:
@@ -184,14 +208,16 @@ def process_poller_payload(
             register.error_count = (register.error_count or 0) + 1
             register.last_error = error_message or status
 
-        is_online = status == "online"
-        if plc.is_online != is_online:
-            plc.is_online = is_online
-            plc.status_changed_at = timestamp
-        if is_online:
+        if status == "online":
+            if plc.is_online is not True:
+                plc.status_changed_at = timestamp
+            plc.is_online = True
             plc.last_seen = timestamp
-        elif status in {"offline", "error"}:
-            plc.last_seen = None
+        else:
+            should_mark_offline = _should_mark_offline(plc, status, timestamp)
+            if should_mark_offline and plc.is_online:
+                plc.status_changed_at = timestamp
+            plc.is_online = plc.is_online if not should_mark_offline else False
 
         session.commit()
     except PollerIngestError:
