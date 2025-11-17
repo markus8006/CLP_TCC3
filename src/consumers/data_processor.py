@@ -16,6 +16,8 @@ from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
+from flask import Flask
+
 try:  # pragma: no cover - dependência opcional
     import redis.asyncio as aioredis
 except Exception:  # pragma: no cover - fallback quando Redis não está disponível
@@ -25,6 +27,7 @@ from src.app import create_app
 from src.app.settings import get_app_settings
 from src.repository.Data_repository import DataRepo
 from src.repository.PLC_repository import Plcrepo
+from src.models.PLCs import PLC
 from src.services.Alarms_service import AlarmService
 from src.services.mqtt_service import get_mqtt_publisher
 from src.utils.logs import logger
@@ -100,6 +103,7 @@ class PLCDataProcessor:
         flush_interval: float = 2.0,
         topic: str = QUEUE_TOPIC,
         redis_url: Optional[str] = None,
+        app: Optional[Flask] = None,
     ) -> None:
         self.batch_size = batch_size
         self.flush_interval = flush_interval
@@ -108,10 +112,11 @@ class PLCDataProcessor:
         self._last_flush = time.monotonic()
         self._subscriber = RedisSubscriber(topic=topic, url=redis_url or os.getenv(REDIS_URL_ENV))
 
-        self._app = create_app()
+        self._app = app or create_app()
         self._settings = get_app_settings(self._app)
-        self._app_ctx = self._app.app_context()
-        self._app_ctx.push()
+        self._app_ctx = None if app is not None else self._app.app_context()
+        if self._app_ctx is not None:
+            self._app_ctx.push()
 
         self._alarm_service = AlarmService()
         self._mqtt = get_mqtt_publisher()
@@ -259,6 +264,7 @@ class PLCDataProcessor:
 
         try:
             DataRepo.bulk_insert(batch)
+            self._update_connectivity(batch)
         except Exception:
             logger.exception("Erro ao executar bulk_insert no DataLogRepo")
             # Reinsere o batch para tentativa futura
@@ -269,6 +275,62 @@ class PLCDataProcessor:
             return
         finally:
             self._last_flush = time.monotonic()
+
+    def _update_connectivity(self, batch: List[Dict[str, Any]]) -> None:
+        """Marca CLPs como online ao processar leituras assíncronas."""
+
+        if not batch:
+            return
+
+        latest_by_plc: Dict[int, datetime] = {}
+        for record in batch:
+            plc_id = record.get("plc_id")
+            if plc_id is None:
+                continue
+
+            timestamp = record.get("timestamp")
+            if not isinstance(timestamp, datetime):
+                timestamp = self._parse_timestamp(timestamp)
+
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
+            else:
+                timestamp = timestamp.astimezone(timezone.utc)
+
+            current = latest_by_plc.get(plc_id)
+            if current is None or timestamp > current:
+                latest_by_plc[plc_id] = timestamp
+
+        if not latest_by_plc:
+            return
+
+        session = DataRepo.session
+
+        try:
+            tracked_plcs = (
+                session.query(PLC)
+                .filter(PLC.id.in_(latest_by_plc.keys()))
+                .all()
+            )
+
+            for plc in tracked_plcs:
+                latest_ts = latest_by_plc.get(plc.id)
+                if latest_ts is None:
+                    continue
+
+                previous_state = plc.is_online
+
+                if plc.last_seen is None or latest_ts > _ensure_timezone(plc.last_seen):
+                    plc.last_seen = latest_ts
+
+                if previous_state is not True:
+                    plc.is_online = True
+                    plc.status_changed_at = latest_ts
+
+            session.commit()
+        except Exception:
+            session.rollback()
+            logger.exception("Falha ao actualizar conectividade dos CLPs após ingestão")
 
     def shutdown(self) -> None:
         self._subscriber.stop()
@@ -319,6 +381,12 @@ class PLCDataProcessor:
         if isinstance(raw_value, (int, float)):
             return float(raw_value)
         return None
+
+
+def _ensure_timezone(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 async def main() -> None:
