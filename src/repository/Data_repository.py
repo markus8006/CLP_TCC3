@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from sqlalchemy import text
@@ -107,5 +108,50 @@ class DataLogRepo(BaseRepo):
     def _cleanup_old_records_optimized(self, records: Iterable[Dict[str, Any]]) -> None:
         self._cleanup_old_records(records)
 
+    def registrar_leitura(
+        self,
+        plc: Any,
+        register: Any,
+        valor: Any,
+        *,
+        quality: str = "ok",
+    ) -> DataLog:
+        """Salva uma leitura única de um registrador."""
+
+        timestamp = datetime.now(timezone.utc)
+        data_entry = DataLog(
+            plc_id=getattr(plc, "id", None),
+            register_id=getattr(register, "id", None),
+            timestamp=timestamp,
+            raw_value=None if valor is None else str(valor),
+            value_float=None if valor is None else _to_float(valor),
+            value_int=valor if isinstance(valor, int) else None,
+            quality=quality,
+            unit=getattr(register, "unit", None),
+            is_alarm=False,
+        )
+
+        try:
+            self.add(data_entry, commit=False)
+            register.last_value = data_entry.raw_value
+            register.last_read = timestamp
+            self.session.commit()
+            return data_entry
+        except SQLAlchemyError:
+            self.session.rollback()
+            logger.exception(
+                "Erro ao registrar leitura plc=%s registrador=%s",
+                getattr(plc, "id", None),
+                getattr(register, "id", None),
+            )
+            raise
+
 
 DataRepo = DataLogRepo()
+
+
+def _to_float(valor: Any) -> Optional[float]:
+    try:
+        return float(valor)
+    except (TypeError, ValueError):
+        return None

@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from flask import current_app
 
 from src.repository.Settings_repository import SettingsRepoInstance
-from src.services.polling_runtime import set_runtime_enabled, trigger_polling_refresh
 from src.utils.logs import logger
+
+if TYPE_CHECKING:
+    from src.services.polling.polling_service import PollingService
 
 POLLING_ENABLED_KEY = "polling_enabled"
 
@@ -25,10 +27,16 @@ def set_polling_enabled(
 ) -> None:
     SettingsRepoInstance.set_bool(POLLING_ENABLED_KEY, enabled, description=description or "Estado global do polling")
     app = current_app._get_current_object()
-    set_runtime_enabled(app, enabled)
-    trigger_polling_refresh(app)
+    service = _get_polling_service(app)
+    if service:
+        service.set_enabled(enabled)
     logger.process(
         "Polling %s por %s",
         "ativado" if enabled else "desativado",
         actor or "sistema",
     )
+
+
+def _get_polling_service(app) -> Optional[PollingService]:
+    service = app.extensions.get("polling")
+    return service if service is not None else None

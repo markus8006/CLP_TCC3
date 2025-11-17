@@ -10,6 +10,7 @@ from flask import Flask
 
 from src.app.extensions import csrf, db, login_manager, migrate
 from src.app.settings import get_app_settings, load_settings, store_settings
+from src.services.polling.polling_service import register_polling
 from src.utils.logs import logger
 
 
@@ -79,6 +80,7 @@ def create_app(config_name: str | None = None) -> Flask:
             db.create_all()
             logger.info("Registrando blueprints")
             register_blueprints(app)
+            register_polling(app)
         logger.info("db criado")
     except Exception as exc:
         logger.debug(

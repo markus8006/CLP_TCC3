@@ -449,19 +449,11 @@ def metrics():
     return generate_latest()
 ```
 
-## 🔌 PollingService gRPC
+## 🔌 Polling Python
 
-### Estendendo o contrato `.proto`
-- Edite `go/polling/polling.proto` para adicionar novos campos às mensagens `ConfigPayload` ou `DataPayload`. Mantenha compatibilidade retroativa incrementando apenas novos `field numbers` e executando `protoc` para regenerar os artefatos Go/Python.【F:go/polling/polling.proto†L1-L33】
-- Gere os *stubs* Go: `protoc --go_out=. --go-grpc_out=. polling.proto` dentro de `go/polling`. Para Python utilize `python -m grpc_tools.protoc -I=go/polling --python_out=src/grpc_generated --grpc_python_out=src/grpc_generated polling.proto`.
-
-### Ajustando o servidor Go
-- Centralize a lógica em `PollingService.UpdateConfig` e `PollingService.StreamData`. Use `sync.RWMutex` para proteger o estado global e trate erros com `log.Printf` para evitar *crashes* em produção.【F:go/polling/cmd/poller/main.go†L67-L165】
-- Funções utilitárias como `pollAllPLCs` e `readRegister` podem ser especializadas conforme o protocolo. Introduza novos pacotes Go se necessário, lembrando de actualizar `go.mod` com as dependências.
-
-### Actualizando o cliente Python
-- `GoPollingManager` encapsula a abertura do canal gRPC e a publicação de configurações. Ajuste o método `update_config` sempre que a estrutura JSON mudar para garantir a compatibilidade com o servidor.【F:src/manager/go_polling_manager.py†L93-L123】
-- A *thread* `go-poller-consumer` em `run.py` é responsável por desserializar `json_data` e encaminhar para `process_poller_payload`. Adapte-a se novos eventos ou formatos forem introduzidos pelo serviço Go.【F:run.py†L309-L360】
+- O polling agora vive em `src/services/polling/polling_service.py` e é iniciado automaticamente em `create_app`. Cada CLP recebe uma *thread* dedicada (`CLPWorker`).
+- Os drivers são simples (`ModbusDriver`, `S7Driver`, `OPCUADriver`) e expõem apenas três métodos (`conectar`, `ler`, `desconectar`). Qualquer protocolo adicional pode seguir o mesmo formato dentro de `src/services/drivers`.
+- Leituras são gravadas diretamente via `DataRepo.registrar_leitura`, eliminando filas JSON, gRPC e binários externos.
 
 ## 📦 Build e Deploy
 

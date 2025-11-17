@@ -8,9 +8,7 @@ Linux, namespace packages, etc.).
 __all__ = [
     "app",
     "consumers",
-    "grpc_generated",
     "jobs",
-    "manager",
     "models",
     "repository",
     "runtime",

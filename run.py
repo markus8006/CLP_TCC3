@@ -1,38 +1,23 @@
-import json
 import logging
-import os
-import threading
 import time
 from dataclasses import dataclass, field
-from queue import Empty, Queue
 from typing import Dict, List, Optional
 
 from src.app import create_app
 from src.app.settings import get_app_settings
-from src.manager.go_polling_manager import GoPollingManager, is_go_available
 from src.models import PLC, Register
 from src.models.Alarms import AlarmDefinition
 from src.repository.Alarms_repository import AlarmDefinitionRepo
 from src.repository.PLC_repository import Plcrepo
 from src.repository.Registers_repository import RegRepo
-from src.services.polling_runtime import PollingRuntime, register_runtime
-from src.services.poller_ingest_service import (
-    PollerIngestError,
-    PollerIngestProcessingError,
-    process_poller_payload,
-)
-from src.services.settings_service import get_polling_enabled
 from src.simulations.runtime import simulation_registry
 from src.utils.logs import logger
-from src.services.mqtt_service import get_mqtt_publisher
 
-# cop
 
 # ===========================================================
 # CONFIGURAÇÕES
 # ===========================================================
 CLPS_POR_PROTOCOLO = 10
-MAX_THREADS = 4  # reservado para futura paralelização
 
 
 # ===========================================================
@@ -69,7 +54,6 @@ class ProtocolConfig:
     tags: List[str] = field(default_factory=list)
     polling_interval: int = 1000
     timeout: int = 5000
-
 
 # ===========================================================
 # CONFIGURAÇÃO DOS PROTOCOLOS
@@ -217,6 +201,7 @@ PROTOCOL_CONFIGS: Dict[str, ProtocolConfig] = {
                     "severity": 2,
                     "description": "Alarme de sobrepressão no CLP Modbus",
                 },
+            ),
             ),
         ],
     ),
@@ -398,6 +383,7 @@ PROTOCOL_ALIAS_MAP = {
     "profinet-sim": "profinet",
     "dnp3": "dnp3",
     "dnp3-sim": "dnp3",
+    "dnp3-sim": "dnp3",
     "iec104": "iec104",
     "iec104-sim": "iec104",
 }
@@ -482,135 +468,9 @@ def ensure_alarm(
 
 
 # ===========================================================
-# CONFIGURAÇÃO DO POLLER GO
-# ===========================================================
-def _normalize_driver_protocol(protocol: Optional[str]) -> Optional[str]:
-    if not protocol:
-        return None
-    normalized = protocol.strip().lower()
-    if not normalized:
-        return None
-    return PROTOCOL_ALIAS_MAP.get(normalized, normalized.split("-")[0])
-
-
-def _build_connection_payload(plc: PLC) -> Dict[str, object]:
-    payload = {
-        "ip_address": plc.ip_address,
-        "port": plc.port,
-        "unit_id": plc.unit_id,
-        "rack_slot": plc.rack_slot,
-        "vlan_id": plc.vlan_id,
-    }
-    return {key: value for key, value in payload.items() if value not in (None, "")}
-
-
-def _build_tag_payload(plc: PLC, register: Register) -> Dict[str, object]:
-    tag_name = register.tag or register.name or f"register_{register.id}"
-    metadata = {
-        "unit": register.unit,
-        "register_type": register.register_type,
-        "poll_rate": register.poll_rate or plc.polling_interval,
-    }
-    metadata = {k: v for k, v in metadata.items() if v not in (None, "")}
-    payload = {
-        "id": register.id,
-        "name": tag_name,
-        "address": register.address,
-        "data_type": (register.data_type or "").upper(),
-    }
-    if metadata:
-        payload["metadata"] = metadata
-    return payload
-
-
-def build_go_poller_config() -> Dict[str, object]:
-    with app.app_context():
-        sessions = []
-        for plc in Plcrepo.list_all():
-            if not plc.is_active:
-                continue
-
-            driver_protocol = _normalize_driver_protocol(plc.protocol)
-            if not driver_protocol:
-                logger.warning(
-                    "[go-polling] Ignorando PLC %s devido a protocolo inválido: %s",
-                    plc.name,
-                    plc.protocol,
-                )
-                continue
-
-            tags = []
-            for register in RegRepo.list_by_plc(plc.id):
-                if not register.is_active:
-                    continue
-                tags.append(_build_tag_payload(plc, register))
-
-            if not tags:
-                logger.debug(
-                    "[go-polling] PLC %s ignorado pois não possui registradores ativos.",
-                    plc.name,
-                )
-                continue
-
-            sessions.append(
-                {
-                    "id": plc.id,
-                    "plc_id": plc.id,
-                    "name": plc.name,
-                    "protocol": driver_protocol,
-                    "interval_ms": plc.polling_interval or SETTINGS.polling_default_interval_ms,
-                    "connection": _build_connection_payload(plc),
-                    "tags": tags,
-                }
-            )
-    return {"sessions": sessions}
-
-
-def start_stream_consumer(
-    app, data_queue: Queue[str]
-) -> tuple[threading.Thread, threading.Event]:
-    stop_event = threading.Event()
-
-    def _worker() -> None:
-        while not stop_event.is_set():
-            try:
-                raw_payload = data_queue.get(timeout=0.5)
-            except Empty:
-                continue
-            if raw_payload is None:
-                break
-            try:
-                payload = json.loads(raw_payload)
-            except json.JSONDecodeError:
-                logger.error(
-                    "Payload JSON inválido recebido do poller Go: %s", raw_payload
-                )
-                continue
-
-            app_logger = getattr(app, "logger", logger)
-            try:
-                with app.app_context():
-                    process_poller_payload(payload, logger=app_logger)
-            except PollerIngestProcessingError as exc:
-                ctx = exc.context or {}
-                app_logger.exception(
-                    "Falha ao processar medição do poller Go (plc=%s reg=%s)",
-                    ctx.get("plc_id", payload.get("plc_id")),
-                    ctx.get("register_id", payload.get("register_id")),
-                )
-            except PollerIngestError as exc:
-                app_logger.error("Erro ao ingerir dados do poller Go: %s", exc)
-            except Exception:
-                app_logger.exception("Erro inesperado ao consumir stream do poller Go.")
-
-    worker = threading.Thread(target=_worker, name="go-poller-consumer", daemon=True)
-    worker.start()
-    return worker, stop_event
-
-
-# ===========================================================
 # CONFIGURAÇÃO DE TODOS OS CLPs
 # ===========================================================
+
 def setup_single_plc(protocol_key: str, index: int) -> bool:
     config = PROTOCOL_CONFIGS[protocol_key]
     plc_name = f"{config.prefix}{index}"
@@ -699,6 +559,7 @@ def setup_all_plcs() -> Dict[str, int]:
 # ===========================================================
 # MAIN EXECUÇÃO DIRETA (SEM CLI)
 # ===========================================================
+
 if __name__ == "__main__":
     total_esperado = CLPS_POR_PROTOCOLO * len(PROTOCOL_CONFIGS)
     logger.process(
@@ -716,47 +577,12 @@ if __name__ == "__main__":
     for protocolo, quantidade in resultados.items():
         logger.info("Protocolo %s: %d CLPs ativos.", protocolo, quantidade)
 
-    if not is_go_available():
-        raise RuntimeError(
-            "Go toolchain não disponível; o poller Go é obrigatório nesta versão."
-        )
-
-    data_queue: Queue[str] = Queue()
-    initial_config = build_go_poller_config()
-    polling_manager = GoPollingManager(data_queue)
-    try:
-        polling_manager.start(initial_config)
-    except Exception:
-        logger.exception("Falha ao iniciar o serviço de polling Go via gRPC.")
-        raise
-    logger.process("Serviço de polling Go inicializado (gRPC).")
-
-    consumer_thread, consumer_stop = start_stream_consumer(app, data_queue)
-
-    runtime = PollingRuntime(
-        manager=polling_manager,
-        data_queue=data_queue,
-        consumer_thread=consumer_thread,
-        consumer_stop_event=consumer_stop,
-    )
-    with app.app_context():
-        runtime.set_enabled(get_polling_enabled())
-    register_runtime(app, runtime)
-
-    mqtt_publisher = get_mqtt_publisher()
-    if mqtt_publisher.is_enabled:
-        logger.process(
-            "Publicação MQTT ativada em %s:%s (base topic: %s)",
-            mqtt_publisher.settings.host,
-            mqtt_publisher.settings.port,
-            mqtt_publisher.settings.base_topic,
-        )
+    polling_service = app.extensions.get("polling")
+    if polling_service:
+        polling_service.start()
+        logger.process("PollingService iniciado automaticamente pelo run.py")
     else:
-        logger.info(
-            "Publicação MQTT desativada. Defina MQTT_ENABLED=true para habilitar a ponte IT/OT."
-        )
-
-    logger.info("Runtime de polling registrado — aguardando ingestão externa de dados.")
+        logger.warning("PollingService não encontrado em app.extensions")
 
     logger.process("Iniciando servidor Flask em http://0.0.0.0:5000")
     logging.getLogger("sqlalchemy").setLevel(logging.CRITICAL)
