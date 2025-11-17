@@ -34,11 +34,13 @@ class PollingService:
         with self._lock:
             if self._running:
                 return
-            if not get_polling_enabled(default=True):
-                logger.info("[POLLING] Serviço desativado nas configurações. Não iniciando threads.")
-                return
-            logger.info("[POLLING] Iniciando PollingService")
             with self.app.app_context():
+                if not get_polling_enabled(default=True):
+                    logger.info(
+                        "[POLLING] Serviço desativado nas configurações. Não iniciando threads."
+                    )
+                    return
+                logger.info("[POLLING] Iniciando PollingService")
                 plcs = self.plc_repo.list_all()
             if not plcs:
                 logger.info("[POLLING] Nenhum CLP encontrado. PollingService permanecerá parado.")
