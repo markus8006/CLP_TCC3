@@ -126,6 +126,7 @@ def process_poller_payload(
         raise PollerIngestError("plc_id e register_id são obrigatórios") from exc
 
     status = (payload.get("status") or "online").strip().lower()
+    is_offline_status = status in {"offline", "error"} or status.startswith("error:")
 
     try:
         timestamp = parse_timestamp(payload.get("timestamp")) or datetime.now(
@@ -201,14 +202,14 @@ def process_poller_payload(
 
         register.last_value = None if raw_value is None else str(raw_value)
         register.last_read = timestamp
-        if status == "online":
-            register.error_count = 0
-            register.last_error = None
-        else:
+        if is_offline_status:
             register.error_count = (register.error_count or 0) + 1
             register.last_error = error_message or status
+        else:
+            register.error_count = 0
+            register.last_error = None
 
-        if status == "online":
+        if not is_offline_status:
             if plc.is_online is not True:
                 plc.status_changed_at = timestamp
             plc.is_online = True
