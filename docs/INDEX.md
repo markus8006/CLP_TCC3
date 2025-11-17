@@ -63,7 +63,7 @@ python run.py
 
 ### 🔌 Para Integradores
 - **[Documentação da API](README.md#documentação-da-api)** - Endpoints REST
-- **[Contrato gRPC do Poller](DEVELOPMENT.md#pollingservice-grpc)** - Como estender o serviço Go
+- **[Polling Python](DEVELOPMENT.md#polling-python)** - Estrutura de coleta nativa
 - **[Exemplos de Integração](README.md#exemplos-de-integração)** - Python, JavaScript, curl
 
 ---
@@ -100,14 +100,14 @@ app/
 ├── auth/           # Autenticação e autorização
 ├── models/         # Modelos de dados (SQLAlchemy)
 ├── services/       # Lógica de negócios
-│   ├── polling_service.py    # Coleta de dados
-│   ├── alarm_service.py      # Sistema de alarmes
-│   ├── security_service.py   # Segurança
-│   └── backup_service.py     # Backup automático
+│   ├── polling/            # Serviço de polling Python
+│   ├── drivers/            # Drivers Modbus/S7/OPC UA
+│   ├── alarm_service.py    # Sistema de alarmes
+│   ├── security_service.py # Segurança
+│   └── backup_service.py   # Backup automático
 ├── api/            # API REST
 ├── web/            # Interface web
-├── grpc_generated/ # Artefatos gRPC Python
-├── manager/        # Cliente gRPC e gestão do poller Go
+├── manager/        # (vago) - reserve para integrações adicionais
 └── utils/          # Utilitários
 ```
 
@@ -126,7 +126,7 @@ app/
 - [Arquitetura e Padrões](DEVELOPMENT.md#arquitetura-do-sistema)
 - [Setup de Desenvolvimento](DEVELOPMENT.md#setup-de-desenvolvimento)
 - [Criando Testes](DEVELOPMENT.md#testes)
-- [Extensões do Poller Go](DEVELOPMENT.md#pollingservice-grpc)
+- [Polling Python](DEVELOPMENT.md#polling-python)
 
 ### 🚀 Produção
 - [Deploy Completo](DEPLOYMENT.md#deploy-em-produção)

@@ -49,6 +49,10 @@ class BaseRepo:
             logger.exception("Erro ao listar %s", self.model.__name__)
             return []
 
+    # Compatibilidade com nomenclatura anterior
+    def get_all(self, limit: Optional[int] = None, offset: Optional[int] = None) -> List[Any]:
+        return self.list_all(limit=limit, offset=offset)
+
     def find_by(self, **filters: Any) -> List[Any]:
         try:
             return self.session.query(self.model).filter_by(**filters).all()

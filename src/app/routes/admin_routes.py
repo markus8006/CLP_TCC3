@@ -29,8 +29,7 @@ from src.services.register_admin_service import (
     delete_register as delete_register_entry,
     update_register,
 )
-from src.services.polling_runtime import trigger_polling_refresh
-from src.services.settings_service import get_polling_enabled, set_polling_enabled
+from src.services.settings_service import get_polling_enabled
 from src.services.email_settings_service import (
     get_email_settings,
     get_stored_email_settings,
@@ -422,8 +421,8 @@ def edit_register(register_id: int):
 def manage_polling_control():
     form = PollingControlForm()
     persisted_enabled = get_polling_enabled()
-    runtime = current_app.extensions.get("polling_runtime")
-    runtime_enabled = runtime.is_enabled() if runtime else persisted_enabled
+    polling_service = current_app.extensions.get("polling")
+    runtime_enabled = getattr(polling_service, "is_running", False)
 
     if request.method == "GET":
         form.enabled.data = persisted_enabled
