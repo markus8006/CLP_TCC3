@@ -1,4 +1,5 @@
 import math
+from datetime import datetime, timezone
 from typing import List
 
 from flask import Blueprint, render_template, request
@@ -9,6 +10,35 @@ from src.utils.tags import parse_tags
 from src.services.security.industrial_security import assess_plc_security
 
 main = Blueprint('main', __name__)
+
+def _grace_period_seconds(plc) -> float:
+    """Return how long a PLC can stay silent before we consider it offline."""
+
+    polling_interval_ms = max(getattr(plc, "polling_interval", 1000) or 1000, 250)
+    timeout_ms = max(getattr(plc, "timeout", 5000) or 5000, 500)
+
+    grace_ms = max(3 * polling_interval_ms, polling_interval_ms + timeout_ms)
+    return grace_ms / 1000.0
+
+
+def _is_plc_online(plc, *, now: datetime | None = None) -> bool:
+    """Determine online status using last seen timestamp as a fallback."""
+
+    if getattr(plc, "is_online", False):
+        return True
+
+    last_seen = getattr(plc, "last_seen", None)
+    if not last_seen:
+        return False
+
+    current_ts = now or datetime.now(timezone.utc)
+
+    if last_seen.tzinfo is None:
+        last_seen = last_seen.replace(tzinfo=timezone.utc)
+    else:
+        last_seen = last_seen.astimezone(timezone.utc)
+
+    return (current_ts - last_seen).total_seconds() < _grace_period_seconds(plc)
 
 
 def _build_clp_view(plc) -> dict:
@@ -22,7 +52,7 @@ def _build_clp_view(plc) -> dict:
         "ip_address": plc.ip_address,
         "vlan_id": plc.vlan_id,
         "protocol": plc.protocol,
-        "is_online": plc.is_online,
+        "is_online": _is_plc_online(plc),
         "last_seen": plc.last_seen,
         "tags": tags,
         "security": {
