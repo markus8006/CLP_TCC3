@@ -3,8 +3,8 @@ Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
 Flask-Migrate
-pydantic==2.7.1
-pydantic-settings==2.2.1
+pydantic
+pydantic-settings
 email-validator==2.2.0
 psycopg2-binary
 psutil==5.9.8
@@ -23,7 +23,4 @@ pycomm3==1.2.11
 pyads==3.3.9
 pandas
 openpyxl==3.1.5
-protobuf 
-googleapis-common-protos 
-grpcio 
-grpcio-tools
+

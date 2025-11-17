@@ -202,7 +202,6 @@ PROTOCOL_CONFIGS: Dict[str, ProtocolConfig] = {
                     "description": "Alarme de sobrepressão no CLP Modbus",
                 },
             ),
-            ),
         ],
     ),
     "ethernetip": ProtocolConfig(
