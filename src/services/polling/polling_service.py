@@ -40,6 +40,9 @@ class PollingService:
             logger.info("[POLLING] Iniciando PollingService")
             with self.app.app_context():
                 plcs = self.plc_repo.list_all()
+            if not plcs:
+                logger.info("[POLLING] Nenhum CLP encontrado. PollingService permanecerá parado.")
+                return
             for plc in plcs:
                 worker = CLPWorker(
                     self.app,
