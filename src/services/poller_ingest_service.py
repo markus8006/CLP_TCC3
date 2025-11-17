@@ -74,10 +74,15 @@ def _log_exception(logger, message: str, *args: Any) -> None:
         pass
 
 
-def _offline_grace_period_seconds(plc) -> float:
+def _offline_grace_period_seconds(plc, register=None) -> float:
     """Calculates how long a PLC can stay silent before being marked offline."""
 
     polling_interval_ms = max(getattr(plc, "polling_interval", 1000) or 1000, 250)
+
+    register_poll_rate = getattr(register, "poll_rate", None)
+    if register_poll_rate:
+        polling_interval_ms = max(polling_interval_ms, register_poll_rate)
+
     timeout_ms = max(getattr(plc, "timeout", 5000) or 5000, 500)
 
     # Allow at least three missed polling windows (interval + timeout) before
@@ -87,15 +92,27 @@ def _offline_grace_period_seconds(plc) -> float:
     return grace_ms / 1000.0
 
 
-def _should_mark_offline(plc, status: str, timestamp: datetime) -> bool:
+def _should_mark_offline(plc, register, status: str, timestamp: datetime) -> bool:
     if status not in {"offline", "error"}:
         return False
 
     if plc.last_seen is None:
         return True
 
-    delta_seconds = (timestamp - plc.last_seen).total_seconds()
-    return delta_seconds >= _offline_grace_period_seconds(plc)
+    last_seen = plc.last_seen
+    if last_seen.tzinfo is None:
+        last_seen = last_seen.replace(tzinfo=timezone.utc)
+    else:
+        last_seen = last_seen.astimezone(timezone.utc)
+
+    normalized_timestamp = timestamp
+    if normalized_timestamp.tzinfo is None:
+        normalized_timestamp = normalized_timestamp.replace(tzinfo=timezone.utc)
+    else:
+        normalized_timestamp = normalized_timestamp.astimezone(timezone.utc)
+
+    delta_seconds = (normalized_timestamp - last_seen).total_seconds()
+    return delta_seconds >= _offline_grace_period_seconds(plc, register)
 
 
 def process_poller_payload(
@@ -215,7 +232,9 @@ def process_poller_payload(
             plc.is_online = True
             plc.last_seen = timestamp
         else:
-            should_mark_offline = _should_mark_offline(plc, status, timestamp)
+            should_mark_offline = _should_mark_offline(
+                plc, register, status, timestamp
+            )
             if should_mark_offline and plc.is_online:
                 plc.status_changed_at = timestamp
             plc.is_online = plc.is_online if not should_mark_offline else False
