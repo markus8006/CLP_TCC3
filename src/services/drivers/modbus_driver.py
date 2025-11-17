@@ -31,7 +31,8 @@ class ModbusDriver:
         try:
             for reg in registros:
                 base = abs(hash((getattr(self.plc, "id", 0), reg.address))) % 100
-                resultados[reg.address] = base + random.random()
+                noise = random.gauss(0, 2)
+                resultados[reg.address] = max(0.0, base + noise)
         except Exception:
             logger.exception("[POLLING] Erro ao ler registradores Modbus")
         return resultados
